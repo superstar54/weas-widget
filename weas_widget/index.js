@@ -1,8 +1,8 @@
-import * as weas from "https://unpkg.com/weas@0.0.5-b/dist/weas.mjs";
+import * as weas from "https://unpkg.com/weas@0.0.5-g/dist/weas.mjs";
 export function render({ model, el }) {
     let avr; // Declare avr here
     let viewerElement = document.createElement("div");
-    viewerElement.style.cssText = "position: absolte; width: 100%; height: 500px;";
+    viewerElement.style.cssText = "position: relative; width: 500px; height: 500px;";
     el.appendChild(viewerElement);
     const renderAtoms = () => {
         const data = model.get("atoms");
