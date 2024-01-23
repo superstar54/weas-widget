@@ -27,6 +27,17 @@ class WeasWidget(anywidget.AnyWidget):
         }
         self.atoms = atoms
 
+    def to_ase(self):
+        # Convert the widget's format to an ASE Atoms object
+        from ase import Atoms
+        import numpy as np
+
+        symbols = [self.atoms["species"][s][0] for s in self.atoms["speciesArray"]]
+        positions = self.atoms["positions"]
+        cell = np.array(self.atoms["cell"]).reshape(3, 3)
+        atoms = Atoms(symbols=symbols, positions=positions, cell=cell)
+        return atoms
+
     def from_pymatgen(self, structure):
         # Convert a Pymatgen Structure object to the widget's format
         atoms_data = self._convert_to_dict(structure)
