@@ -1,8 +1,8 @@
-import * as weas from "https://unpkg.com/weas@0.0.5-g/dist/weas.mjs";
+import * as weas from "https://unpkg.com/weas@0.0.5-y/dist/weas.mjs";
 export function render({ model, el }) {
     let avr; // Declare avr here
     let viewerElement = document.createElement("div");
-    viewerElement.style.cssText = "position: relative; width: 500px; height: 500px;";
+    viewerElement.style.cssText = "position: relative; width: 100%; height: 400px;";
     el.appendChild(viewerElement);
     const renderAtoms = () => {
         const data = model.get("atoms");
@@ -26,7 +26,7 @@ export function render({ model, el }) {
         // uuid is used to identify the atoms object in the viewer
         // so that we can delete it later
         atoms.uuid = avr.uuid;
-        avr.drawModel();
+        avr.drawModels();
     });
     // Listen for the custom 'atomsUpdated' event
     viewerElement.addEventListener('atomsUpdated', (event) => {
@@ -34,6 +34,13 @@ export function render({ model, el }) {
         model.set("atoms", updatedAtoms);
         model.save_changes();
         console.log("Updated atoms: ", updatedAtoms);
+    });
+    // Listen for the custom 'pickedAtomsUpdated' event
+    viewerElement.addEventListener('pickedAtomsUpdated', (event) => {
+        const pickedAtomsIndices = event.detail; // event.detail contains the updated atoms
+        model.set("picked_atoms", pickedAtomsIndices);
+        model.save_changes();
+        console.log("Updated picked_atoms: ", pickedAtomsIndices);
     });
 
 }

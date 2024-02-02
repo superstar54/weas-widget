@@ -3,11 +3,14 @@ import traitlets
 import os
 
 esm_path = os.path.join(os.path.dirname(__file__), """index.js""")
+css_path = os.path.join(os.path.dirname(__file__), """style.css""")
 
 
 class WeasWidget(anywidget.AnyWidget):
     _esm = esm_path
+    _css = css_path
     atoms = traitlets.Dict().tag(sync=True)
+    picked_atoms = traitlets.List().tag(sync=True)
 
     def from_ase(self, atoms):
         # Convert an ASE Atoms object to the widget's format
