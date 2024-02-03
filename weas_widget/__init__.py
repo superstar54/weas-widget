@@ -11,6 +11,10 @@ class WeasWidget(anywidget.AnyWidget):
     _css = css_path
     atoms = traitlets.Dict().tag(sync=True)
     picked_atoms = traitlets.List().tag(sync=True)
+    model_style = traitlets.Int(1).tag(sync=True)
+    color_type = traitlets.Unicode("CPK").tag(sync=True)
+    material_type = traitlets.Unicode("Standard").tag(sync=True)
+    atom_label_type = traitlets.Unicode("None").tag(sync=True)
 
     def from_ase(self, atoms):
         # Convert an ASE Atoms object to the widget's format

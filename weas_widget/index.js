@@ -1,4 +1,4 @@
-import * as weas from "https://unpkg.com/weas@0.0.5-y/dist/weas.mjs";
+import * as weas from "https://unpkg.com/weas@0.0.5-z/dist/weas.mjs";
 export function render({ model, el }) {
     let avr; // Declare avr here
     let viewerElement = document.createElement("div");
@@ -28,6 +28,11 @@ export function render({ model, el }) {
         atoms.uuid = avr.uuid;
         avr.drawModels();
     });
+    // Listen for changes in the 'atoms' property
+    model.on("change:model_style", () => {avr.modelStyle = model.get("model_style");});
+    model.on("change:color_type", () => {avr.colorType = model.get("color_type");});
+    model.on("change:material_type", () => {avr.materialType = model.get("material_type");});
+    model.on("change:atom_label_type", () => {avr.atomLabelType = model.get("atom_label_type");});
     // Listen for the custom 'atomsUpdated' event
     viewerElement.addEventListener('atomsUpdated', (event) => {
         const updatedAtoms = event.detail.to_dict(); // event.detail contains the updated atoms
