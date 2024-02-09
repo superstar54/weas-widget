@@ -1,4 +1,4 @@
-import * as weas from "https://unpkg.com/weas@0.0.5-z/dist/weas.mjs";
+import * as weas from "https://unpkg.com/weas@0.0.6-a/dist/weas.mjs";
 export function render({ model, el }) {
     let avr; // Declare avr here
     let viewerElement = document.createElement("div");
@@ -9,6 +9,7 @@ export function render({ model, el }) {
         const atoms = new weas.Atoms(data);
         const bjs = new weas.BlendJS(viewerElement);
         avr = new weas.AtomsViewer(bjs, atoms);
+        avr.drawModels();
         bjs.render();
         return avr;
     };
