@@ -1,8 +1,8 @@
-import * as weas from "https://unpkg.com/weas@0.0.6-a/dist/weas.mjs";
+import * as weas from "https://unpkg.com/weas@0.0.6-c/dist/weas.mjs";
 export function render({ model, el }) {
     let avr; // Declare avr here
     let viewerElement = document.createElement("div");
-    viewerElement.style.cssText = "position: relative; width: 100%; height: 400px;";
+    viewerElement.style.cssText = "position: relative; width: 400px; height: 400px;";
     el.appendChild(viewerElement);
     const renderAtoms = () => {
         const data = model.get("atoms");
@@ -29,11 +29,6 @@ export function render({ model, el }) {
         atoms.uuid = avr.uuid;
         avr.drawModels();
     });
-    // Listen for changes in the 'atoms' property
-    model.on("change:model_style", () => {avr.modelStyle = model.get("model_style");});
-    model.on("change:color_type", () => {avr.colorType = model.get("color_type");});
-    model.on("change:material_type", () => {avr.materialType = model.get("material_type");});
-    model.on("change:atom_label_type", () => {avr.atomLabelType = model.get("atom_label_type");});
     // Listen for the custom 'atomsUpdated' event
     viewerElement.addEventListener('atomsUpdated', (event) => {
         const updatedAtoms = event.detail.to_dict(); // event.detail contains the updated atoms
@@ -48,5 +43,20 @@ export function render({ model, el }) {
         model.save_changes();
         console.log("Updated picked_atoms: ", pickedAtomsIndices);
     });
+    // Listen for the custom 'viewerUpdated' event
+    viewerElement.addEventListener('viewerUpdated', (event) => {
+        const data = event.detail; // event.detail contains the updated data
+        // loop through the data and update the model
+        for (const key in data) {
+            model.set(key, data[key]);
+        }
+        model.save_changes();
+        console.log("Updated viewer: ", data);
+    });
+    // Listen for changes in the 'viewer' property
+    model.on("change:modelStyle", () => {avr.modelStyle = model.get("modelStyle");});
+    model.on("change:colorType", () => {avr.colorType = model.get("colorType");});
+    model.on("change:materialType", () => {avr.materialType = model.get("materialType");});
+    model.on("change:atomLabelType", () => {avr.atomLabelType = model.get("atomLabelType");});
 
 }
