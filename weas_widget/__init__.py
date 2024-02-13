@@ -10,7 +10,8 @@ class WeasWidget(anywidget.AnyWidget):
     _esm = esm_path
     _css = css_path
     atoms = traitlets.Dict().tag(sync=True)
-    picked_atoms = traitlets.List().tag(sync=True)
+    selectedAtoms = traitlets.List([]).tag(sync=True)
+    boundary = traitlets.List([[0, 1], [0, 1], [0, 1]]).tag(sync=True)
     modelStyle = traitlets.Int(1).tag(sync=True)
     colorType = traitlets.Unicode("CPK").tag(sync=True)
     materialType = traitlets.Unicode("Standard").tag(sync=True)
