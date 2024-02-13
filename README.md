@@ -6,6 +6,10 @@
 
 A widget to visualize and edit with atomistic structures in Jupyter Notebook. It uses [WEAS](https://github.com/superstar54/weas) (Web Environment For Atomistic Structure) in the backend.
 
+
+<img src="docs/source/_static/images/example-adsorption.gif"  width="100%"/>
+
+
 ## Installation
 
 ```console

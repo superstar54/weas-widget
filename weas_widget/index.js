@@ -3,7 +3,7 @@ import * as weas from "https://unpkg.com/weas/dist/weas.mjs";
 export function render({ model, el }) {
     let avr; // Declare avr here
     let viewerElement = document.createElement("div");
-    viewerElement.style.cssText = "position: relative; width: 400px; height: 400px;";
+    viewerElement.style.cssText = "position: relative; width: 600px; height: 400px;";
     el.appendChild(viewerElement);
     const renderAtoms = () => {
         const data = model.get("atoms");
