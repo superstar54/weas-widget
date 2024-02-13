@@ -1,4 +1,5 @@
-import * as weas from "https://unpkg.com/weas@0.0.6-e/dist/weas.mjs";
+// use the latest version of weas from unpkg
+import * as weas from "https://unpkg.com/weas/dist/weas.mjs";
 export function render({ model, el }) {
     let avr; // Declare avr here
     let viewerElement = document.createElement("div");
@@ -18,6 +19,10 @@ export function render({ model, el }) {
         avr = renderAtoms();
             }, 10
     ); // Delay rendering by 10ms
+    // Listen for changes in the '_update' property
+    model.on("change:_drawModels", () => {
+        avr.drawModels();
+    });
     // Listen for changes in the 'atoms' property
     model.on("change:atoms", () => {
         const data = model.get("atoms");
@@ -52,5 +57,12 @@ export function render({ model, el }) {
     model.on("change:colorType", () => {avr.colorType = model.get("colorType");});
     model.on("change:materialType", () => {avr.materialType = model.get("materialType");});
     model.on("change:atomLabelType", () => {avr.atomLabelType = model.get("atomLabelType");});
+    model.on("change:showCell", () => {avr.showCell = model.get("showCell");});
+    model.on("change:showBondedAtoms", () => {avr.showBondedAtoms = model.get("showBondedAtoms");});
+    model.on("change:atomScales", () => {avr.atomScales = model.get("atomScales");});
+    model.on("change:modelSticks", () => {avr.modelSticks = model.get("modelSticks");});
+    model.on("change:modelPolyhedras", () => {avr.modelPolyhedras = model.get("modelPolyhedras");});
+    model.on("change:selectedAtomsIndices", () => {avr.selectedAtomsIndices = model.get("selectedAtomsIndices");});
+    model.on("change:boundary", () => {avr.boundary = model.get("boundary");});
 
 }

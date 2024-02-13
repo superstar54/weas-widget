@@ -1,7 +1,7 @@
 
 Welcome to WEAS Widget's documentation!
 ===========================================
-The Web Environments for Atomistic Structure (WEAS) package is a JavaScript library designed to simplify and enhance the visualization and interaction with atomistic structures (molecule, crystal, etc.) in web environments.
+A widget to visualize and interact with atomistic structures in Jupyter Notebook. It uses WEAS_ (Web Environment For Atomistic Structure) in the backend.
 
 .. toctree::
    :maxdepth: 1
@@ -17,3 +17,6 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+
+.. _WEAS: https://github.com/superstar54/weas

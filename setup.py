@@ -2,9 +2,9 @@ from setuptools import setup, find_packages
 
 setup(
     name="weas-widget",
-    version="0.0.1",
+    version="0.0.3",
     packages=find_packages(),
-    description="A wdiget to visualize and interact with atomistic structures.",
+    description="A widget to visualize and interact with atomistic structures in Jupyter Notebook.",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     author="Xing Wang",
@@ -25,8 +25,8 @@ setup(
         "Programming Language :: Python :: 3.12",
     ],
     package_data={
-        # If any package contains *.js files, include them:
-        "": ["*.js"],
+        "": ["*.js", "*.css"],
+        "weas_widget.datas": ["*"],
     },
     include_package_data=True,  # This tells setuptools to check MANIFEST.in for additional files
 )
