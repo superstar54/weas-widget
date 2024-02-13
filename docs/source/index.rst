@@ -9,6 +9,8 @@ A widget to visualize and interact with atomistic structures in Jupyter Notebook
 
    quick_start
    installation
+   operation
+   boundary
 
 
 Indices and tables
