@@ -10,6 +10,15 @@ A widget to visualize and edit atomistic structures in Jupyter Notebook. It uses
 <img src="docs/source/_static/images/example-adsorption.gif"  width="100%"/>
 
 
+Features:
+
+- Model: space-filling, ball-stick, polyhedral.
+- Supported File type: cif, xyz.
+- Edit structure: move, rotate, delete and replace atoms.
+- Support periodic boundary conditions
+- Animation
+
+
 ## Installation
 
 Use the pip:

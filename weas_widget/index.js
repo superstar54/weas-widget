@@ -8,9 +8,16 @@ export function render({ model, el }) {
     // Function to render atoms
     const renderAtoms = () => {
         // load init parameters from the model
-        const atoms = new weas.Atoms(model.get("atoms"));
-        const bjs = new weas.BlendJS(viewerElement);
-        avr = new weas.AtomsViewer(bjs, atoms);
+        const atomsData = model.get("atoms");
+        let atoms;
+        // if atomsData is an array, then create an array of Atoms objects
+        if (Array.isArray(atomsData)) {
+            atoms = atomsData.map((data) => new weas.Atoms(data));
+        } else {
+            atoms = new weas.Atoms(atomsData);
+        }
+        // console.log("atoms: ", atoms);
+        avr = new weas.AtomsViewer(viewerElement, atoms);
         avr.modelStyle = model.get("modelStyle");
         avr.colorType = model.get("colorType");
         avr.materialType = model.get("materialType");
@@ -24,7 +31,7 @@ export function render({ model, el }) {
         // avr.modelPolyhedras = model.get("modelPolyhedras");
 
         avr.drawModels();
-        bjs.render();
+        avr.render();
         return avr;
     };
     // Initial rendering
