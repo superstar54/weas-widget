@@ -4,7 +4,7 @@
 [![Docs status](https://readthedocs.org/projects/weas-widget/badge)](http://weas-widget.readthedocs.io/)
 
 
-A widget to visualize and edit with atomistic structures in Jupyter Notebook. It uses [WEAS](https://github.com/superstar54/weas) (Web Environment For Atomistic Structure) in the backend.
+A widget to visualize and edit atomistic structures in Jupyter Notebook. It uses [WEAS](https://github.com/superstar54/weas) (Web Environment For Atomistic Structure) in the backend.
 
 
 <img src="docs/source/_static/images/example-adsorption.gif"  width="100%"/>
@@ -12,9 +12,19 @@ A widget to visualize and edit with atomistic structures in Jupyter Notebook. It
 
 ## Installation
 
+Use the pip:
+
 ```console
     pip install weas-widget
 ```
+
+To install the latest version from source, first clone the repository and then install using pip:
+
+```console
+    $ git clone https://github.com/superstar54/weas-widget
+    $ pip install -e weas-widget
+```
+
 
 ## Edit the structure with mouse and keyboard
 WEAS supports editing the atoms directly in the GUI and synchronizing with the structure of the Python object.
@@ -47,7 +57,8 @@ One can export the edited atoms to ASE or Pymatgen
 
 ### Load structure
 One can load a structure from ASE or Pymatgen
-```
+
+```python
 from ase.build import molecule
 from weas_widget import WeasWidget
 atoms = molecule("C2H6SO")
@@ -62,6 +73,17 @@ viewer
 
 ### Crystal view
 For a nice visualization of a crystal, one usually shows the polyhedra and the atoms on the unit cell boundary, as well as the bonded atoms outside the cell.
+
+```python
+from weas_widget import WeasWidget
+viewer1 = WeasWidget()
+viewer1.load_example("tio2.cif")
+viewer1.modelStyle = 2
+viewer1.boundary = [[-0.1, 1.1], [-0.1, 1.1], [-0.1, 1.1]]
+viewer1.showBondedAtoms = True
+viewer1.colorType = "VESTA"
+viewer1
+```
 
 <img src="docs/source/_static/images/example-tio2.png"  width="300px"/>
 

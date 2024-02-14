@@ -5,11 +5,24 @@ export function render({ model, el }) {
     let viewerElement = document.createElement("div");
     viewerElement.style.cssText = "position: relative; width: 600px; height: 400px;";
     el.appendChild(viewerElement);
+    // Function to render atoms
     const renderAtoms = () => {
-        const data = model.get("atoms");
-        const atoms = new weas.Atoms(data);
+        // load init parameters from the model
+        const atoms = new weas.Atoms(model.get("atoms"));
         const bjs = new weas.BlendJS(viewerElement);
         avr = new weas.AtomsViewer(bjs, atoms);
+        avr.modelStyle = model.get("modelStyle");
+        avr.colorType = model.get("colorType");
+        avr.materialType = model.get("materialType");
+        avr.atomLabelType = model.get("atomLabelType");
+        avr.showCell = model.get("showCell");
+        avr.showBondedAtoms = model.get("showBondedAtoms");
+        avr.selectedAtomsIndices = model.get("selectedAtomsIndices");
+        avr.boundary = model.get("boundary");
+        // avr.atomScales = model.get("atomScales");
+        // avr.modelSticks = model.get("modelSticks");
+        // avr.modelPolyhedras = model.get("modelPolyhedras");
+
         avr.drawModels();
         bjs.render();
         return avr;
