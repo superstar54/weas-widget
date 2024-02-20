@@ -27,11 +27,18 @@ class ASE_Adapter:
         speciesArray = symbols
         for i in range(len(symbols)):
             species[symbols[i]] = [symbols[i], numbers[i]]
+        # save other arrays to attributes
+        attributes = {"atom": {}, "species": {}}
+        for key in ase_atoms.arrays.keys():
+            if key not in ["positions", "numbers"]:
+                attributes["atom"][key] = ase_atoms.arrays[key]
+
         weas_atoms = {
             "species": species,
             "cell": cell,
             "positions": positions,
             "speciesArray": speciesArray,
+            "attributes": attributes,
         }
         return weas_atoms
 
