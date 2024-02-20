@@ -27,6 +27,10 @@ class WeasWidget(anywidget.AnyWidget):
     modelPolyhedras = tl.List([]).tag(sync=True)
     volumetricData = tl.Dict({"values": [[[]]]}).tag(sync=True)
     isoSettings = tl.List([]).tag(sync=True)
+    imageData = tl.Unicode("").tag(sync=True)
+    _exportImage = tl.Bool(False).tag(sync=True)
+    _downloadImage = tl.Bool(False).tag(sync=True)
+    _imageFileName = tl.Unicode("atomistic-model.png").tag(sync=True)
 
     def drawModels(self):
         """Redraw the widget."""
@@ -61,3 +65,26 @@ class WeasWidget(anywidget.AnyWidget):
 
         atoms = read(os.path.join(os.path.dirname(__file__), f"datas/{name}"))
         self.set_atoms(ASE_Adapter.to_weas(atoms))
+
+    def export_image(self):
+        self._exportImage = not self._exportImage
+
+    def display_image(self):
+        from IPython.display import display, Image
+        import base64
+
+        if self.imageData == "":
+            print(
+                "No image data available, please export the image first: running export_image() in another cell."
+            )
+            return None
+        base64_data = self.imageData.split(",")[1]
+        # Decode the base64 string
+        image_data = base64.b64decode(base64_data)
+
+        # Display the image
+        return display(Image(data=image_data))
+
+    def download_image(self, imageFileName="atomistic-model.png"):
+        self._imageFileName = imageFileName
+        self._downloadImage = not self._downloadImage
