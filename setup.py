@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="weas-widget",
-    version="0.0.4",
+    version="0.0.5",
     packages=find_packages(),
     description="A widget to visualize and interact with atomistic structures in Jupyter Notebook.",
     long_description=open("README.md").read(),

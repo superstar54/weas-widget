@@ -25,6 +25,8 @@ class WeasWidget(anywidget.AnyWidget):
     atomScales = tl.List([]).tag(sync=True)
     modelSticks = tl.List([]).tag(sync=True)
     modelPolyhedras = tl.List([]).tag(sync=True)
+    volumetricData = tl.Dict({"values": [[[]]]}).tag(sync=True)
+    isoSettings = tl.List([]).tag(sync=True)
 
     def drawModels(self):
         """Redraw the widget."""

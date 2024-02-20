@@ -29,6 +29,9 @@ export function render({ model, el }) {
         // avr.atomScales = model.get("atomScales");
         // avr.modelSticks = model.get("modelSticks");
         // avr.modelPolyhedras = model.get("modelPolyhedras");
+        // volumetric data
+        avr.isosurfaceManager.volumetricData = createVolumeData(model.get("volumetricData"), atoms.cell);
+        avr.isosurfaceManager.fromSettings(model.get("isoSettings"));
 
         avr.drawModels();
         avr.render();
@@ -85,4 +88,23 @@ export function render({ model, el }) {
     model.on("change:selectedAtomsIndices", () => {avr.selectedAtomsIndices = model.get("selectedAtomsIndices");});
     model.on("change:boundary", () => {avr.boundary = model.get("boundary");});
 
+    // volumetric data
+    model.on("change:volumetricData", () => {
+        const data = model.get("volumetricData");
+        avr.isosurfaceManager.volumetricData = createVolumeData(data);
+    });
+    model.on("change:isoSettings", () => {
+        const isoSettings = model.get("isoSettings");
+        avr.isosurfaceManager.fromSettings(isoSettings);
+        avr.isosurfaceManager.drawIsosurfaces();
+    });
+}
+
+
+function createVolumeData(data, cell=[[1, 0, 0], [0, 1, 0], [0, 0, 1]]) {
+    // get the dimensions
+    const dims = [data.values.length, data.values[0].length, data.values[0][0].length];
+    // flatten the 3d data to 1d
+    const values = [].concat.apply([], [].concat.apply([], data.values));
+    return {dims, values, cell: cell, origin: [0, 0, 0]};
 }
