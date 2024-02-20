@@ -17,6 +17,7 @@ Features:
 - Edit structure: move, rotate, delete and replace atoms.
 - Support periodic boundary conditions
 - Animation
+- Isosurface
 
 
 ## Installation
@@ -95,6 +96,24 @@ viewer1
 ```
 
 <img src="docs/source/_static/images/example-tio2.png"  width="300px"/>
+
+
+### Isosurface
+
+```python
+from ase.build import molecule
+from weas_widget import WeasWidget
+from ase.io.cube import read_cube_data
+volume, atoms = read_cube_data("h2o-homo.cube")
+viewer = WeasWidget()
+viewer.from_ase(atoms)
+viewer.volumetricData = {"values": volume}
+viewer.isoSettings = [{"isovalue": 0.0001, "mode": 0}]
+viewer
+```
+<img src="docs/source/_static/images/example-isosurface.png"  width="300px"/>
+
+
 
 ### How to use
 
