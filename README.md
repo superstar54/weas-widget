@@ -114,10 +114,15 @@ viewer
 <img src="docs/source/_static/images/example-isosurface.png"  width="300px"/>
 
 
+### Download image
 
-### How to use
+```python
+viewer.download_image("filename.png")
+```
 
-Please vist: https://weas-widget.readthedocs.io/en/latest/index.html
+## How to use
+
+Please visit: https://weas-widget.readthedocs.io/en/latest/index.html
 
 
 

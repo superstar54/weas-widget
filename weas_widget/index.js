@@ -98,6 +98,18 @@ export function render({ model, el }) {
         avr.isosurfaceManager.fromSettings(isoSettings);
         avr.isosurfaceManager.drawIsosurfaces();
     });
+    // export image
+    model.on("change:_exportImage", () => {
+        const imageData = avr.tjs.exportImage();
+        model.set("imageData", imageData);
+        model.save_changes();
+    });
+    // download image
+    model.on("change:_downloadImage", () => {
+        const filename = model.get("_imageFileName");
+        console.log("filename: ", filename);
+        avr.tjs.downloadImage(filename);
+    });
 }
 
 
