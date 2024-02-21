@@ -102,7 +102,6 @@ export function render({ model, el }) {
     // Vector field
     model.on("change:vectorField", () => {
         const data = model.get("vectorField");
-        console.log("vectorField: ", data);
         avr.VFManager.addSetting(data);
         avr.VFManager.drawVectorFields();
     });

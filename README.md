@@ -130,8 +130,31 @@ viewer.from_ase(atoms)
 viewer.modelStyle = 1
 viewer
 ```
-
 <img src="docs/source/_static/images/example-magnetic-moment.png"  width="300px"/>
+
+
+### Phonon
+One can visualize the phonon dispersion via lattice vibrations. One only need to use the eigenstates (calculated with an external software) to generate the trajectory.
+
+```python
+import numpy as np
+from ase.build import bulk
+from weas_widget import WeasWidget
+from weas_widget.utils import generate_phonon_trajectory
+
+atoms = bulk("Fe", cubic=True)
+eigenvector = np.array([[0, -0.0, 0.5], [0, 0.0, -0.5]])
+trajectory = generate_phonon_trajectory(atoms, eigenvector, repeat=[4, 4, 1])
+viewer = WeasWidget()
+viewer.from_ase(trajectory)
+viewer
+
+# In another cell
+viewer.vectorField = {"origins": "positions", "vectors": "movement", "radius": 0.1}
+```
+
+<img src="docs/source/_static/images/example-phonon.gif"  width="300px"/>
+
 
 
 ### Download image
