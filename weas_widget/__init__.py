@@ -31,6 +31,9 @@ class WeasWidget(anywidget.AnyWidget):
     _exportImage = tl.Bool(False).tag(sync=True)
     _downloadImage = tl.Bool(False).tag(sync=True)
     _imageFileName = tl.Unicode("atomistic-model.png").tag(sync=True)
+    vectorField = tl.Dict({"origins": [], "vectors": [], "color": "#3d82ed"}).tag(
+        sync=True
+    )
 
     def drawModels(self):
         """Redraw the widget."""
