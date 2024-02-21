@@ -18,6 +18,7 @@ Features:
 - Support periodic boundary conditions
 - Animation
 - Isosurface
+- Vector field, e.g., magnetic moment
 
 
 ## Installation
@@ -112,6 +113,25 @@ viewer.isoSettings = [{"isovalue": 0.0001, "mode": 0}]
 viewer
 ```
 <img src="docs/source/_static/images/example-isosurface.png"  width="300px"/>
+
+
+### Magnetic moment
+Show the magnetic moment as a vector field.
+
+```python
+from ase.build import bulk
+from weas_widget import WeasWidget
+import numpy as np
+atoms = bulk("Fe", cubic=True)
+atoms*=[2, 2, 1]
+atoms.set_array("moment", np.ones(len(atoms)))
+viewer = WeasWidget()
+viewer.from_ase(atoms)
+viewer.modelStyle = 1
+viewer
+```
+
+<img src="docs/source/_static/images/example-magnetic-moment.png"  width="300px"/>
 
 
 ### Download image

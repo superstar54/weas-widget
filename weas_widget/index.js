@@ -98,6 +98,15 @@ export function render({ model, el }) {
         avr.isosurfaceManager.fromSettings(isoSettings);
         avr.isosurfaceManager.drawIsosurfaces();
     });
+
+    // Vector field
+    model.on("change:vectorField", () => {
+        const data = model.get("vectorField");
+        console.log("vectorField: ", data);
+        avr.VFManager.addSetting(data);
+        avr.VFManager.drawVectorFields();
+    });
+
     // export image
     model.on("change:_exportImage", () => {
         const imageData = avr.tjs.exportImage();
