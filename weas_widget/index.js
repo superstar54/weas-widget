@@ -32,6 +32,9 @@ export function render({ model, el }) {
         // volumetric data
         avr.isosurfaceManager.volumetricData = createVolumeData(model.get("volumetricData"), atoms.cell);
         avr.isosurfaceManager.fromSettings(model.get("isoSettings"));
+        // vector field
+        avr.VFManager.fromSettings(model.get("vectorField"));
+        avr.showVectorField = model.get("showVectorField")
 
         avr.drawModels();
         avr.render();
@@ -102,8 +105,7 @@ export function render({ model, el }) {
     // Vector field
     model.on("change:vectorField", () => {
         const data = model.get("vectorField");
-        console.log("vectorField: ", data);
-        avr.VFManager.addSetting(data);
+        avr.VFManager.fromSettings(data);
         avr.VFManager.drawVectorFields();
     });
 
@@ -120,7 +122,6 @@ export function render({ model, el }) {
         avr.tjs.downloadImage(filename);
     });
 }
-
 
 function createVolumeData(data, cell=[[1, 0, 0], [0, 1, 0], [0, 0, 1]]) {
     // get the dimensions

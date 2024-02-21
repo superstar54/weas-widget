@@ -93,3 +93,36 @@ class Pymatgen_Adapter:
         sites = weas_atoms["positions"]
         structure = Structure(lattice, species, sites)
         return structure
+
+
+def generate_phonon_trajectory(
+    atoms,
+    eigenvectors,
+    amplitude=1,
+    nframes=20,
+    scale=5,
+    attribute="movement",
+    repeat=[1, 1, 1],
+):
+    """Generate a trajectory of atoms vibrating along the given eigenvectors.
+    Args:
+        atoms: ASE Atoms object
+        eigenvectors: Eigenvectors of the dynamical matrix
+        amplitude: Amplitude of the vibration
+    Returns:
+        A list of ASE Atoms objects representing the trajectory
+    """
+    import numpy as np
+
+    trajectory = []
+    times = np.linspace(0, 2 * np.pi, nframes)
+    for t in times:
+        # arrow vector
+        vectors = amplitude * eigenvectors * np.sin(t)
+        # new atoms
+        new_atoms = atoms.copy()
+        new_atoms.positions = atoms.positions + vectors
+        new_atoms.set_array(attribute, vectors * scale)
+        new_atoms = new_atoms.repeat(repeat)
+        trajectory.append(new_atoms)
+    return trajectory

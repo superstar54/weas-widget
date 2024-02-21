@@ -31,9 +31,8 @@ class WeasWidget(anywidget.AnyWidget):
     _exportImage = tl.Bool(False).tag(sync=True)
     _downloadImage = tl.Bool(False).tag(sync=True)
     _imageFileName = tl.Unicode("atomistic-model.png").tag(sync=True)
-    vectorField = tl.Dict({"origins": [], "vectors": [], "color": "#3d82ed"}).tag(
-        sync=True
-    )
+    vectorField = tl.List().tag(sync=True)
+    showVectorField = tl.Bool(True).tag(sync=True)
 
     def drawModels(self):
         """Redraw the widget."""
@@ -50,6 +49,26 @@ class WeasWidget(anywidget.AnyWidget):
         self.atomScales = [1] * natom
         self.modelSticks = [0] * natom
         self.modelPolyhedras = [0] * natom
+        # magnetic moment vector field
+        # separate spin up and down, add two vector fields
+        if "moment" in atoms["attributes"]["atom"]:
+            moment = atoms["attributes"]["atom"]["moment"]
+            spin_up = [i for i, m in enumerate(moment) if m > 0]
+            spin_down = [i for i, m in enumerate(moment) if m < 0]
+        if "moment" in atoms["attributes"]["atom"]:
+            moment = atoms["attributes"]["atom"]["moment"]
+            self.vectorField = [
+                {
+                    "origins": atoms["positions"][spin_up],
+                    "vectors": [[0, 0, m] for m in moment[spin_up]],
+                    "color": "blue",
+                },
+                {
+                    "origins": atoms["positions"][spin_down],
+                    "vectors": [[0, 0, m] for m in moment[spin_down]],
+                    "color": "red",
+                },
+            ]
 
     def from_ase(self, atoms):
         self.set_atoms(ASE_Adapter.to_weas(atoms))
