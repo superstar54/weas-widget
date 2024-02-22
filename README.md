@@ -58,7 +58,7 @@ Press the transform shortcut, and move your mouse.
 
 
 ### Delete selected atoms
-Press the ``Delete`` key to delete the selected atoms
+Press the ``x`` key to delete the selected atoms
 
 
 ### Export edited atoms
