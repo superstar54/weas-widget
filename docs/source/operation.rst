@@ -1,4 +1,4 @@
-Operation
+Operation history
 ===========================
 The operations is concerned with the manipulation of the structure, such as removing, rotating, and modifying the atoms. WEAS allow you to roll back and redo the operations.
 
