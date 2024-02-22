@@ -4,7 +4,21 @@ class ASE_Adapter:
 
     @classmethod
     def to_weas(cls, ase_atoms):
-        # Convert an ASE Atoms object to the widget's format
+        """Convert an ASE Atoms object to the widget's format."""
+        # if atoms is a list of atoms, check if they are the same species and number of atoms
+        # then convert all atoms to weas format as a list of atoms
+        if isinstance(ase_atoms, list):
+            if len(ase_atoms) > 0:
+                for atoms in ase_atoms:
+                    if (
+                        atoms.get_chemical_symbols()
+                        != ase_atoms[0].get_chemical_symbols()
+                    ):
+                        raise ValueError("All atoms must have the same species")
+                weas_atoms = [cls.to_weas(atom) for atom in ase_atoms]
+                return weas_atoms
+            else:
+                raise ValueError("The list of atoms is empty")
         species = {}
         cell = ase_atoms.get_cell().array.flatten().tolist()
         positions = ase_atoms.get_positions()
@@ -13,11 +27,18 @@ class ASE_Adapter:
         speciesArray = symbols
         for i in range(len(symbols)):
             species[symbols[i]] = [symbols[i], numbers[i]]
+        # save other arrays to attributes
+        attributes = {"atom": {}, "species": {}}
+        for key in ase_atoms.arrays.keys():
+            if key not in ["positions", "numbers"]:
+                attributes["atom"][key] = ase_atoms.arrays[key]
+
         weas_atoms = {
             "species": species,
             "cell": cell,
             "positions": positions,
             "speciesArray": speciesArray,
+            "attributes": attributes,
         }
         return weas_atoms
 
@@ -27,6 +48,9 @@ class ASE_Adapter:
         from ase import Atoms
         import numpy as np
 
+        # if atoms is a list of atoms, convert all atoms to a list of ase atoms
+        if isinstance(weas_atoms, list):
+            return [cls.to_ase(atom) for atom in weas_atoms]
         symbols = [weas_atoms["species"][s][0] for s in weas_atoms["speciesArray"]]
         positions = weas_atoms["positions"]
         cell = np.array(weas_atoms["cell"]).reshape(3, 3)
@@ -43,12 +67,11 @@ class Pymatgen_Adapter:
         # Convert a Pymatgen Structure object to the widget's format
         species = {}
         cell = pymatgen_structure.lattice.matrix.flatten().tolist()
-        positions = [site.frac_coords for site in pymatgen_structure.sites]
+        positions = [site.coords for site in pymatgen_structure.sites]
         symbols = [site.species_string for site in pymatgen_structure.sites]
-        numbers = [site.species.number for site in pymatgen_structure.sites]
         speciesArray = symbols
         for i in range(len(symbols)):
-            species[symbols[i]] = [symbols[i], numbers[i]]
+            species[symbols[i]] = [symbols[i]]
         weas_atoms = {
             "species": species,
             "cell": cell,
@@ -60,18 +83,46 @@ class Pymatgen_Adapter:
     @classmethod
     def to_pymatgen(cls, weas_atoms):
         # Convert the widget's format to a Pymatgen Structure object
-        from pymatgen import Structure, Lattice
-        from pymatgen.core.sites import PeriodicSite
+        from pymatgen.core import Structure, Lattice
+
+        if isinstance(weas_atoms, list):
+            return [cls.to_pymatgen(atom) for atom in weas_atoms]
 
         lattice = Lattice(weas_atoms["cell"])
-        species = weas_atoms["species"]
-        sites = [
-            PeriodicSite(
-                species[weas_atoms["speciesArray"][i]][0],
-                weas_atoms["positions"][i],
-                lattice,
-            )
-            for i in range(len(weas_atoms["speciesArray"]))
-        ]
+        species = weas_atoms["speciesArray"]
+        sites = weas_atoms["positions"]
         structure = Structure(lattice, species, sites)
         return structure
+
+
+def generate_phonon_trajectory(
+    atoms,
+    eigenvectors,
+    amplitude=1,
+    nframes=20,
+    scale=5,
+    attribute="movement",
+    repeat=[1, 1, 1],
+):
+    """Generate a trajectory of atoms vibrating along the given eigenvectors.
+    Args:
+        atoms: ASE Atoms object
+        eigenvectors: Eigenvectors of the dynamical matrix
+        amplitude: Amplitude of the vibration
+    Returns:
+        A list of ASE Atoms objects representing the trajectory
+    """
+    import numpy as np
+
+    trajectory = []
+    times = np.linspace(0, 2 * np.pi, nframes)
+    for t in times:
+        # arrow vector
+        vectors = amplitude * eigenvectors * np.sin(t)
+        # new atoms
+        new_atoms = atoms.copy()
+        new_atoms.positions = atoms.positions + vectors
+        new_atoms.set_array(attribute, vectors * scale)
+        new_atoms = new_atoms.repeat(repeat)
+        trajectory.append(new_atoms)
+    return trajectory

@@ -1,5 +1,31 @@
-
 .selectBox {
     border: 1px solid #55aaff;
     background-color: rgba(75, 160, 255, 0.3);
-}
+    position: fixed;
+  }
+
+  #animation-controls {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: #ffffff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+  }
+
+  #animation-controls button {
+    margin: 0 5px;
+    padding: 5px 10px;
+  }
+
+  #timeline {
+    margin: 0 10px;
+    width: 50%;
+  }
+
+  #current-frame {
+    margin-left: 10px;
+  }

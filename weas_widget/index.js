@@ -5,13 +5,39 @@ export function render({ model, el }) {
     let viewerElement = document.createElement("div");
     viewerElement.style.cssText = "position: relative; width: 600px; height: 400px;";
     el.appendChild(viewerElement);
+    // Function to render atoms
     const renderAtoms = () => {
-        const data = model.get("atoms");
-        const atoms = new weas.Atoms(data);
-        const bjs = new weas.BlendJS(viewerElement);
-        avr = new weas.AtomsViewer(bjs, atoms);
+        // load init parameters from the model
+        const atomsData = model.get("atoms");
+        let atoms;
+        // if atomsData is an array, then create an array of Atoms objects
+        if (Array.isArray(atomsData)) {
+            atoms = atomsData.map((data) => new weas.Atoms(data));
+        } else {
+            atoms = new weas.Atoms(atomsData);
+        }
+        // console.log("atoms: ", atoms);
+        avr = new weas.AtomsViewer(viewerElement, atoms);
+        avr.modelStyle = model.get("modelStyle");
+        avr.colorType = model.get("colorType");
+        avr.materialType = model.get("materialType");
+        avr.atomLabelType = model.get("atomLabelType");
+        avr.showCell = model.get("showCell");
+        avr.showBondedAtoms = model.get("showBondedAtoms");
+        avr.selectedAtomsIndices = model.get("selectedAtomsIndices");
+        avr.boundary = model.get("boundary");
+        // avr.atomScales = model.get("atomScales");
+        // avr.modelSticks = model.get("modelSticks");
+        // avr.modelPolyhedras = model.get("modelPolyhedras");
+        // volumetric data
+        avr.isosurfaceManager.volumetricData = createVolumeData(model.get("volumetricData"), atoms.cell);
+        avr.isosurfaceManager.fromSettings(model.get("isoSettings"));
+        // vector field
+        avr.VFManager.fromSettings(model.get("vectorField"));
+        avr.showVectorField = model.get("showVectorField")
+
         avr.drawModels();
-        bjs.render();
+        avr.render();
         return avr;
     };
     // Initial rendering
@@ -65,4 +91,42 @@ export function render({ model, el }) {
     model.on("change:selectedAtomsIndices", () => {avr.selectedAtomsIndices = model.get("selectedAtomsIndices");});
     model.on("change:boundary", () => {avr.boundary = model.get("boundary");});
 
+    // volumetric data
+    model.on("change:volumetricData", () => {
+        const data = model.get("volumetricData");
+        avr.isosurfaceManager.volumetricData = createVolumeData(data);
+    });
+    model.on("change:isoSettings", () => {
+        const isoSettings = model.get("isoSettings");
+        avr.isosurfaceManager.fromSettings(isoSettings);
+        avr.isosurfaceManager.drawIsosurfaces();
+    });
+
+    // Vector field
+    model.on("change:vectorField", () => {
+        const data = model.get("vectorField");
+        avr.VFManager.fromSettings(data);
+        avr.VFManager.drawVectorFields();
+    });
+
+    // export image
+    model.on("change:_exportImage", () => {
+        const imageData = avr.tjs.exportImage();
+        model.set("imageData", imageData);
+        model.save_changes();
+    });
+    // download image
+    model.on("change:_downloadImage", () => {
+        const filename = model.get("_imageFileName");
+        console.log("filename: ", filename);
+        avr.tjs.downloadImage(filename);
+    });
+}
+
+function createVolumeData(data, cell=[[1, 0, 0], [0, 1, 0], [0, 0, 1]]) {
+    // get the dimensions
+    const dims = [data.values.length, data.values[0].length, data.values[0][0].length];
+    // flatten the 3d data to 1d
+    const values = [].concat.apply([], [].concat.apply([], data.values));
+    return {dims, values, cell: cell, origin: [0, 0, 0]};
 }
