@@ -46,7 +46,6 @@ class WeasWidget(anywidget.AnyWidget):
     def _observe_structure(self, change):
         if self.structure is not None:
             self.from_ase(self.structure)
-            self.drawModels()
 
     def drawModels(self):
         """Redraw the widget."""

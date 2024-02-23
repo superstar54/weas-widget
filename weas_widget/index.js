@@ -54,7 +54,7 @@ export function render({ model, el }) {
         const data = model.get("atoms");
         const atoms = new weas.Atoms(data);
         // Re-render with the new atoms data
-        avr.atoms = atoms;
+        avr.updateAtoms(atoms);
         // uuid is used to identify the atoms object in the viewer
         // so that we can delete it later
         atoms.uuid = avr.uuid;
