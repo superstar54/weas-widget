@@ -2,6 +2,7 @@ import anywidget
 import traitlets as tl
 import os
 from .utils import ASE_Adapter, Pymatgen_Adapter
+import ase
 
 esm_path = os.path.join(os.path.dirname(__file__), """index.js""")
 # css_path = os.path.join(os.path.dirname(__file__), """style.css""")
@@ -11,8 +12,15 @@ css_path = "https://unpkg.com/weas/dist/style.css"
 class WeasWidget(anywidget.AnyWidget):
     _esm = esm_path
     _css = css_path
+
+    # Widgets needed to interact with StructureManagerWidget
+    input_selection = tl.List(tl.Int(), allow_none=True)
+    selection = tl.List(tl.Int())
+    structure = tl.Instance(ase.Atoms, allow_none=True)
+
     # atoms can be a dictionary or a list of dictionaries
     atoms = tl.Union([tl.Dict({}), tl.List(tl.Dict({}))]).tag(sync=True)
+
     selectedAtomsIndices = tl.List([]).tag(sync=True)
     boundary = tl.List([[0, 1], [0, 1], [0, 1]]).tag(sync=True)
     modelStyle = tl.Int(0).tag(sync=True)
@@ -33,6 +41,12 @@ class WeasWidget(anywidget.AnyWidget):
     _imageFileName = tl.Unicode("atomistic-model.png").tag(sync=True)
     vectorField = tl.List().tag(sync=True)
     showVectorField = tl.Bool(True).tag(sync=True)
+
+    @tl.observe("structure")
+    def _observe_structure(self, change):
+        if self.structure is not None:
+            self.from_ase(self.structure)
+            self.drawModels()
 
     def drawModels(self):
         """Redraw the widget."""
