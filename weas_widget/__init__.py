@@ -33,6 +33,7 @@ class WeasWidget(anywidget.AnyWidget):
     _imageFileName = tl.Unicode("atomistic-model.png").tag(sync=True)
     vectorField = tl.List().tag(sync=True)
     showVectorField = tl.Bool(True).tag(sync=True)
+    guiConfig = tl.Dict({}).tag(sync=True)
 
     def __init__(self, from_ase=None, from_pymatgen=None, **kwargs):
         super().__init__(**kwargs)

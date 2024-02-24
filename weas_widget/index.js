@@ -17,7 +17,8 @@ export function render({ model, el }) {
             atoms = new weas.Atoms(atomsData);
         }
         // console.log("atoms: ", atoms);
-        avr = new weas.AtomsViewer(viewerElement, atoms);
+        const guiConfig = model.get("guiConfig");
+        avr = new weas.AtomsViewer(viewerElement, atoms, guiConfig);
         avr.modelStyle = model.get("modelStyle");
         avr.colorType = model.get("colorType");
         avr.materialType = model.get("materialType");
@@ -52,20 +53,22 @@ export function render({ model, el }) {
     // Listen for changes in the 'atoms' property
     model.on("change:atoms", () => {
         const data = model.get("atoms");
+        // if uuid of data and avr.atoms are not undefined and are the same, then skip
+        if (data.uuid && avr.atoms.uuid && avr.atoms.uuid === data.uuid) {
+            return;
+        }
         const atoms = new weas.Atoms(data);
         // Re-render with the new atoms data
-        avr.atoms = atoms;
-        // uuid is used to identify the atoms object in the viewer
-        // so that we can delete it later
-        atoms.uuid = avr.uuid;
-        avr.drawModels();
+        avr.updateAtoms(atoms);
+        console.log("update viewer from Python.");
     });
     // Listen for the custom 'atomsUpdated' event
     viewerElement.addEventListener('atomsUpdated', (event) => {
         const updatedAtoms = event.detail.to_dict(); // event.detail contains the updated atoms
+        updatedAtoms.uuid = avr.atoms.uuid;
         model.set("atoms", updatedAtoms);
         model.save_changes();
-        console.log("Updated atoms: ", updatedAtoms);
+        console.log("Updated atoms from event.")
     });
     // Listen for the custom 'viewerUpdated' event
     // this include modelStyle, colorType, materialType, atomLabelType, etc
