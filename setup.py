@@ -13,6 +13,7 @@ setup(
     install_requires=[
         "anywidget",
         "ipywidgets",
+        "ase",
     ],
     classifiers=[
         "Development Status :: 3 - Alpha",
