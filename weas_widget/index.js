@@ -17,7 +17,8 @@ export function render({ model, el }) {
             atoms = new weas.Atoms(atomsData);
         }
         // console.log("atoms: ", atoms);
-        avr = new weas.AtomsViewer(viewerElement, atoms);
+        const guiConfig = model.get("guiConfig");
+        avr = new weas.AtomsViewer(viewerElement, atoms, guiConfig);
         avr.modelStyle = model.get("modelStyle");
         avr.colorType = model.get("colorType");
         avr.materialType = model.get("materialType");
