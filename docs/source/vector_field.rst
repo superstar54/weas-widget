@@ -43,7 +43,7 @@ One can visualize the phonon dispersion via lattice vibrations. One only need to
     viewer = WeasWidget()
     viewer.from_ase(trajectory)
     # set a vector field to show the arrow
-    viewer.vectorField = {"origins": "positions", "vectors": "movement", "radius": 0.1}
+    viewer.vectorField = [{"origins": "positions", "vectors": "movement", "radius": 0.1}]
     viewer
 
 
