@@ -156,7 +156,6 @@ npm-debug.log
 #
 *.pdf
 tests/work
-/tests/**/*.png
 *.xyz
 test.ipynb
 
