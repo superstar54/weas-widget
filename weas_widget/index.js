@@ -1,6 +1,6 @@
 // use the latest version of weas from unpkg
 import * as weas from "https://unpkg.com/weas/dist/weas.mjs";
-export function render({ model, el }) {
+function render({ model, el }) {
     let avr; // Declare avr here
     let viewerElement = document.createElement("div");
     viewerElement.style.cssText = "position: relative; width: 600px; height: 400px;";
@@ -18,15 +18,19 @@ export function render({ model, el }) {
         }
         // console.log("atoms: ", atoms);
         const guiConfig = model.get("guiConfig");
-        avr = new weas.AtomsViewer(viewerElement, atoms, guiConfig);
-        avr.modelStyle = model.get("modelStyle");
-        avr.colorType = model.get("colorType");
-        avr.materialType = model.get("materialType");
-        avr.atomLabelType = model.get("atomLabelType");
-        avr.showCell = model.get("showCell");
-        avr.showBondedAtoms = model.get("showBondedAtoms");
+        const viewerConfig = {
+             debug: model.get("debug"),
+            _modelStyle: model.get("modelStyle"),
+            _colorType: model.get("colorType"),
+            _materialType: model.get("materialType"),
+            _atomLabelType: model.get("atomLabelType"),
+            _showCell: model.get("showCell"),
+            _showBondedAtoms: model.get("showBondedAtoms"),
+            _boundary: model.get("boundary"),
+
+        };
+        avr = new weas.AtomsViewer(viewerElement, atoms, viewerConfig, guiConfig);
         avr.selectedAtomsIndices = model.get("selectedAtomsIndices");
-        avr.boundary = model.get("boundary");
         // avr.atomScales = model.get("atomScales");
         // avr.modelSticks = model.get("modelSticks");
         // avr.modelPolyhedras = model.get("modelPolyhedras");
@@ -133,3 +137,5 @@ function createVolumeData(data, cell=[[1, 0, 0], [0, 1, 0], [0, 0, 1]]) {
     const values = [].concat.apply([], [].concat.apply([], data.values));
     return {dims, values, cell: cell, origin: [0, 0, 0]};
 }
+
+export default { render }

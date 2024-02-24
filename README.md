@@ -2,7 +2,7 @@
 # Welcome to WEAS Widget!
 [![PyPI version](https://badge.fury.io/py/weas-widget.svg)](https://badge.fury.io/py/weas-widget)
 [![Docs status](https://readthedocs.org/projects/weas-widget/badge)](http://weas-widget.readthedocs.io/)
-
+[![Unit test](https://github.com/superstar54/weas-widget/actions/workflows/ci.yml/badge.svg)](https://github.com/superstar54/weas-widget/actions/workflows/ci.yml)
 
 A widget to visualize and edit atomistic structures in Jupyter Notebook. It uses [WEAS](https://github.com/superstar54/weas) (Web Environment For Atomistic Structure) in the backend.
 
@@ -35,6 +35,21 @@ To install the latest version from source, first clone the repository and then i
     $ git clone https://github.com/superstar54/weas-widget
     $ pip install -e weas-widget
 ```
+
+## How to use
+
+Please visit: https://weas-widget.readthedocs.io/en/latest/index.html
+
+
+## Issue
+If you encounter any problems, please update the widget to the latest version.
+
+```console
+    pip install weas-widget  --upgrade
+```
+
+If the problem persists, please report it on the [GitHub issue](https://github.com/superstar54/weas-widget/issues)
+
 
 
 ## Edit the structure with mouse and keyboard
@@ -148,7 +163,7 @@ trajectory = generate_phonon_trajectory(atoms, eigenvector, repeat=[4, 4, 1])
 viewer = WeasWidget()
 viewer.from_ase(trajectory)
 # set a vector field to show the arrow
-viewer.vectorField = {"origins": "positions", "vectors": "movement", "radius": 0.1}
+viewer.vectorField = [{"origins": "positions", "vectors": "movement", "radius": 0.1}]
 viewer
 ```
 
@@ -161,11 +176,6 @@ viewer
 ```python
 viewer.download_image("filename.png")
 ```
-
-## How to use
-
-Please visit: https://weas-widget.readthedocs.io/en/latest/index.html
-
 
 
 ## Contact
