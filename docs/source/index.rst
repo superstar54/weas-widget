@@ -4,6 +4,12 @@ Welcome to WEAS Widget's documentation!
 A widget to visualize and interact with atomistic structures in Jupyter Notebook. It uses WEAS_ (Web Environment For Atomistic Structure) in the backend.
 
 
+.. note::
+
+   If you encounter any problems, please update the widget to the latest version. If the problem persists, please report it on the `GitHub issue <https://github.com/superstar54/weas-widget/issues>`_
+
+
+
 .. figure:: _static/images/example-adsorption.gif
    :alt: Edit the structure
    :align: center
@@ -16,6 +22,7 @@ A widget to visualize and interact with atomistic structures in Jupyter Notebook
    quick_start
    installation
    edit
+   gui
    operation
    boundary
    measurement
