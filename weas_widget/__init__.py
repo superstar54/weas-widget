@@ -42,6 +42,14 @@ class WeasWidget(anywidget.AnyWidget):
     vectorField = tl.List().tag(sync=True)
     showVectorField = tl.Bool(True).tag(sync=True)
     guiConfig = tl.Dict({}).tag(sync=True)
+    debug = tl.Bool(False).tag(sync=True)
+
+    def __init__(self, from_ase=None, from_pymatgen=None, **kwargs):
+        super().__init__(**kwargs)
+        if from_ase is not None:
+            self.from_ase(from_ase)
+        if from_pymatgen is not None:
+            self.from_pymatgen(from_pymatgen)
 
     def __init__(self, from_ase=None, from_pymatgen=None, **kwargs):
         super().__init__(**kwargs)

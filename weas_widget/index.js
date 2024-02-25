@@ -19,6 +19,7 @@ function render({ model, el }) {
         // console.log("atoms: ", atoms);
         const guiConfig = model.get("guiConfig");
         const viewerConfig = {
+             debug: model.get("debug"),
             _modelStyle: model.get("modelStyle"),
             _colorType: model.get("colorType"),
             _materialType: model.get("materialType"),
