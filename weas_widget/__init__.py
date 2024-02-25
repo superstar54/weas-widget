@@ -41,6 +41,14 @@ class WeasWidget(anywidget.AnyWidget):
     _imageFileName = tl.Unicode("atomistic-model.png").tag(sync=True)
     vectorField = tl.List().tag(sync=True)
     showVectorField = tl.Bool(True).tag(sync=True)
+    guiConfig = tl.Dict({}).tag(sync=True)
+
+    def __init__(self, from_ase=None, from_pymatgen=None, **kwargs):
+        super().__init__(**kwargs)
+        if from_ase is not None:
+            self.from_ase(from_ase)
+        if from_pymatgen is not None:
+            self.from_pymatgen(from_pymatgen)
 
     @tl.observe("structure")
     def _observe_structure(self, change):
@@ -54,11 +62,9 @@ class WeasWidget(anywidget.AnyWidget):
     def set_atoms(self, atoms):
         self.atoms = atoms
         # initialize atomScales
-        natom = (
-            len(atoms["speciesArray"])
-            if isinstance(atoms, dict)
-            else len(atoms[0]["speciesArray"])
-        )
+        if isinstance(atoms, list):
+            atoms = atoms[0]
+        natom = len(atoms["speciesArray"])
         self.atomScales = [1] * natom
         self.modelSticks = [0] * natom
         self.modelPolyhedras = [0] * natom

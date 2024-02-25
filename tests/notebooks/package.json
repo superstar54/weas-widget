@@ -1,0 +1,23 @@
+{
+  "name": "@jupyter-widgets/ui-tests",
+  "private": true,
+  "version": "0.1.0",
+  "description": "ipywidgets UI Tests",
+  "scripts": {
+    "start": "jupyter lab --config ./jupyter_server_config.py",
+    "start:detached": "jlpm start&",
+    "test": "npx playwright test",
+    "test:debug": "PWDEBUG=1 npx playwright test",
+    "test:report": "http-server ./playwright-report -a localhost -o",
+    "test:update": "npx playwright test --update-snapshots",
+    "deduplicate": "jlpm && yarn-deduplicate -s fewer --fail"
+  },
+  "author": "Project Jupyter",
+  "license": "BSD-3-Clause",
+  "devDependencies": {
+    "@jupyterlab/galata": "^5.0.1",
+    "@playwright/test": "^1.32.0",
+    "yarn-deduplicate": "^6.0.1"
+  },
+  "packageManager": "yarn@3.8.0"
+}

@@ -34,6 +34,6 @@ For the ``isoSetting``:
    - mode=other: Only the given isosurface is drawn.
 
 
-.. tips::
+.. tip::
 
    Support for multiple isosurfaces with individual properties (isovalue and color).
