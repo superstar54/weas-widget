@@ -51,13 +51,6 @@ class WeasWidget(anywidget.AnyWidget):
         if from_pymatgen is not None:
             self.from_pymatgen(from_pymatgen)
 
-    def __init__(self, from_ase=None, from_pymatgen=None, **kwargs):
-        super().__init__(**kwargs)
-        if from_ase is not None:
-            self.from_ase(from_ase)
-        if from_pymatgen is not None:
-            self.from_pymatgen(from_pymatgen)
-
     @tl.observe("structure")
     def _observe_structure(self, change):
         if self.structure is not None:

@@ -36,6 +36,21 @@ To install the latest version from source, first clone the repository and then i
     $ pip install -e weas-widget
 ```
 
+## How to use
+
+Please visit: https://weas-widget.readthedocs.io/en/latest/index.html
+
+
+## Issue
+If you encounter any problems, please update the widget to the latest version.
+
+```console
+    pip install weas-widget  --upgrade
+```
+
+If the problem persists, please report it on the [GitHub issue](https://github.com/superstar54/weas-widget/issues)
+
+
 
 ## Edit the structure with mouse and keyboard
 WEAS supports editing the atoms directly in the GUI and synchronizing with the structure of the Python object.
@@ -161,11 +176,6 @@ viewer
 ```python
 viewer.download_image("filename.png")
 ```
-
-## How to use
-
-Please visit: https://weas-widget.readthedocs.io/en/latest/index.html
-
 
 
 ## Contact
