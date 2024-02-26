@@ -68,10 +68,16 @@ function render({ model, el }) {
     });
     // Listen for the custom 'atomsUpdated' event
     viewerElement.addEventListener('atomsUpdated', (event) => {
-        const updatedAtoms = event.detail.to_dict(); // event.detail contains the updated atoms
-        updatedAtoms.uuid = avr.atoms.uuid;
-        model.set("atoms", updatedAtoms);
+        // event detail is a trajectory: a array of atoms data
+        // loop all the atoms and export to a dict
+        const trajectory = [];
+        event.detail.forEach((atomsData) => {
+            trajectory.push(atomsData.to_dict());
+        });
+        trajectory.uuid = avr.uuid;
+        model.set("atoms", trajectory);
         model.save_changes();
+        // console.log("updatedAtoms: ", trajectory);
         console.log("Updated atoms from event.")
     });
     // Listen for the custom 'viewerUpdated' event
