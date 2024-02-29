@@ -26,14 +26,17 @@ Features:
 Use the pip:
 
 ```console
-    pip install weas-widget
+pip install weas-widget
 ```
 
 To install the latest version from source, first clone the repository and then install using pip:
 
 ```console
-    $ git clone https://github.com/superstar54/weas-widget
-    $ pip install -e weas-widget
+git clone https://github.com/superstar54/weas-widget
+cd weas-widget
+npm install
+npm run build
+pip install -e .
 ```
 
 ## How to use
@@ -170,8 +173,14 @@ viewer
 <img src="docs/source/_static/images/example-phonon.gif"  width="300px"/>
 
 
+### Save image
+Save image to a path by:
+```python
+viewer.save_image("/home/xing/filename.png")
+```
 
 ### Download image
+This will open a download panel.
 
 ```python
 viewer.download_image("filename.png")

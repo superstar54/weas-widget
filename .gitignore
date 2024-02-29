@@ -153,6 +153,9 @@ npm-debug.log
 .vscode/*
 !.vscode/extensions.json
 
+# do not upload static files
+src/weas_widget/static/*
+
 #
 *.pdf
 tests/work

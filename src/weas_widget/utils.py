@@ -127,3 +127,22 @@ def generate_phonon_trajectory(
         new_atoms = new_atoms.repeat(repeat)
         trajectory.append(new_atoms)
     return trajectory
+
+
+def load_online_example(name="tio2.cif"):
+    """Load an example from the online data."""
+    from ase.io import read
+    import requests
+    from io import StringIO
+
+    url = "https://raw.githubusercontent.com/superstar54/weas/main/demo/datas/" + name
+    # Download the file content
+    response = requests.get(url)
+    if response.status_code == 200:
+        file_content = response.text
+        # Use StringIO to simulate a file-like object for ASE to read from
+        file_like_object = StringIO(file_content)
+        atoms = read(file_like_object, format="cif")
+        return atoms
+    else:
+        raise ValueError(f"Failed to download the file {name}")
