@@ -162,3 +162,4 @@ test.ipynb
 tests/notebooks/test-results
 tests/notebooks/playwright-report
 tests/notebooks/.yarn/cache
+examples/test*

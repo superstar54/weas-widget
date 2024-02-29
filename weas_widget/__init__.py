@@ -96,6 +96,8 @@ class WeasWidget(anywidget.AnyWidget):
         self.set_atoms(ASE_Adapter.to_weas(atoms))
 
     def export_image(self):
+
+        self.imageData = ""
         self._exportImage = not self._exportImage
 
     def display_image(self):
@@ -113,6 +115,27 @@ class WeasWidget(anywidget.AnyWidget):
 
         # Display the image
         return display(Image(data=image_data))
+
+    def save_image(self, imageFileName="atomistic-model.png"):
+        import base64
+        import threading
+        import time
+
+        def _save_image():
+            self.export_image()
+            # polling mechanism to check if the image data is available
+            while not self.imageData:
+                print("1")
+                time.sleep(0.1)
+            base64_data = self.imageData.split(",")[1]
+            print("get image data")
+            # Decode the base64 string
+            image_data = base64.b64decode(base64_data)
+            with open(imageFileName, "wb") as f:
+                f.write(image_data)
+
+        thread = threading.Thread(target=_save_image, args=(), daemon=False)
+        thread.start()
 
     def download_image(self, imageFileName="atomistic-model.png"):
         self._imageFileName = imageFileName
