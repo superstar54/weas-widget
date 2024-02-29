@@ -1,26 +1,26 @@
+import importlib.metadata
+import pathlib
 import anywidget
 import traitlets as tl
-import os
-from .utils import ASE_Adapter, Pymatgen_Adapter
 import ase
+from .utils import ASE_Adapter, Pymatgen_Adapter, load_online_example
+import time
+import threading
 
-esm_path = os.path.join(os.path.dirname(__file__), """index.js""")
-# css_path = os.path.join(os.path.dirname(__file__), """style.css""")
-css_path = "https://unpkg.com/weas/dist/style.css"
+try:
+    __version__ = importlib.metadata.version("weas_widget")
+except importlib.metadata.PackageNotFoundError:
+    __version__ = "unknown"
 
 
 class WeasWidget(anywidget.AnyWidget):
-    _esm = esm_path
-    _css = css_path
+    _esm = pathlib.Path(__file__).parent / "static" / "widget.js"
+    _css = pathlib.Path(__file__).parent / "static" / "widget.css"
 
-    # Widgets needed to interact with StructureManagerWidget
-    input_selection = tl.List(tl.Int(), allow_none=True)
-    selection = tl.List(tl.Int())
-    structure = tl.Instance(ase.Atoms, allow_none=True)
-
+    # indicate if the widget is displayed and available for interaction.
+    ready = tl.Bool(False).tag(sync=True)
     # atoms can be a dictionary or a list of dictionaries
     atoms = tl.Union([tl.Dict({}), tl.List(tl.Dict({}))]).tag(sync=True)
-
     selectedAtomsIndices = tl.List([]).tag(sync=True)
     boundary = tl.List([[0, 1], [0, 1], [0, 1]]).tag(sync=True)
     modelStyle = tl.Int(0).tag(sync=True)
@@ -29,20 +29,24 @@ class WeasWidget(anywidget.AnyWidget):
     atomLabelType = tl.Unicode("None").tag(sync=True)
     showCell = tl.Bool(True).tag(sync=True)
     showBondedAtoms = tl.Bool(False).tag(sync=True)
-    _drawModels = tl.Bool(False).tag(sync=True)
     atomScales = tl.List([]).tag(sync=True)
     modelSticks = tl.List([]).tag(sync=True)
     modelPolyhedras = tl.List([]).tag(sync=True)
     volumetricData = tl.Dict({"values": [[[]]]}).tag(sync=True)
     isoSettings = tl.List([]).tag(sync=True)
     imageData = tl.Unicode("").tag(sync=True)
-    _exportImage = tl.Bool(False).tag(sync=True)
-    _downloadImage = tl.Bool(False).tag(sync=True)
-    _imageFileName = tl.Unicode("atomistic-model.png").tag(sync=True)
     vectorField = tl.List().tag(sync=True)
     showVectorField = tl.Bool(True).tag(sync=True)
     guiConfig = tl.Dict({}).tag(sync=True)
+    # task
+    js_task = tl.Dict({}).tag(sync=True)
     debug = tl.Bool(False).tag(sync=True)
+    # --------------------------------------------------------
+    # integration with other libraries
+    # AiiDAlab-Widget-Base StructureManagerWidget
+    input_selection = tl.List(tl.Int(), allow_none=True)
+    selection = tl.List(tl.Int())
+    structure = tl.Instance(ase.Atoms, allow_none=True)
 
     def __init__(self, from_ase=None, from_pymatgen=None, **kwargs):
         super().__init__(**kwargs)
@@ -51,14 +55,18 @@ class WeasWidget(anywidget.AnyWidget):
         if from_pymatgen is not None:
             self.from_pymatgen(from_pymatgen)
 
-    @tl.observe("structure")
-    def _observe_structure(self, change):
-        if self.structure is not None:
-            self.from_ase(self.structure)
+    def send_js_task(self, task):
+        """Send a task to the javascript side.
+        task is a dictionary with the following keys
+        - name: the name of the task
+        - kwargs: a dictionary of arguments
+        """
+        self.js_task = task
+        self.js_task = {}
 
     def drawModels(self):
         """Redraw the widget."""
-        self._drawModels = not self._drawModels
+        self.send_js_task({"name": "drawModels"})
 
     def set_atoms(self, atoms):
         self.atoms = atoms
@@ -103,13 +111,16 @@ class WeasWidget(anywidget.AnyWidget):
         return Pymatgen_Adapter.to_pymatgen(self.atoms)
 
     def load_example(self, name="tio2.cif"):
-        from ase.io import read
-
-        atoms = read(os.path.join(os.path.dirname(__file__), f"datas/{name}"))
+        atoms = load_online_example(name)
         self.set_atoms(ASE_Adapter.to_weas(atoms))
 
-    def export_image(self):
-        self._exportImage = not self._exportImage
+    def export_image(self, resolutionScale=5):
+        self.send_js_task(
+            {
+                "name": "exportImage",
+                "kwargs": {"resolutionScale": resolutionScale},
+            }
+        )
 
     def display_image(self):
         from IPython.display import display, Image
@@ -127,6 +138,49 @@ class WeasWidget(anywidget.AnyWidget):
         # Display the image
         return display(Image(data=image_data))
 
-    def download_image(self, imageFileName="atomistic-model.png"):
-        self._imageFileName = imageFileName
-        self._downloadImage = not self._downloadImage
+    def download_image(self, filename="weas-model.png"):
+        self.send_js_task(
+            {
+                "name": "downloadImage",
+                "kwargs": {"filename": filename},
+            }
+        )
+
+    def save_image(
+        self, filename="weas-model.png", resolutionScale=5, camera_position=None
+    ):
+        import base64
+
+        def _save_image():
+            while not self.ready:
+                time.sleep(0.1)
+            if camera_position is not None:
+                self.camera_position = camera_position
+            self.export_image(resolutionScale)
+            # polling mechanism to check if the image data is available
+            while not self.imageData:
+                time.sleep(0.1)
+            base64_data = self.imageData.split(",")[1]
+            # Decode the base64 string
+            image_data = base64.b64decode(base64_data)
+            with open(filename, "wb") as f:
+                f.write(image_data)
+
+        thread = threading.Thread(target=_save_image, args=(), daemon=False)
+        thread.start()
+
+    @property
+    def camera_position(self):
+        return self._camera_position
+
+    @camera_position.setter
+    def camera_position(self, value):
+        self.send_js_task({"name": "setCameraPosition", "kwargs": {"position": value}})
+
+    # --------------------------------------------------------
+    # integration with other libraries
+    # AiiDAlab-Widget-Base StructureManagerWidget
+    @tl.observe("structure")
+    def _observe_structure(self, change):
+        if self.structure is not None:
+            self.from_ase(self.structure)

@@ -50,7 +50,8 @@ class ASE_Adapter:
 
         # if atoms is a list of atoms, convert all atoms to a list of ase atoms
         if isinstance(weas_atoms, list):
-            return [cls.to_ase(atom) for atom in weas_atoms]
+            trajectory = [cls.to_ase(atom) for atom in weas_atoms]
+            return trajectory[0] if len(trajectory) == 1 else trajectory
         symbols = [weas_atoms["species"][s][0] for s in weas_atoms["speciesArray"]]
         positions = weas_atoms["positions"]
         cell = np.array(weas_atoms["cell"]).reshape(3, 3)
@@ -126,3 +127,22 @@ def generate_phonon_trajectory(
         new_atoms = new_atoms.repeat(repeat)
         trajectory.append(new_atoms)
     return trajectory
+
+
+def load_online_example(name="tio2.cif"):
+    """Load an example from the online data."""
+    from ase.io import read
+    import requests
+    from io import StringIO
+
+    url = "https://raw.githubusercontent.com/superstar54/weas/main/demo/datas/" + name
+    # Download the file content
+    response = requests.get(url)
+    if response.status_code == 200:
+        file_content = response.text
+        # Use StringIO to simulate a file-like object for ASE to read from
+        file_like_object = StringIO(file_content)
+        atoms = read(file_like_object, format="cif")
+        return atoms
+    else:
+        raise ValueError(f"Failed to download the file {name}")

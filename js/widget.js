@@ -1,5 +1,12 @@
-// use the latest version of weas from unpkg
+// if we want test weas package, then use the following import
+// clone the weas repo and import the weas module
+// import * as weas from "../../weas/src/index.js";
+// if not, then use the release version from unpkg
 import * as weas from "https://unpkg.com/weas/dist/weas.mjs";
+import "./widget.css";
+
+
+
 function render({ model, el }) {
     let avr; // Declare avr here
     let viewerElement = document.createElement("div");
@@ -49,10 +56,29 @@ function render({ model, el }) {
     setTimeout(() => {
         avr = renderAtoms();
             }, 10
-    ); // Delay rendering by 10ms
-    // Listen for changes in the '_update' property
-    model.on("change:_drawModels", () => {
-        avr.drawModels();
+    );
+    // js task
+    model.on("change:js_task", () => {
+        const task = model.get("js_task");
+        function run_task(task) {
+            switch (task.name) {
+                case "drawModels":
+                    avr.drawModels();
+                    break;
+                case "exportImage":
+                    const imageData = avr.tjs.exportImage(task.kwargs.resolutionScale);
+                    model.set("imageData", imageData);
+                    model.save_changes();
+                    break;
+                case "downloadImage":
+                    avr.tjs.downloadImage(task.kwargs.filename);
+                    break;
+                case "setCameraPosition":
+                    avr.tjs.updateCameraAndControls(avr.atoms.getCenterOfGeometry(), task.kwargs.position);
+                    break;
+            }
+        }
+        run_task(task);
     });
     // Listen for changes in the 'atoms' property
     model.on("change:atoms", () => {
@@ -68,10 +94,16 @@ function render({ model, el }) {
     });
     // Listen for the custom 'atomsUpdated' event
     viewerElement.addEventListener('atomsUpdated', (event) => {
-        const updatedAtoms = event.detail.to_dict(); // event.detail contains the updated atoms
-        updatedAtoms.uuid = avr.atoms.uuid;
-        model.set("atoms", updatedAtoms);
+        // event detail is a trajectory: a array of atoms data
+        // loop all the atoms and export to a dict
+        const trajectory = [];
+        event.detail.forEach((atomsData) => {
+            trajectory.push(atomsData.to_dict());
+        });
+        trajectory.uuid = avr.uuid;
+        model.set("atoms", trajectory);
         model.save_changes();
+        // console.log("updatedAtoms: ", trajectory);
         console.log("Updated atoms from event.")
     });
     // Listen for the custom 'viewerUpdated' event
@@ -97,7 +129,6 @@ function render({ model, el }) {
     model.on("change:modelPolyhedras", () => {avr.modelPolyhedras = model.get("modelPolyhedras");});
     model.on("change:selectedAtomsIndices", () => {avr.selectedAtomsIndices = model.get("selectedAtomsIndices");});
     model.on("change:boundary", () => {avr.boundary = model.get("boundary");});
-
     // volumetric data
     model.on("change:volumetricData", () => {
         const data = model.get("volumetricData");
@@ -116,20 +147,7 @@ function render({ model, el }) {
         avr.VFManager.drawVectorFields();
     });
 
-    // export image
-    model.on("change:_exportImage", () => {
-        const imageData = avr.tjs.exportImage();
-        model.set("imageData", imageData);
-        model.save_changes();
-    });
-    // download image
-    model.on("change:_downloadImage", () => {
-        const filename = model.get("_imageFileName");
-        console.log("filename: ", filename);
-        avr.tjs.downloadImage(filename);
-    });
 }
-
 function createVolumeData(data, cell=[[1, 0, 0], [0, 1, 0], [0, 0, 1]]) {
     // get the dimensions
     const dims = [data.values.length, data.values[0].length, data.values[0][0].length];
