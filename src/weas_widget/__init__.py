@@ -1,16 +1,20 @@
+import importlib.metadata
+import pathlib
 import anywidget
 import traitlets as tl
 import os
 from .utils import ASE_Adapter, Pymatgen_Adapter
 
-esm_path = os.path.join(os.path.dirname(__file__), """index.js""")
-# css_path = os.path.join(os.path.dirname(__file__), """style.css""")
-css_path = "https://unpkg.com/weas/dist/style.css"
+try:
+    __version__ = importlib.metadata.version("weas_widget")
+except importlib.metadata.PackageNotFoundError:
+    __version__ = "unknown"
 
 
 class WeasWidget(anywidget.AnyWidget):
-    _esm = esm_path
-    _css = css_path
+    _esm = pathlib.Path(__file__).parent / "static" / "widget.js"
+    _css = pathlib.Path(__file__).parent / "static" / "widget.css"
+
     # atoms can be a dictionary or a list of dictionaries
     atoms = tl.Union([tl.Dict({}), tl.List(tl.Dict({}))]).tag(sync=True)
     selectedAtomsIndices = tl.List([]).tag(sync=True)

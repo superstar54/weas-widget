@@ -1,5 +1,6 @@
-// use the latest version of weas from unpkg
-import * as weas from "https://unpkg.com/weas/dist/weas.mjs";
+// use weas from another repo (folder)
+import * as weas from "../../weas/src/index.js";
+import "../../weas/src/style.css";
 function render({ model, el }) {
     let avr; // Declare avr here
     let viewerElement = document.createElement("div");
