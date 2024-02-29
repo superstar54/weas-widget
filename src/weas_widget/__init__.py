@@ -2,8 +2,7 @@ import importlib.metadata
 import pathlib
 import anywidget
 import traitlets as tl
-import os
-from .utils import ASE_Adapter, Pymatgen_Adapter
+from .utils import ASE_Adapter, Pymatgen_Adapter, load_online_example
 import time
 import threading
 
@@ -105,9 +104,7 @@ class WeasWidget(anywidget.AnyWidget):
         return Pymatgen_Adapter.to_pymatgen(self.atoms)
 
     def load_example(self, name="tio2.cif"):
-        from ase.io import read
-
-        atoms = read(os.path.join(os.path.dirname(__file__), f"datas/{name}"))
+        atoms = load_online_example(name)
         self.set_atoms(ASE_Adapter.to_weas(atoms))
 
     def export_image(self, resolutionScale=5):

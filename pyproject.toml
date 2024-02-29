@@ -29,7 +29,7 @@ classifiers = [
 keywords = ["atomistic", "visualize", "edit"]
 requires-python = ">=3.6"
 
-dependencies = ["anywidget", "ase"]
+dependencies = ["anywidget", "ase", "requests"]
 
 [project.urls]
 Documentation = "https://weas-widget.readthedocs.io"
