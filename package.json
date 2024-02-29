@@ -1,7 +1,8 @@
 {
 	"scripts": {
 		"dev": "npm run build -- --sourcemap=inline --watch",
-		"build": "esbuild js/widget.js --minify --format=esm --bundle --outdir=src/weas_widget/static --watch"
+		"build": "esbuild js/widget.js --minify --format=esm --bundle --outdir=src/weas_widget/static",
+		"build-watch": "esbuild js/widget.js --minify --format=esm --bundle --outdir=src/weas_widget/static --watch=forever"
 	},
 	"dependencies": {
 		"dat.gui": "^0.7.9",
