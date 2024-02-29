@@ -170,8 +170,14 @@ viewer
 <img src="docs/source/_static/images/example-phonon.gif"  width="300px"/>
 
 
+### Save image
+Save image to a path by:
+```python
+viewer.save_image("/home/xing/filename.png")
+```
 
 ### Download image
+This will open a download panel.
 
 ```python
 viewer.download_image("filename.png")

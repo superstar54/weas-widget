@@ -69,7 +69,7 @@ Here is a example of a molecule with `index` label:
 
 
 Other parameters:
-----------------
+------------------
 
 - **Atom Scale**: change scale for all atoms.
 - **Unit Cell**: show or hide the unit cell.
@@ -80,7 +80,7 @@ Other parameters:
 
 
 Buttons
--------
+---------
 There are several buttons on the top right of the GUI. They are:
 
 .. figure:: _static/images/gui-buttons.png
@@ -99,7 +99,7 @@ Configuration
 One can use a configuration dict to specify their GUI preferences, such as enabling/disabling the GUI entirely or choosing specific components to display.
 
 Disable the GUI entirely
-~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------
 .. code-block:: python
 
    from weas_widget import WeasWidget
@@ -108,7 +108,7 @@ Disable the GUI entirely
 
 
 Select specific components
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------
 
 .. code-block:: python
 
