@@ -10,7 +10,16 @@ import "./widget.css";
 function render({ model, el }) {
     let avr; // Declare avr here
     let viewerElement = document.createElement("div");
+    // Stop propagation of mouse and keyboard events from the viewer to jupyter notebook
+    // to avoid conflicts with the notebook's keyboard shortcuts
+    preventEventPropagation(viewerElement);
     viewerElement.style.cssText = "position: relative; width: 600px; height: 400px;";
+    const viewerStyle = model.get("viewerStyle");
+    // set the style ortherwise use the default value
+    if (viewerStyle) {
+        viewerElement.style.width = viewerStyle.width;
+        viewerElement.style.height = viewerStyle.height;
+    }
     el.appendChild(viewerElement);
     // Function to render atoms
     const renderAtoms = () => {
@@ -155,5 +164,12 @@ function createVolumeData(data, cell=[[1, 0, 0], [0, 1, 0], [0, 0, 1]]) {
     const values = [].concat.apply([], [].concat.apply([], data.values));
     return {dims, values, cell: cell, origin: [0, 0, 0]};
 }
+
+function preventEventPropagation(element) {
+    const stopPropagation = (e) => e.stopPropagation();
+    ["click", "keydown", "keyup", "keypress"].forEach((eventType) => {
+      element.addEventListener(eventType, stopPropagation, false);
+    });
+  }
 
 export default { render }

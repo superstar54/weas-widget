@@ -1,7 +1,7 @@
 
 
 =======================
-Edit the structure
+Editing the structure
 =======================
 
 WEAS supports editing the atoms directly in the GUI and synchronizing with the structure of the Python object.
@@ -21,7 +21,7 @@ There are two methods for selecting atoms:
 
 
 
-Move, Rotate selected atoms
+Move, Rotate and Duplicate selected atoms
 ===========================
 
 Press the transform shortcut, and move your mouse.
@@ -33,8 +33,10 @@ Press the transform shortcut, and move your mouse.
 +-----------+----------+
 | Rotate    | ``r``    |
 +-----------+----------+
+| Duplicate | ``d``    |
++-----------+----------+
 
 
 Delete selected atoms
 =====================
-Press the ``x`` key to delete the selected atoms
+Press the ``Delete`` key to delete the selected atoms
