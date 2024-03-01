@@ -56,6 +56,8 @@ function render({ model, el }) {
         // vector field
         avr.VFManager.fromSettings(model.get("vectorField"));
         avr.showVectorField = model.get("showVectorField")
+        // mesh primitives
+        avr.meshPrimitive.fromSettings(model.get("meshPrimitives"));
 
         avr.drawModels();
         avr.render();
@@ -155,7 +157,13 @@ function render({ model, el }) {
         avr.VFManager.fromSettings(data);
         avr.VFManager.drawVectorFields();
     });
-
+    // mesh primitives
+    model.on("change:meshPrimitives", () => {
+        const data = model.get("meshPrimitives");
+        console.log("meshPrimitives: ", data);
+        avr.meshPrimitive.fromSettings(data);
+        avr.meshPrimitive.drawMesh();
+    });
 }
 function createVolumeData(data, cell=[[1, 0, 0], [0, 1, 0], [0, 0, 1]]) {
     // get the dimensions

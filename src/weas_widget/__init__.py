@@ -37,6 +37,8 @@ class WeasWidget(anywidget.AnyWidget):
     vectorField = tl.List().tag(sync=True)
     showVectorField = tl.Bool(True).tag(sync=True)
     guiConfig = tl.Dict({}).tag(sync=True)
+    # mesh primitives
+    meshPrimitives = tl.List(tl.Dict({})).tag(sync=True)
     # viewer
     viewerStyle = tl.Dict({}).tag(sync=True)
     # task
