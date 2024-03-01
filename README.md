@@ -26,14 +26,17 @@ Features:
 Use the pip:
 
 ```console
-    pip install weas-widget
+pip install weas-widget
 ```
 
 To install the latest version from source, first clone the repository and then install using pip:
 
 ```console
-    $ git clone https://github.com/superstar54/weas-widget
-    $ pip install -e weas-widget
+git clone https://github.com/superstar54/weas-widget
+cd weas-widget
+npm install
+npm run build
+pip install -e .
 ```
 
 ## How to use
@@ -70,10 +73,11 @@ Press the transform shortcut, and move your mouse.
 |----------|---------|
 | Move     | `g`   |
 | Rotate   | `r`   |
+| Duplicate| `d`   |
 
 
 ### Delete selected atoms
-Press the ``x`` key to delete the selected atoms
+Press the ``Delete`` key to delete the selected atoms
 
 
 ### Export edited atoms

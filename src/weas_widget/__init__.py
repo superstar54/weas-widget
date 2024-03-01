@@ -38,6 +38,8 @@ class WeasWidget(anywidget.AnyWidget):
     vectorField = tl.List().tag(sync=True)
     showVectorField = tl.Bool(True).tag(sync=True)
     guiConfig = tl.Dict({}).tag(sync=True)
+    # viewer
+    viewerStyle = tl.Dict({}).tag(sync=True)
     # task
     js_task = tl.Dict({}).tag(sync=True)
     debug = tl.Bool(False).tag(sync=True)
