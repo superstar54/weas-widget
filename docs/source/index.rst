@@ -29,6 +29,7 @@ A widget to visualize and interact with atomistic structures in Jupyter Notebook
    isosurface
    vector_field
    mesh_primitive
+   search_operator
    selection
 
 
