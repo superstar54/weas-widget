@@ -23,7 +23,11 @@ class WeasWidget(anywidget.AnyWidget):
     selectedAtomsIndices = tl.List([]).tag(sync=True)
     boundary = tl.List([[0, 1], [0, 1], [0, 1]]).tag(sync=True)
     modelStyle = tl.Int(0).tag(sync=True)
+    # color
+    colorBy = tl.Unicode("Element").tag(sync=True)
     colorType = tl.Unicode("CPK").tag(sync=True)
+    colorRamp = tl.List(["red", "blue"]).tag(sync=True)
+    # material
     materialType = tl.Unicode("Standard").tag(sync=True)
     atomLabelType = tl.Unicode("None").tag(sync=True)
     showCell = tl.Bool(True).tag(sync=True)

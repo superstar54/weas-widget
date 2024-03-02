@@ -33,13 +33,13 @@ The following example shows how to use the mesh primitive to draw two cubes and 
             "type": "cube",
             "data": [
                 {
-                    "positions": [-5, 0, 0],
+                    "position": [-5, 0, 0],
                     "size": 2,
                     "scale": [1, 0.5, 1],
                     "rotation": [0, 0, 0]
                 },
                 {
-                    "positions": [5, 0, 1],
+                    "position": [5, 0, 1],
                     "size": 1,
                     "scale": [1, 0.5, 1],
                     "rotation": [1, 1, 0],
@@ -51,7 +51,7 @@ The following example shows how to use the mesh primitive to draw two cubes and 
             "type": "cylinder",
             "data": [
                 {
-                    "positions": [0, 0, 0],
+                    "position": [0, 0, 0],
                     "segments": 12,
                     "radius": 1,
                     "depth": 5,
@@ -77,7 +77,7 @@ The cube is defined by the following parameters:
 .. code-block:: python
 
     {
-     "positions": [0, 0, 0],
+     "position": [0, 0, 0],
      "size": 2,
      "scale": [1, 1, 1],
      "rotation":[0, 0, 0],
@@ -93,7 +93,7 @@ The cylinder is defined by the following parameters:
 .. code-block:: python
 
     {
-     "positions": [0, 0, 0],
+     "position": [0, 0, 0],
       "segments": 12,
       "radius": 1,
       "depth": 2,
@@ -109,7 +109,7 @@ The sphere is defined by the following parameters:
 .. code-block:: python
 
     {
-     "positions": [0, 0, 0],
+     "position": [0, 0, 0],
       "widthSegments": 8,
       "heightSegments": 6,
       "radius": 1,
@@ -125,7 +125,7 @@ The plane is defined by the following parameters:
 .. code-block:: python
 
     {
-     "positions": [0, 0, 0],
+     "position": [0, 0, 0],
       "size": 2,
       "scale": [1, 1, 1],
       "rotation":[0, 0, 0],
@@ -139,7 +139,7 @@ The icosahedron is defined by the following parameters:
 .. code-block:: python
 
     {
-     "positions": [0, 0, 0],
+     "position": [0, 0, 0],
       "radius": 1,
       "detail": 2,
       "scale": [1, 1, 1],
@@ -154,7 +154,7 @@ The cone is defined by the following parameters:
 .. code-block:: python
 
     {
-     "positions": [0, 0, 0],
+     "position": [0, 0, 0],
       "segments": 8,
       "radius": 1,
       "height": 2,
@@ -170,7 +170,7 @@ The arrow is defined by the following parameters:
 .. code-block:: python
 
     {
-     "positions": [0, 0, 0],
+     "position": [0, 0, 0],
       "direction": [0, 0, 1],
       "length": 1,
       "color": "#bd0d87",
@@ -184,7 +184,7 @@ The torus is defined by the following parameters:
 .. code-block:: python
 
     {
-     "positions": [0, 0, 0],
+     "position": [0, 0, 0],
       "radius": 1,
       "tube": 0.4,
       "radialSegments": 8,
