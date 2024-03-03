@@ -79,5 +79,5 @@
 
 #search-results {
   overflow-y: auto; /* Allow vertical scrolling */
-  max-height: 200px; /* Adjust based on the overlay height and search box */
+  max-height: 150px; /* Adjust based on the overlay height and search box */
 }
