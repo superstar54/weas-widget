@@ -23,12 +23,16 @@ A widget to visualize and interact with atomistic structures in Jupyter Notebook
    installation
    edit
    gui
+   color
    operation
    boundary
    measurement
    isosurface
    vector_field
+   mesh_primitive
+   search_operator
    selection
+   gallery
 
 
 Indices and tables

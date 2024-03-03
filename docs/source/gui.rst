@@ -123,3 +123,13 @@ Select specific components
             }
    viewer = WeasWidget(guiConfig=guiConfig)
    viewer
+
+
+Set viewer width and height
+----------------------------
+
+.. code-block:: python
+
+   from weas_widget import WeasWidget
+   viewer = WeasWidget(viewerStyle = {"width": "800px", "height": "600px"})
+   viewer
