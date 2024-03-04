@@ -2,7 +2,7 @@
 // clone the weas repo and import the weas module
 // import * as weas from "../../weas/src/index.js";
 // if not, then use the release version from unpkg
-import * as weas from "https://unpkg.com/weas@0.0.8-a/dist/weas.mjs";
+import * as weas from "https://unpkg.com/weas@0.0.8-b/dist/weas.mjs";
 import "./widget.css";
 
 
@@ -60,7 +60,9 @@ function render({ model, el }) {
         avr.showVectorField = model.get("showVectorField")
         // mesh primitives
         avr.meshPrimitive.fromSettings(model.get("meshPrimitives"));
-
+        // camera settings
+        const cameraSetting = model.get("cameraSetting");
+        avr.tjs.updateCameraAndControls(cameraSetting);
         avr.drawModels();
         avr.render();
         return avr;
@@ -85,9 +87,6 @@ function render({ model, el }) {
                     break;
                 case "downloadImage":
                     avr.tjs.downloadImage(task.kwargs.filename);
-                    break;
-                case "setCameraPosition":
-                    avr.tjs.updateCameraAndControls(avr.atoms.getCenterOfGeometry(), task.kwargs.position);
                     break;
             }
         }

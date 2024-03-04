@@ -29,8 +29,8 @@ test.describe('Widget Visual Regression', () => {
 
     await page.notebook.runCellByCell({
       onAfterCellRun: async (cellIndex: number) => {
-        // wait 2 seconds for the widget to render
-        await page.waitForTimeout(2000);
+        // wait 3 seconds for the widget to render
+        await page.waitForTimeout(3000);
         const cell = await page.notebook.getCellOutput(cellIndex);
         if (cell) {
           captures.push(await cell.screenshot());
