@@ -22,7 +22,7 @@ There are two methods for selecting atoms:
 
 
 Move, Rotate and Duplicate selected atoms
-===========================
+=========================================
 
 Press the transform shortcut, and move your mouse.
 

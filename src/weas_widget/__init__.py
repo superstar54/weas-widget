@@ -24,7 +24,11 @@ class WeasWidget(anywidget.AnyWidget):
     selectedAtomsIndices = tl.List([]).tag(sync=True)
     boundary = tl.List([[0, 1], [0, 1], [0, 1]]).tag(sync=True)
     modelStyle = tl.Int(0).tag(sync=True)
+    # color
+    colorBy = tl.Unicode("Element").tag(sync=True)
     colorType = tl.Unicode("CPK").tag(sync=True)
+    colorRamp = tl.List(["red", "blue"]).tag(sync=True)
+    # material
     materialType = tl.Unicode("Standard").tag(sync=True)
     atomLabelType = tl.Unicode("None").tag(sync=True)
     showCell = tl.Bool(True).tag(sync=True)
@@ -38,8 +42,12 @@ class WeasWidget(anywidget.AnyWidget):
     vectorField = tl.List().tag(sync=True)
     showVectorField = tl.Bool(True).tag(sync=True)
     guiConfig = tl.Dict({}).tag(sync=True)
+    # mesh primitives
+    meshPrimitives = tl.List(tl.Dict({})).tag(sync=True)
     # viewer
     viewerStyle = tl.Dict({}).tag(sync=True)
+    # camera
+    cameraSetting = tl.Dict({}).tag(sync=True)
     # task
     js_task = tl.Dict({}).tag(sync=True)
     debug = tl.Bool(False).tag(sync=True)
@@ -148,16 +156,12 @@ class WeasWidget(anywidget.AnyWidget):
             }
         )
 
-    def save_image(
-        self, filename="weas-model.png", resolutionScale=5, camera_position=None
-    ):
+    def save_image(self, filename="weas-model.png", resolutionScale=5):
         import base64
 
         def _save_image():
             while not self.ready:
                 time.sleep(0.1)
-            if camera_position is not None:
-                self.camera_position = camera_position
             self.export_image(resolutionScale)
             # polling mechanism to check if the image data is available
             while not self.imageData:
@@ -170,15 +174,6 @@ class WeasWidget(anywidget.AnyWidget):
 
         thread = threading.Thread(target=_save_image, args=(), daemon=False)
         thread.start()
-
-    @property
-    def camera_position(self):
-        return self._camera_position
-
-    @camera_position.setter
-    def camera_position(self, value):
-        self.send_js_task({"name": "setCameraPosition", "kwargs": {"position": value}})
-
     # --------------------------------------------------------
     # integration with other libraries
     # AiiDAlab-Widget-Base StructureManagerWidget
@@ -186,3 +181,4 @@ class WeasWidget(anywidget.AnyWidget):
     def _observe_structure(self, change):
         if self.structure is not None:
             self.from_ase(self.structure)
+
