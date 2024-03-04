@@ -21,7 +21,7 @@ Supported style are:
 
 
 Color by attribute
-----------------
+----------------------
 Coloring based on the attribute of the atoms. The attribute can be: charge, magmom, or any other attribute in the structure.
 
 Here we show how to color the atoms by their forces.
