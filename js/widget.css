@@ -81,3 +81,8 @@
   overflow-y: auto; /* Allow vertical scrolling */
   max-height: 150px; /* Adjust based on the overlay height and search box */
 }
+
+/* fix wrong style of dat.gui in Jupyterlab 3: */
+select {
+  color: black !important; /* Or any color that provides better contrast */
+}
