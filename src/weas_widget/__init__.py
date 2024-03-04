@@ -45,6 +45,8 @@ class WeasWidget(anywidget.AnyWidget):
     meshPrimitives = tl.List(tl.Dict({})).tag(sync=True)
     # viewer
     viewerStyle = tl.Dict({}).tag(sync=True)
+    # camera
+    cameraSetting = tl.Dict({}).tag(sync=True)
     # task
     js_task = tl.Dict({}).tag(sync=True)
     debug = tl.Bool(False).tag(sync=True)
@@ -147,16 +149,12 @@ class WeasWidget(anywidget.AnyWidget):
             }
         )
 
-    def save_image(
-        self, filename="weas-model.png", resolutionScale=5, camera_position=None
-    ):
+    def save_image(self, filename="weas-model.png", resolutionScale=5):
         import base64
 
         def _save_image():
             while not self.ready:
                 time.sleep(0.1)
-            if camera_position is not None:
-                self.camera_position = camera_position
             self.export_image(resolutionScale)
             # polling mechanism to check if the image data is available
             while not self.imageData:
@@ -169,11 +167,3 @@ class WeasWidget(anywidget.AnyWidget):
 
         thread = threading.Thread(target=_save_image, args=(), daemon=False)
         thread.start()
-
-    @property
-    def camera_position(self):
-        return self._camera_position
-
-    @camera_position.setter
-    def camera_position(self, value):
-        self.send_js_task({"name": "setCameraPosition", "kwargs": {"position": value}})

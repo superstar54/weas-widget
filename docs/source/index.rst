@@ -32,6 +32,7 @@ A widget to visualize and interact with atomistic structures in Jupyter Notebook
    mesh_primitive
    search_operator
    selection
+   camera
    gallery
 
 
