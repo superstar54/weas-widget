@@ -1,8 +1,8 @@
 // if we want test weas package, then use the following import
 // clone the weas repo and import the weas module
-// import * as weas from "../../weas/src/index.js";
+import * as weas from "../../weas/src/index.js";
 // if not, then use the release version from unpkg
-import * as weas from "https://unpkg.com/weas@0.0.8-b/dist/weas.mjs";
+// import * as weas from "https://unpkg.com/weas@0.0.8-b/dist/weas.mjs";
 import "./widget.css";
 
 
