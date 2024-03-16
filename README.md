@@ -90,7 +90,9 @@ Press the ``Delete`` key
 
 ### Export
 - Export the modified atomic structure to ASE or Pymatgen
-
+```python
+atoms = viewer.to_ase()
+```
 - Save image to a path by:
 ```python
 viewer.save_image("/home/xing/filename.png")
@@ -99,7 +101,6 @@ viewer.save_image("/home/xing/filename.png")
 ```python
 viewer.download_image("filename.png")
 ```
-
 
 ### Visualizing crystal structures
 For a nice visualization of a crystal, show
