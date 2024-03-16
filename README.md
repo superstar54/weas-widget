@@ -13,7 +13,7 @@ A widget to visualize and edit atomic structures in Jupyter Notebooks. It uses [
 Features:
 
 - Model: space-filling, ball-stick, polyhedral.
-- Supported File types: cif, xyz.
+- Supports importing data from ASE and Pymatgen.
 - Edit structure: move, rotate, delete and replace atoms.
 - Supports periodic boundary conditions
 - Animations
@@ -104,7 +104,7 @@ viewer.download_image("filename.png")
 For a nice visualization of a crystal, show
 - unit cell
 - bonded atoms outside the cell
-- oxygen polyhedra
+- polyhedra
 
 ```python
 from weas_widget import WeasWidget
