@@ -90,6 +90,7 @@ Press the ``Delete`` key
 
 ### Export
 - Export the modified atomic structure to ASE or Pymatgen
+
 - Save image to a path by:
 ```python
 viewer.save_image("/home/xing/filename.png")
