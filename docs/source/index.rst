@@ -1,7 +1,7 @@
 
 Welcome to WEAS Widget's documentation!
 ===========================================
-A widget to visualize and interact with atomistic structures in Jupyter Notebook. It uses WEAS_ (Web Environment For Atomistic Structure) in the backend.
+A widget to visualize and interact with atomic structures in Jupyter Notebook. It uses WEAS_ (Web Environment For Atomistic Structure) in the backend.
 
 
 .. note::
