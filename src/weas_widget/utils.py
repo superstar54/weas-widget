@@ -23,10 +23,8 @@ class ASE_Adapter:
         cell = ase_atoms.get_cell().array.flatten().tolist()
         positions = ase_atoms.get_positions()
         symbols = ase_atoms.get_chemical_symbols()
-        numbers = ase_atoms.get_atomic_numbers()
-        speciesArray = symbols
         for i in range(len(symbols)):
-            species[symbols[i]] = [symbols[i], numbers[i]]
+            species[symbols[i]] = symbols[i]
         # save other arrays to attributes
         attributes = {"atom": {}, "species": {}}
         for key in ase_atoms.arrays.keys():
@@ -37,7 +35,7 @@ class ASE_Adapter:
             "species": species,
             "cell": cell,
             "positions": positions,
-            "speciesArray": speciesArray,
+            "symbols": symbols,
             "attributes": attributes,
         }
         return weas_atoms
@@ -52,7 +50,7 @@ class ASE_Adapter:
         if isinstance(weas_atoms, list):
             trajectory = [cls.to_ase(atom) for atom in weas_atoms]
             return trajectory[0] if len(trajectory) == 1 else trajectory
-        symbols = [weas_atoms["species"][s][0] for s in weas_atoms["speciesArray"]]
+        symbols = [weas_atoms["species"][s][0] for s in weas_atoms["symbols"]]
         positions = weas_atoms["positions"]
         cell = np.array(weas_atoms["cell"]).reshape(3, 3)
         ase_atoms = Atoms(symbols=symbols, positions=positions, cell=cell)
@@ -70,14 +68,13 @@ class Pymatgen_Adapter:
         cell = pymatgen_structure.lattice.matrix.flatten().tolist()
         positions = [site.coords for site in pymatgen_structure.sites]
         symbols = [site.species_string for site in pymatgen_structure.sites]
-        speciesArray = symbols
         for i in range(len(symbols)):
-            species[symbols[i]] = [symbols[i]]
+            species[symbols[i]] = symbols[i]
         weas_atoms = {
             "species": species,
             "cell": cell,
             "positions": positions,
-            "speciesArray": speciesArray,
+            "symbols": symbols,
         }
         return weas_atoms
 
@@ -90,7 +87,7 @@ class Pymatgen_Adapter:
             return [cls.to_pymatgen(atom) for atom in weas_atoms]
 
         lattice = Lattice(weas_atoms["cell"])
-        species = weas_atoms["speciesArray"]
+        species = weas_atoms["symbols"]
         sites = weas_atoms["positions"]
         structure = Structure(lattice, species, sites)
         return structure
