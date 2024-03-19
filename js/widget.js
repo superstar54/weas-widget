@@ -20,6 +20,8 @@ function render({ model, el }) {
         viewerElement.style.width = viewerStyle.width;
         viewerElement.style.height = viewerStyle.height;
     }
+    // To scope styles to just elements added by this widget, adding a class to the root el.
+    el.classList.add("weas-widget");
     el.appendChild(viewerElement);
     // Function to render atoms
     const renderAtoms = () => {

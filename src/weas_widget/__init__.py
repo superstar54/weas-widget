@@ -2,6 +2,7 @@ import importlib.metadata
 import pathlib
 import anywidget
 import traitlets as tl
+import ase
 from .utils import ASE_Adapter, Pymatgen_Adapter, load_online_example
 import time
 import threading
@@ -50,6 +51,12 @@ class WeasWidget(anywidget.AnyWidget):
     # task
     js_task = tl.Dict({}).tag(sync=True)
     debug = tl.Bool(False).tag(sync=True)
+    # --------------------------------------------------------
+    # integration with other libraries
+    # AiiDAlab-Widget-Base StructureManagerWidget
+    input_selection = tl.List(tl.Int(), allow_none=True)
+    selection = tl.List(tl.Int())
+    structure = tl.Instance(ase.Atoms, allow_none=True)
 
     def __init__(self, from_ase=None, from_pymatgen=None, **kwargs):
         super().__init__(**kwargs)
@@ -167,3 +174,10 @@ class WeasWidget(anywidget.AnyWidget):
 
         thread = threading.Thread(target=_save_image, args=(), daemon=False)
         thread.start()
+    # --------------------------------------------------------
+    # integration with other libraries
+    # AiiDAlab-Widget-Base StructureManagerWidget
+    @tl.observe("structure")
+    def _observe_structure(self, change):
+        if self.structure is not None:
+            self.from_ase(self.structure)
