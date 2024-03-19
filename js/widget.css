@@ -83,6 +83,6 @@
 }
 
 /* fix wrong style of dat.gui in Jupyterlab 3: */
-select {
-  color: black !important; /* Or any color that provides better contrast */
+.weas-widget select {
+  color: black;
 }
