@@ -48,6 +48,7 @@ class BaseWidget(anywidget.AnyWidget):
     cameraSetting = tl.Dict({}).tag(sync=True)
     # task
     js_task = tl.Dict({}).tag(sync=True)
+    python_task = tl.Dict({}).tag(sync=True)
     debug = tl.Bool(False).tag(sync=True)
 
     def __init__(self, from_ase=None, from_pymatgen=None, **kwargs):

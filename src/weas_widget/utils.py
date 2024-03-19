@@ -50,7 +50,7 @@ class ASE_Adapter:
         if isinstance(weas_atoms, list):
             trajectory = [cls.to_ase(atom) for atom in weas_atoms]
             return trajectory[0] if len(trajectory) == 1 else trajectory
-        symbols = [weas_atoms["species"][s][0] for s in weas_atoms["symbols"]]
+        symbols = [weas_atoms["species"][s] for s in weas_atoms["symbols"]]
         positions = weas_atoms["positions"]
         cell = np.array(weas_atoms["cell"]).reshape(3, 3)
         ase_atoms = Atoms(symbols=symbols, positions=positions, cell=cell)

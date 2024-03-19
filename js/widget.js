@@ -95,6 +95,16 @@ function render({ model, el }) {
         editor.avr.atoms = atoms;
         console.log("update viewer from Python.");
     });
+    // Listen for changes in the 'objectUpdated' property
+    domElement.addEventListener('weas', (event) => {
+        const detail = event.detail; // event.detail contains the updated data
+        model.set("python_task", event.detail);
+        model.save_changes();
+    });
+    model.on("change:python_task", () => {
+        const python_task = model.get("python_task");
+        console.log("on change, python_task: ", python_task)
+      });
     // Listen for the custom 'atomsUpdated' event
     domElement.addEventListener('atomsUpdated', (event) => {
         // event detail is a trajectory: a array of atoms data
@@ -191,7 +201,7 @@ function resolveFunctionFromString(editor, path) {
     }
   }
 
-function run_task(task, model) {
+  function run_task(task, model) {
     console.log("task: ", task);
     switch (task.name) {
         case "exportImage":
@@ -199,18 +209,21 @@ function run_task(task, model) {
             model.set("imageData", imageData);
             model.save_changes();
             break;
-        // all the other tasks, run editor.task.name with task.kwargs
+        // all the other tasks, run editor.task.name with task.args and task.kwargs
         default:
             // Extract the method based on the 'name' path
             const method = resolveFunctionFromString(editor, task.name);
             console.log("method: ", method)
             console.log("editor: ", editor.ops.undoStack);
             if (typeof method === 'function') {
-                // Call the resolved method with the 'kwargs'
-                if (task.kwargs === undefined) {
-                    method();
+                // Prepare args and kwargs
+                const args = task.args || [];
+                const kwargs = task.kwargs || {};
+                // Handle both args and kwargs if method supports it
+                if (args.length > 0) {
+                    method.apply(null, [...args, kwargs]);
                 } else {
-                    method(task.kwargs);
+                    method(kwargs);
                 }
             } else {
                 console.error('Method not found or is not a function');
