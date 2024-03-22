@@ -10,8 +10,8 @@ def deserialize_threejs(json_data):
     object3d = Object3D(
         uuid=obj_data["uuid"],
         type=obj_data["type"],
-        geometry=geometries[obj_data["geometry"]],
-        material=materials[obj_data["material"]],
+        geometry=geometries.get(obj_data.get("geometry")),
+        material=materials.get(obj_data.get("material")),
         **{
             k: v
             for k, v in obj_data.items()
@@ -37,12 +37,12 @@ class Data:
         object = deserialize_threejs(change["new"]["data"])
         if action == "add":
             self.objects.add(object.uuid, object)
-            self.geometries.add(object.geometry.uuid, object.geometry)
-            self.materials.add(object.material.uuid, object.material)
+            # self.geometries.add(object.geometry.uuid, object.geometry)
+            # self.materials.add(object.material.uuid, object.material)
         elif action == "remove":
             self.objects.remove(object.uuid)
-            self.geometries.remove(object.geometry.uuid)
-            self.materials.remove(object.material.uuid)
+            # self.geometries.remove(object.geometry.uuid)
+            # self.materials.remove(object.material.uuid)
 
 
 class Object3D:

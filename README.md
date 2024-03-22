@@ -179,6 +179,43 @@ viewer
 
 
 
+## Test
+
+### Unit test
+
+```console
+pytest
+```
+
+### End-to-end test
+
+The e2e test is similar to [ipywidgets](https://ipywidgets.readthedocs.io/en/latest/dev_testing.html).
+
+For the first time, one needs to install the dependence.
+
+```
+cd tests/notebooks/
+yarn install
+```
+
+Then run in a terminal:
+
+```
+yarn start
+```
+
+In another terminal:
+
+```
+yarn test
+```
+
+If the snapshots need to be updated:
+
+```
+yarn test:update
+```
+
 ## Contact
 * Xing Wang  <xingwang1991@gmail.com>
 

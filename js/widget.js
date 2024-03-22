@@ -60,12 +60,14 @@ function render({ model, el }) {
         // vector field
         editor.avr.VFManager.fromSettings(model.get("vectorField"));
         editor.avr.showVectorField = model.get("showVectorField");
-        // mesh primitives
-        editor.instancedMeshPrimitive.fromSettings(model.get("meshPrimitives"));
         // camera settings
         const cameraSetting = model.get("cameraSetting");
         editor.tjs.updateCameraAndControls(cameraSetting);
         editor.avr.drawModels();
+        // mesh primitives
+        editor.instancedMeshPrimitive.fromSettings(model.get("instancedMeshPrimitive"));
+        editor.instancedMeshPrimitive.drawMesh();
+        //
         editor.render();
         return editor;
     };
@@ -164,9 +166,9 @@ function render({ model, el }) {
         editor.avr.VFManager.drawVectorFields();
     });
     // mesh primitives
-    model.on("change:meshPrimitives", () => {
-        const data = model.get("meshPrimitives");
-        console.log("meshPrimitives: ", data);
+    model.on("change:instancedMeshPrimitive", () => {
+        const data = model.get("instancedMeshPrimitive");
+        console.log("instancedMeshPrimitive: ", data);
         editor.instancedMeshPrimitive.fromSettings(data);
         editor.avr.meshPrimitive.drawMesh();
     });

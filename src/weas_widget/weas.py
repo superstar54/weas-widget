@@ -3,17 +3,20 @@ from .utils import ASE_Adapter, Pymatgen_Adapter, load_online_example
 from .data import Data
 from .operators.ops import Ops
 from .atoms_viewer import AtomsViewer
+from .camera import Camera
+from .plugins.instanced_mesh_pritimive import InstancedMeshPrimitive
 import time
 import threading
 
 
 class WeasWidget:
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self._widget = BaseWidget()
+        self._widget = BaseWidget(**kwargs)
         self.avr = AtomsViewer(self._widget)
         self.data = Data(self._widget)
         self.ops = Ops(self._widget)
+        self.camera = Camera(self._widget)
+        self.imp = InstancedMeshPrimitive(self._widget)
 
     def _repr_mimebundle_(self, *args, **kwargs):
         return self._widget._repr_mimebundle_(*args, **kwargs)
