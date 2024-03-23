@@ -2,8 +2,6 @@ import importlib.metadata
 import pathlib
 import anywidget
 import traitlets as tl
-import time
-import threading
 
 try:
     __version__ = importlib.metadata.version("weas_widget")
@@ -46,6 +44,10 @@ class BaseWidget(anywidget.AnyWidget):
     viewerStyle = tl.Dict({}).tag(sync=True)
     # camera
     cameraSetting = tl.Dict({}).tag(sync=True)
+    cameraZoom = tl.Float().tag(sync=True)
+    cameraPosition = tl.List().tag(sync=True)
+    cameraRotation = tl.List().tag(sync=True)
+    cameraLookAt = tl.List().tag(sync=True)
     # task
     js_task = tl.Dict({}).tag(sync=True)
     python_task = tl.Dict({}).tag(sync=True)
@@ -70,54 +72,3 @@ class BaseWidget(anywidget.AnyWidget):
     def drawModels(self):
         """Redraw the widget."""
         self.send_js_task({"name": "drawModels"})
-
-    def export_image(self, resolutionScale=5):
-        self.send_js_task(
-            {
-                "name": "exportImage",
-                "kwargs": {"resolutionScale": resolutionScale},
-            }
-        )
-
-    def display_image(self):
-        from IPython.display import display, Image
-        import base64
-
-        if self.imageData == "":
-            print(
-                "No image data available, please export the image first: running export_image() in another cell."
-            )
-            return None
-        base64_data = self.imageData.split(",")[1]
-        # Decode the base64 string
-        image_data = base64.b64decode(base64_data)
-
-        # Display the image
-        return display(Image(data=image_data))
-
-    def download_image(self, filename="weas-model.png"):
-        self.send_js_task(
-            {
-                "name": "downloadImage",
-                "kwargs": {"filename": filename},
-            }
-        )
-
-    def save_image(self, filename="weas-model.png", resolutionScale=5):
-        import base64
-
-        def _save_image():
-            while not self.ready:
-                time.sleep(0.1)
-            self.export_image(resolutionScale)
-            # polling mechanism to check if the image data is available
-            while not self.imageData:
-                time.sleep(0.1)
-            base64_data = self.imageData.split(",")[1]
-            # Decode the base64 string
-            image_data = base64.b64decode(base64_data)
-            with open(filename, "wb") as f:
-                f.write(image_data)
-
-        thread = threading.Thread(target=_save_image, args=(), daemon=False)
-        thread.start()

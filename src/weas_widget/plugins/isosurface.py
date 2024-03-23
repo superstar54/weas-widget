@@ -1,19 +1,16 @@
-class Isosurface:
-    def __init__(self, base_widget):
-        self.base_widget = base_widget
+from ..base_class import WidgetWrapper
 
-    @property
-    def volumetric_data(self):
-        return self.base_widget.volumetricData
 
-    @volumetric_data.setter
-    def volumetric_data(self, value):
-        self.base_widget.volumetricData = value
+class Isosurface(WidgetWrapper):
 
-    @property
-    def settings(self):
-        return self.base_widget.isoSettings
+    catalog = "isosurface"
 
-    @settings.setter
-    def settings(self, value):
-        self.base_widget.isoSettings = value
+    _attribute_map = {
+        "volumetric_data": "volumetricData",
+        "settings": "isoSettings",
+    }
+
+    _extra_allowed_attrs = []
+
+    def __init__(self, _widget):
+        super().__init__(_widget)

@@ -1,8 +1,7 @@
-// if we want test weas package, then use the following import
-// clone the weas repo and import the weas module
-import * as weas from "../../weas/src/index.js";
-// if not, then use the release version from unpkg
-// import * as weas from "https://unpkg.com/weas@0.0.8-b/dist/weas.mjs";
+// if we want test weas package, clone the weas repo and import the weas module, then use the following import
+// import * as weas from "../../weas/src/index.js";
+// if not, then use the following import
+import * as weas from "weas";
 import "./widget.css";
 
 
@@ -102,6 +101,7 @@ function render({ model, el }) {
         const detail = event.detail; // event.detail contains the updated data
         model.set("python_task", event.detail);
         model.save_changes();
+        console.log("Get event from weas: ");
     });
     model.on("change:python_task", () => {
         const python_task = model.get("python_task");
@@ -171,6 +171,25 @@ function render({ model, el }) {
         console.log("instancedMeshPrimitive: ", data);
         editor.instancedMeshPrimitive.fromSettings(data);
         editor.avr.meshPrimitive.drawMesh();
+    });
+
+    // camera settings
+    model.on("change:cameraSetting", () => {
+        console.log("cameraSetting changed.")
+        const cameraSetting = model.get("cameraSetting");
+        editor.tjs.updateCameraAndControls(cameraSetting);
+    });
+    model.on("change:cameraZoom", () => {
+        const cameraZoom = model.get("cameraZoom");
+        editor.tjs.camera.updateZoom(cameraZoom);
+    });
+    model.on("change:cameraPosition", () => {
+        const cameraPosition = model.get("cameraPosition");
+        editor.tjs.camera.updatePosition(cameraPosition[0], cameraPosition[1], cameraPosition[2]);
+    });
+    model.on("change:cameraLookAt", () => {
+        const cameraLookAt = model.get("cameraLookAt");
+        editor.tjs.controls.target.set(cameraLookAt[0], cameraLookAt[1], cameraLookAt[2]);
     });
 }
 function createVolumeData(data, cell=[[1, 0, 0], [0, 1, 0], [0, 0, 1]]) {

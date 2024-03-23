@@ -1,11 +1,17 @@
-class Camera:
+from .base_class import WidgetWrapper
+
+
+class Camera(WidgetWrapper):
+
+    catalog = "camera"
+
+    _attribute_map = {
+        "zoom": "cameraZoom",
+        "position": "cameraPosition",
+        "look_at": "cameraLookAt",
+        "setting": "cameraSetting",
+    }
+    _extra_allowed_attrs = []
+
     def __init__(self, _widget):
-        self._widget = _widget
-
-    @property
-    def setting(self):
-        return self._widget.cameraSetting
-
-    @setting.setter
-    def setting(self, value):
-        self._widget.cameraSetting = value
+        super().__init__(_widget)

@@ -1,19 +1,16 @@
-class VectorField:
-    def __init__(self, base_widget):
-        self.base_widget = base_widget
+from ..base_class import WidgetWrapper
 
-    @property
-    def settings(self):
-        return self.base_widget.vectorField
 
-    @settings.setter
-    def settings(self, value):
-        self.base_widget.vectorField = value
+class VectorField(WidgetWrapper):
 
-    @property
-    def show(self):
-        return self.base_widget.showVectorField
+    catalog = "vector_field"
 
-    @show.setter
-    def show(self, value):
-        self.base_widget.showVectorField = value
+    _attribute_map = {
+        "settings": "vectorField",
+        "show": "showVectorField",
+    }
+
+    _extra_allowed_attrs = []
+
+    def __init__(self, _widget):
+        super().__init__(_widget)
