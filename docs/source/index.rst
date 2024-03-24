@@ -33,7 +33,6 @@ A widget to visualize and interact with atomic structures in Jupyter Notebook. I
    search_operator
    selection
    camera
-   python_api
    gallery
 
 
