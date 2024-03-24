@@ -49,6 +49,7 @@ You can create and remove data in the same way as the Javascript API.
     viewer.data.objects.remove(viewer.data.objects[0])
 
 One can not create a new object with the Python API yet. So this will not work:
+
 .. code-block:: python
 
     viewer.data.objects.new()
@@ -61,16 +62,11 @@ Instead, you need to use operations to create new objects. For example, to creat
 
 Context
 ======================
-The Python API does not have a context manager yet. So this will not work:
-
-.. code-block:: python
-
-    viewer.context.selected_object
-
+To be added.
 
 Operations
 ======================
-Operators are tools generally accessed by the user from buttons, menu items or key shortcuts. From the user perspective they are a tool but Python can run these with its own settings through the bpy.ops module.
+Operators are tools generally accessed by the user from buttons, menu items or key shortcuts.The Python API allows users to run these through the `ops` module.
 
 Examples:
 

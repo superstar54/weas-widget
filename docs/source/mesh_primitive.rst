@@ -63,7 +63,7 @@ The following example shows how to use the mesh primitive to draw two cubes and 
         },
     ]
 
-    viewer.meshPrimitives = data
+    viewer.imp.settings = data
     viewer
 
 

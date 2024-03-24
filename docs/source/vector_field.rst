@@ -18,7 +18,7 @@ Show the magnetic moment as a vector field.
     atoms.set_array("moment", np.ones(len(atoms)))
     viewer = WeasWidget()
     viewer.from_ase(atoms)
-    viewer.modelStyle = 1
+    viewer.avr.model_style = 1
     viewer
 
 .. figure:: _static/images/example-magnetic-moment.png
@@ -43,7 +43,7 @@ One can visualize the phonon dispersion via lattice vibrations. One only need to
     viewer = WeasWidget()
     viewer.from_ase(trajectory)
     # set a vector field to show the arrow
-    viewer.vectorField = [{"origins": "positions", "vectors": "movement", "radius": 0.1}]
+    viewer.avr.vf.settings = [{"origins": "positions", "vectors": "movement", "radius": 0.1}]
     viewer
 
 

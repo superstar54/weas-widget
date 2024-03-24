@@ -5,7 +5,7 @@ from .selection import SelectionOperation
 from .transform import TransformOperation
 
 
-class Ops:
+class Operators:
     def __init__(self, weas_viewer):
         self.weas_viewer = weas_viewer
         self.mesh = MeshOperation(weas_viewer)
