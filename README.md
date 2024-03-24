@@ -112,10 +112,10 @@ For a nice visualization of a crystal, show
 from weas_widget import WeasWidget
 viewer1 = WeasWidget()
 viewer1.load_example("tio2.cif")
-viewer1.modelStyle = 2
-viewer1.boundary = [[-0.1, 1.1], [-0.1, 1.1], [-0.1, 1.1]]
-viewer1.showBondedAtoms = True
-viewer1.colorType = "VESTA"
+viewer1.avr.model_style = 2
+viewer1.avr.boundary = [[-0.1, 1.1], [-0.1, 1.1], [-0.1, 1.1]]
+viewer1.avr.show_bonded_atoms = True
+viewer1.avr.color_type = "VESTA"
 viewer1
 ```
 
@@ -131,8 +131,8 @@ from ase.io.cube import read_cube_data
 volume, atoms = read_cube_data("h2o-homo.cube")
 viewer = WeasWidget()
 viewer.from_ase(atoms)
-viewer.volumetricData = {"values": volume}
-viewer.isoSettings = [{"isovalue": 0.0001, "mode": 0}]
+viewer.avr.iso.volumetric_data = {"values": volume}
+viewer.avr.iso.settings = [{"isovalue": 0.0001, "mode": 0}]
 viewer
 ```
 <img src="docs/source/_static/images/example-isosurface.png"  width="300px"/>
@@ -150,7 +150,7 @@ atoms*=[2, 2, 1]
 atoms.set_array("moment", np.ones(len(atoms)))
 viewer = WeasWidget()
 viewer.from_ase(atoms)
-viewer.modelStyle = 1
+viewer.avr.model_style = 1
 viewer
 ```
 <img src="docs/source/_static/images/example-magnetic-moment.png"  width="300px"/>
@@ -171,7 +171,8 @@ trajectory = generate_phonon_trajectory(atoms, eigenvector, repeat=[4, 4, 1])
 viewer = WeasWidget()
 viewer.from_ase(trajectory)
 # set a vector field to show the arrow
-viewer.vectorField = [{"origins": "positions", "vectors": "movement", "radius": 0.1}]
+viewer.avr.vf.settings = [{"origins": "positions", "vectors": "movement", "radius": 0.1}]
+viewer.avr.vf.show = True
 viewer
 ```
 
