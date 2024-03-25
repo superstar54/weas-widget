@@ -17,7 +17,11 @@ class WeasWidget:
         self.imp = InstancedMeshPrimitive(self._widget)
 
     def _repr_mimebundle_(self, *args, **kwargs):
-        return self._widget._repr_mimebundle_(*args, **kwargs)
+        # if ipywdigets > 8.0.0, use _repr_mimebundle_ instead of _ipython_display_
+        if hasattr(self._widget, "_repr_mimebundle_"):
+            return self._widget._repr_mimebundle_(*args, **kwargs)
+        else:
+            return self._widget._ipython_display_(*args, **kwargs)
 
     def from_ase(self, atoms):
         self.avr.atoms = ASE_Adapter.to_weas(atoms)
