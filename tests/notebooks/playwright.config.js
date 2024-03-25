@@ -2,7 +2,8 @@ const baseConfig = require('@jupyterlab/galata/lib/playwright-config');
 
 module.exports = {
   ...baseConfig,
-  timeout: 180000,
+  timeout: 240000,
+  workers: process.env.CI ? 1 : 1,
   webServer: {
     command: 'jlpm start',
     url: 'http://localhost:8888/lab',

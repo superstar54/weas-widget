@@ -16,11 +16,11 @@ test.describe('Widget Visual Regression', () => {
     await page.filebrowser.openDirectory(tmpPath);
   });
 
-  test('Run notebook widgets.ipynb and capture cell outputs', async ({
+  test('Run notebook plugins.ipynb and capture cell outputs', async ({
     page,
     tmpPath,
   }) => {
-    const notebook = 'widgets.ipynb';
+    const notebook = 'plugins.ipynb';
     await page.notebook.openByPath(`${tmpPath}/${notebook}`);
     await page.notebook.activate(notebook);
 
@@ -35,7 +35,7 @@ test.describe('Widget Visual Regression', () => {
 
         // Polling for cell output to be not null
         while (!cell && Date.now() - startTime < timeout) {
-          await page.waitForTimeout(1000); // Wait for 3 second before retrying
+          await page.waitForTimeout(1000); // Wait for 1 second before retrying
           console.log("waiting for cell output to be not null");
           cell = await page.notebook.getCellOutput(cellIndex);
         }
@@ -57,7 +57,7 @@ test.describe('Widget Visual Regression', () => {
     });
 
     for (let i = 0; i < cellCount; i++) {
-      const image = `widgets-cell-${i}.png`;
+      const image = `plugins-cell-${i}.png`;
       expect.soft(captures[i]).toMatchSnapshot(image);
     }
   });
