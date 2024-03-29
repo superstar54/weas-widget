@@ -35,8 +35,8 @@ test.describe('Widget Visual Regression', () => {
 
         // Polling for cell output to be not null
         while (!cell && Date.now() - startTime < timeout) {
-          await page.waitForTimeout(1000); // Wait for 3 second before retrying
-          console.log("waiting for cell output to be not null");
+          await page.waitForTimeout(3000); // Wait for 3 second before retrying
+          console.log("waiting for cell output to be not null: ", cellIndex);
           cell = await page.notebook.getCellOutput(cellIndex);
         }
 
