@@ -1,3 +1,6 @@
+import numpy as np
+
+
 class ASE_Adapter:
     def __init__(self):
         pass
@@ -36,7 +39,7 @@ class ASE_Adapter:
         weas_atoms = {
             "species": species,
             "cell": cell,
-            "positions": positions,
+            "positions": positions.tolist(),
             "speciesArray": speciesArray,
             "attributes": attributes,
         }
@@ -65,34 +68,51 @@ class Pymatgen_Adapter:
 
     @classmethod
     def to_weas(cls, pymatgen_structure):
-        # Convert a Pymatgen Structure object to the widget's format
+        from pymatgen.core import Molecule
+
         species = {}
-        cell = pymatgen_structure.lattice.matrix.flatten().tolist()
-        positions = [site.coords for site in pymatgen_structure.sites]
+        # structure is a Molecule, convert it to Structure
+        if isinstance(pymatgen_structure, Molecule):
+            cell = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
+        else:
+            cell = pymatgen_structure.lattice.matrix.flatten().tolist()
+        positions = [site.coords.tolist() for site in pymatgen_structure.sites]
         symbols = [site.species_string for site in pymatgen_structure.sites]
         speciesArray = symbols
         for i in range(len(symbols)):
             species[symbols[i]] = [symbols[i]]
+        # save other arrays to attributes
+        attributes = {"atom": {}, "species": {}}
+        # read pymatgen site properties
+        for key in pymatgen_structure.site_properties.keys():
+            attributes["atom"][key] = [
+                site.properties[key] for site in pymatgen_structure.sites
+            ]
         weas_atoms = {
             "species": species,
             "cell": cell,
             "positions": positions,
             "speciesArray": speciesArray,
+            "attributes": attributes,
         }
         return weas_atoms
 
     @classmethod
     def to_pymatgen(cls, weas_atoms):
         # Convert the widget's format to a Pymatgen Structure object
-        from pymatgen.core import Structure, Lattice
+        from pymatgen.core import Molecule, Structure, Lattice
 
         if isinstance(weas_atoms, list):
             return [cls.to_pymatgen(atom) for atom in weas_atoms]
-
-        lattice = Lattice(weas_atoms["cell"])
         species = weas_atoms["speciesArray"]
         sites = weas_atoms["positions"]
-        structure = Structure(lattice, species, sites)
+        cell = np.array(weas_atoms["cell"]).reshape(3, 3)
+        # if all cell are close to zeros, it is a molecule
+        if np.allclose(cell, np.zeros((3, 3))):
+            structure = Molecule(species, sites)
+        else:
+            lattice = Lattice(weas_atoms["cell"])
+            structure = Structure(lattice, species, sites, coords_are_cartesian=True)
         return structure
 
 
