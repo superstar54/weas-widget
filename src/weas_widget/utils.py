@@ -36,7 +36,7 @@ class ASE_Adapter:
         weas_atoms = {
             "species": species,
             "cell": cell,
-            "positions": positions,
+            "positions": positions.tolist(),
             "speciesArray": speciesArray,
             "attributes": attributes,
         }
