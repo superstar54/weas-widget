@@ -90,13 +90,13 @@ class WeasWidget(anywidget.AnyWidget):
             moment = atoms["attributes"]["atom"]["moment"]
             self.vectorField = [
                 {
-                    "origins": atoms["positions"][spin_up],
-                    "vectors": [[0, 0, m] for m in moment[spin_up]],
+                    "origins": [atoms["positions"][i] for i in spin_up],
+                    "vectors": [[0, 0, moment[i]] for i in spin_up],
                     "color": "blue",
                 },
                 {
-                    "origins": atoms["positions"][spin_down],
-                    "vectors": [[0, 0, m] for m in moment[spin_down]],
+                    "origins": [atoms["positions"][i] for i in spin_down],
+                    "vectors": [[0, 0, moment[i]] for i in spin_down],
                     "color": "red",
                 },
             ]
