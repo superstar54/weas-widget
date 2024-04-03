@@ -51,7 +51,7 @@ jobs:
           npm install
           npm run build
           pip install -e .
-          pip install "pytest<8"
+          pip install "pytest<8" pymatgen
       - name: Test with pytest
         run: |
           cd tests
