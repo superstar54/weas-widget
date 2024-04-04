@@ -1,4 +1,4 @@
-class ASE_Adapter:
+class ASEAdapter:
     def __init__(self):
         pass
 
@@ -57,7 +57,7 @@ class ASE_Adapter:
         return ase_atoms
 
 
-class Pymatgen_Adapter:
+class PymatgenAdapter:
     def __init__(self):
         pass
 

@@ -1,5 +1,5 @@
 from .base_widget import BaseWidget
-from .utils import ASE_Adapter, Pymatgen_Adapter, load_online_example
+from .utils import ASEAdapter, PymatgenAdapter, load_online_example
 from .atoms_viewer import AtomsViewer
 from .camera import Camera
 from .plugins.instanced_mesh_pritimive import InstancedMeshPrimitive
@@ -22,20 +22,20 @@ class WeasWidget:
             return self._widget._ipython_display_(*args, **kwargs)
 
     def from_ase(self, atoms):
-        self.avr.atoms = ASE_Adapter.to_weas(atoms)
+        self.avr.atoms = ASEAdapter.to_weas(atoms)
 
     def to_ase(self):
-        return ASE_Adapter.to_ase(self.avr.atoms)
+        return ASEAdapter.to_ase(self.avr.atoms)
 
     def from_pymatgen(self, structure):
-        self.avr.atoms = Pymatgen_Adapter.to_weas(structure)
+        self.avr.atoms = PymatgenAdapter.to_weas(structure)
 
     def to_pymatgen(self):
-        return Pymatgen_Adapter.to_pymatgen(self.avr.atoms)
+        return PymatgenAdapter.to_pymatgen(self.avr.atoms)
 
     def load_example(self, name="tio2.cif"):
         atoms = load_online_example(name)
-        self.avr.atoms = ASE_Adapter.to_weas(atoms)
+        self.avr.atoms = ASEAdapter.to_weas(atoms)
 
     def export_image(self, resolutionScale=5):
         self._widget.send_js_task(
