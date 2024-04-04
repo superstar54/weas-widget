@@ -2,14 +2,18 @@
 Camera
 ===================
 
-Setting
-=============
+The camera can be configured in two ways:
 
-Camera has three settings:
+Direct Camera Settings
+=======================
 
-- zoom: the zoom level of the camera
-- position: the position of the camera
-- look_at: the point the camera is looking at
+The camera has three direct settings:
+
+- **zoom**: Controls the zoom level of the camera.
+- **position**: Specifies the camera's position in 3D space.
+- **look_at**: Determines the point in space the camera is oriented towards.
+
+Example usage:
 
 .. code-block:: python
 
@@ -17,15 +21,16 @@ Camera has three settings:
     viewer.camera.position = [0, 0, 100]
     viewer.camera.look_at = [0, 0, 0]
 
-
-If you want to set the `direction` of the camera, you can use the following code:
+Viewpoint-Centric Settings
+===========================
+This approach is useful for orienting the camera towards a subject, like the center of atoms or a bounding box, based on direction and distance from the subject.
+This method automatically calculates the appropriate `position` and `look_at`` values.
 
 .. code-block:: python
 
-    # the look_at is the center of the atoms (or the center of the bounding box in case of no atoms)
-    # the distance is the distance between the camera and the look_at point
+    # Direction is relative to the center of atoms or bounding box.
+    # Distance specifies how far the camera is from the look_at point.
     viewer.camera.setting = {"direction": [0, 5, 1], "distance": 50, "zoom": 2}
-
 
 Camera Type
 =============
