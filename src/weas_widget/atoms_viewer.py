@@ -1,6 +1,7 @@
 from .base_class import WidgetWrapper
 from .plugins.vector_field import VectorField
 from .plugins.isosurface import Isosurface
+from .plugins.lattice_plane import LatticePlane
 
 
 class AtomsViewer(WidgetWrapper):
@@ -31,6 +32,7 @@ class AtomsViewer(WidgetWrapper):
         # Initialize plugins
         object.__setattr__(self, "vf", VectorField(_widget))
         object.__setattr__(self, "iso", Isosurface(_widget))
+        object.__setattr__(self, "lp", LatticePlane(_widget))
 
     @property
     def atoms(self):

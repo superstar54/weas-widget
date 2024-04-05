@@ -38,8 +38,10 @@ class BaseWidget(anywidget.AnyWidget):
     vectorField = tl.List().tag(sync=True)
     showVectorField = tl.Bool(True).tag(sync=True)
     guiConfig = tl.Dict({}).tag(sync=True)
-    # mesh primitives
+    # instanced mesh primitives
     instancedMeshPrimitive = tl.List(tl.Dict({})).tag(sync=True)
+    # any mesh
+    anyMesh = tl.List(tl.Dict({})).tag(sync=True)
     # viewer
     viewerStyle = tl.Dict({}).tag(sync=True)
     # camera

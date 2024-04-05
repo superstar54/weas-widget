@@ -178,6 +178,20 @@ viewer
 
 <img src="docs/source/_static/images/example-phonon.gif"  width="300px"/>
 
+### Lattice plane
+Draw a plane that is defined by the miller indices and distance from the origin or by selecting the atoms.
+
+```python
+viewer.avr.lp.add_plane_from_indices(name = "111",
+                                     indices = [1, 1, 1],
+                                     distance = 4,
+                                     scale = 1.0,
+                                     color = [0, 1, 1, 0.5])
+viewer.avr.lp.build_plane()
+```
+
+<img src="docs/source/_static/images/lattice_plane.png"  width="300px"/>
+
 
 
 ## Test

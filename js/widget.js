@@ -167,12 +167,20 @@ function render({ model, el }) {
         editor.avr.VFManager.fromSettings(data);
         editor.avr.VFManager.drawVectorFields();
     });
-    // mesh primitives
+    // instanced mesh primitives
     model.on("change:instancedMeshPrimitive", () => {
         const data = model.get("instancedMeshPrimitive");
         console.log("instancedMeshPrimitive: ", data);
         editor.instancedMeshPrimitive.fromSettings(data);
-        editor.avr.meshPrimitive.drawMesh();
+        editor.instancedMeshPrimitive.drawMesh();
+    });
+
+    // any mesh
+    model.on("change:anyMesh", () => {
+        const data = model.get("anyMesh");
+        console.log("anyMesh: ", data);
+        editor.anyMesh.fromSettings(data);
+        editor.anyMesh.drawMesh();
     });
 
     // camera settings
