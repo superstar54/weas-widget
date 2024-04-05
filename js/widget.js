@@ -1,26 +1,25 @@
-// if we want test weas package, then use the following import
-// clone the weas repo and import the weas module
+// if we want test weas package, clone the weas repo and import the weas module, then use the following import
 // import * as weas from "../../weas/src/index.js";
-// if not, then use the release version from unpkg
-import * as weas from "https://unpkg.com/weas@0.0.8-b/dist/weas.mjs";
+// if not, then use the following import
+import * as weas from "weas";
 import "./widget.css";
 
 
 
 function render({ model, el }) {
-    let avr; // Declare avr here
-    let viewerElement = document.createElement("div");
+    let editor;
+    let domElement = document.createElement("div");
+    el.appendChild(domElement);
     // Stop propagation of mouse and keyboard events from the viewer to jupyter notebook
     // to avoid conflicts with the notebook's keyboard shortcuts
-    preventEventPropagation(viewerElement);
-    viewerElement.style.cssText = "position: relative; width: 600px; height: 400px;";
+    preventEventPropagation(domElement);
+    domElement.style.cssText = "position: relative; width: 600px; height: 400px;";
     const viewerStyle = model.get("viewerStyle");
     // set the style ortherwise use the default value
     if (viewerStyle) {
-        viewerElement.style.width = viewerStyle.width;
-        viewerElement.style.height = viewerStyle.height;
+        domElement.style.width = viewerStyle.width;
+        domElement.style.height = viewerStyle.height;
     }
-    el.appendChild(viewerElement);
     // Function to render atoms
     const renderAtoms = () => {
         // load init parameters from the model
@@ -32,7 +31,7 @@ function render({ model, el }) {
         } else {
             atoms = new weas.Atoms(atomsData);
         }
-        // console.log("atoms: ", atoms);
+        console.log("atoms: ", atoms);
         const guiConfig = model.get("guiConfig");
         const viewerConfig = {
              debug: model.get("debug"),
@@ -47,72 +46,76 @@ function render({ model, el }) {
             _boundary: model.get("boundary"),
 
         };
-        avr = new weas.AtomsViewer(viewerElement, atoms, viewerConfig, guiConfig);
-        avr.selectedAtomsIndices = model.get("selectedAtomsIndices");
-        // avr.atomScales = model.get("atomScales");
-        // avr.modelSticks = model.get("modelSticks");
-        // avr.modelPolyhedras = model.get("modelPolyhedras");
+        editor = new weas.WEAS({ domElement, viewerConfig, guiConfig });
+        window.editor = editor; // for debugging
+        editor.avr.atoms = atoms;
+        editor.avr.selectedAtomsIndices = model.get("selectedAtomsIndices");
+        // editor.avr.atomScales = model.get("atomScales");
+        // editor.avr.modelSticks = model.get("modelSticks");
+        // editor.avr.modelPolyhedras = model.get("modelPolyhedras");
         // volumetric data
-        avr.isosurfaceManager.volumetricData = createVolumeData(model.get("volumetricData"), atoms.cell);
-        avr.isosurfaceManager.fromSettings(model.get("isoSettings"));
+        editor.avr.isosurfaceManager.volumetricData = createVolumeData(model.get("volumetricData"), atoms.cell);
+        editor.avr.isosurfaceManager.fromSettings(model.get("isoSettings"));
         // vector field
-        avr.VFManager.fromSettings(model.get("vectorField"));
-        avr.showVectorField = model.get("showVectorField")
-        // mesh primitives
-        avr.meshPrimitive.fromSettings(model.get("meshPrimitives"));
+        editor.avr.VFManager.fromSettings(model.get("vectorField"));
+        editor.avr.showVectorField = model.get("showVectorField");
         // camera settings
         const cameraSetting = model.get("cameraSetting");
-        avr.tjs.updateCameraAndControls(cameraSetting);
-        avr.drawModels();
-        avr.render();
-        return avr;
+        editor.tjs.updateCameraAndControls(cameraSetting);
+        editor.avr.drawModels();
+        // mesh primitives
+        editor.instancedMeshPrimitive.fromSettings(model.get("instancedMeshPrimitive"));
+        editor.instancedMeshPrimitive.drawMesh();
+        //
+        editor.render();
+        return editor;
     };
     // Initial rendering
     setTimeout(() => {
-        avr = renderAtoms();
+        editor = renderAtoms();
             }, 10
     );
     // js task
     model.on("change:js_task", () => {
         const task = model.get("js_task");
-        function run_task(task) {
-            switch (task.name) {
-                case "drawModels":
-                    avr.drawModels();
-                    break;
-                case "exportImage":
-                    const imageData = avr.tjs.exportImage(task.kwargs.resolutionScale);
-                    model.set("imageData", imageData);
-                    model.save_changes();
-                    break;
-                case "downloadImage":
-                    avr.tjs.downloadImage(task.kwargs.filename);
-                    break;
-            }
+        // if task is {}, then skip
+        if (Object.keys(task).length === 0) {
+            return;
         }
-        run_task(task);
+        run_task(task, model);
     });
     // Listen for changes in the 'atoms' property
     model.on("change:atoms", () => {
         const data = model.get("atoms");
-        // if uuid of data and avr.atoms are not undefined and are the same, then skip
-        if (data.uuid && avr.atoms.uuid && avr.atoms.uuid === data.uuid) {
+        // if uuid of data and editor.avr.atoms are not undefined and are the same, then skip
+        if (data.uuid && editor.avr.atoms.uuid && editor.avr.atoms.uuid === data.uuid) {
             return;
         }
         const atoms = new weas.Atoms(data);
         // Re-render with the new atoms data
-        avr.updateAtoms(atoms);
+        editor.avr.atoms = atoms;
         console.log("update viewer from Python.");
     });
+    // Listen for changes in the 'objectUpdated' property
+    domElement.addEventListener('weas', (event) => {
+        const detail = event.detail; // event.detail contains the updated data
+        model.set("python_task", event.detail);
+        model.save_changes();
+        console.log("Get event from weas: ");
+    });
+    model.on("change:python_task", () => {
+        const python_task = model.get("python_task");
+        console.log("on change, python_task: ", python_task)
+      });
     // Listen for the custom 'atomsUpdated' event
-    viewerElement.addEventListener('atomsUpdated', (event) => {
+    domElement.addEventListener('atomsUpdated', (event) => {
         // event detail is a trajectory: a array of atoms data
         // loop all the atoms and export to a dict
         const trajectory = [];
         event.detail.forEach((atomsData) => {
             trajectory.push(atomsData.to_dict());
         });
-        trajectory.uuid = avr.uuid;
+        trajectory.uuid = editor.avr.uuid;
         model.set("atoms", trajectory);
         model.save_changes();
         // console.log("updatedAtoms: ", trajectory);
@@ -120,7 +123,7 @@ function render({ model, el }) {
     });
     // Listen for the custom 'viewerUpdated' event
     // this include modelStyle, colorType, materialType, atomLabelType, etc
-    viewerElement.addEventListener('viewerUpdated', (event) => {
+    domElement.addEventListener('viewerUpdated', (event) => {
         const data = event.detail; // event.detail contains the updated data
         // loop through the data and update the model
         for (const key in data) {
@@ -130,40 +133,64 @@ function render({ model, el }) {
         console.log("Updated viewer: ", data);
     });
     // Listen for changes in the 'viewer' property
-    model.on("change:modelStyle", () => {avr.modelStyle = model.get("modelStyle");});
-    model.on("change:colorType", () => {avr.colorType = model.get("colorType");});
-    model.on("change:materialType", () => {avr.materialType = model.get("materialType");});
-    model.on("change:atomLabelType", () => {avr.atomLabelType = model.get("atomLabelType");});
-    model.on("change:showCell", () => {avr.showCell = model.get("showCell");});
-    model.on("change:showBondedAtoms", () => {avr.showBondedAtoms = model.get("showBondedAtoms");});
-    model.on("change:atomScales", () => {avr.atomScales = model.get("atomScales");});
-    model.on("change:modelSticks", () => {avr.modelSticks = model.get("modelSticks");});
-    model.on("change:modelPolyhedras", () => {avr.modelPolyhedras = model.get("modelPolyhedras");});
-    model.on("change:selectedAtomsIndices", () => {avr.selectedAtomsIndices = model.get("selectedAtomsIndices");});
-    model.on("change:boundary", () => {avr.boundary = model.get("boundary");});
+    model.on("change:modelStyle", () => {editor.avr.modelStyle = model.get("modelStyle");});
+    model.on("change:colorType", () => {editor.avr.colorType = model.get("colorType");});
+    model.on("change:materialType", () => {editor.avr.materialType = model.get("materialType");});
+    model.on("change:atomLabelType", () => {editor.avr.atomLabelType = model.get("atomLabelType");});
+    model.on("change:showCell", () => {editor.avr.showCell = model.get("showCell");});
+    model.on("change:showBondedAtoms", () => {editor.avr.showBondedAtoms = model.get("showBondedAtoms");});
+    model.on("change:atomScales", () => {editor.avr.atomScales = model.get("atomScales");});
+    model.on("change:modelSticks", () => {editor.avr.modelSticks = model.get("modelSticks");});
+    model.on("change:modelPolyhedras", () => {editor.avr.modelPolyhedras = model.get("modelPolyhedras");});
+    model.on("change:selectedAtomsIndices", () => {editor.avr.selectedAtomsIndices = model.get("selectedAtomsIndices");});
+    model.on("change:boundary", () => {editor.avr.boundary = model.get("boundary");});
     // volumetric data
     model.on("change:volumetricData", () => {
         const data = model.get("volumetricData");
-        avr.isosurfaceManager.volumetricData = createVolumeData(data);
+        console.log("volumetricData: ", data);
+        editor.avr.isosurfaceManager.volumetricData = createVolumeData(data, editor.avr.atoms.cell);
+        console.log("volumeData: ", editor.avr.isosurfaceManager.volumetricData);
     });
     model.on("change:isoSettings", () => {
         const isoSettings = model.get("isoSettings");
-        avr.isosurfaceManager.fromSettings(isoSettings);
-        avr.isosurfaceManager.drawIsosurfaces();
+        console.log("isoSettings: ", isoSettings);
+        editor.avr.isosurfaceManager.fromSettings(isoSettings);
+        editor.avr.isosurfaceManager.drawIsosurfaces();
+        console.log("drawIsosurfaces");
     });
 
     // Vector field
     model.on("change:vectorField", () => {
         const data = model.get("vectorField");
-        avr.VFManager.fromSettings(data);
-        avr.VFManager.drawVectorFields();
+        editor.avr.VFManager.fromSettings(data);
+        editor.avr.VFManager.drawVectorFields();
     });
     // mesh primitives
-    model.on("change:meshPrimitives", () => {
-        const data = model.get("meshPrimitives");
-        console.log("meshPrimitives: ", data);
-        avr.meshPrimitive.fromSettings(data);
-        avr.meshPrimitive.drawMesh();
+    model.on("change:instancedMeshPrimitive", () => {
+        const data = model.get("instancedMeshPrimitive");
+        console.log("instancedMeshPrimitive: ", data);
+        editor.instancedMeshPrimitive.fromSettings(data);
+        editor.avr.meshPrimitive.drawMesh();
+    });
+
+    // camera settings
+    model.on("change:cameraSetting", () => {
+        console.log("cameraSetting changed.")
+        const cameraSetting = model.get("cameraSetting");
+        editor.tjs.updateCameraAndControls(cameraSetting);
+    });
+    model.on("change:cameraZoom", () => {
+        const cameraZoom = model.get("cameraZoom");
+        editor.tjs.camera.updateZoom(cameraZoom);
+    });
+    model.on("change:cameraPosition", () => {
+        const cameraPosition = model.get("cameraPosition");
+        editor.tjs.camera.updatePosition(cameraPosition[0], cameraPosition[1], cameraPosition[2]);
+    });
+    model.on("change:cameraLookAt", () => {
+        const cameraLookAt = model.get("cameraLookAt");
+        editor.tjs.controls.target.set(cameraLookAt[0], cameraLookAt[1], cameraLookAt[2]);
+        editor.tjs.render();
     });
 }
 function createVolumeData(data, cell=[[1, 0, 0], [0, 1, 0], [0, 0, 1]]) {
@@ -180,5 +207,51 @@ function preventEventPropagation(element) {
       element.addEventListener(eventType, stopPropagation, false);
     });
   }
+
+
+// Function to safely resolve the method from the string path
+function resolveFunctionFromString(editor, path) {
+    const parts = path.split('.');
+    const methodName = parts.pop(); // Separate the method name from the path
+    const context = parts.reduce((acc, part) => acc && acc[part], editor);
+
+    if (context && typeof context[methodName] === 'function') {
+      return context[methodName].bind(context); // Bind the method to its context
+    } else {
+      console.error('Method not found or is not a function');
+      return null;
+    }
+  }
+
+  function run_task(task, model) {
+    console.log("task: ", task);
+    switch (task.name) {
+        case "exportImage":
+            const imageData = editor.tjs.exportImage(task.kwargs.resolutionScale);
+            model.set("imageData", imageData);
+            model.save_changes();
+            break;
+        // all the other tasks, run editor.task.name with task.args and task.kwargs
+        default:
+            // Extract the method based on the 'name' path
+            const method = resolveFunctionFromString(editor, task.name);
+            console.log("method: ", method)
+            console.log("editor: ", editor.ops.undoStack);
+            if (typeof method === 'function') {
+                // Prepare args and kwargs
+                const args = task.args || [];
+                const kwargs = task.kwargs || {};
+                // Handle both args and kwargs if method supports it
+                if (args.length > 0) {
+                    method.apply(null, [...args, kwargs]);
+                } else {
+                    method(kwargs);
+                }
+            } else {
+                console.error('Method not found or is not a function');
+            }
+            break;
+    }
+}
 
 export default { render }

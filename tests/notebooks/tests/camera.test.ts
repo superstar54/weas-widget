@@ -16,11 +16,11 @@ test.describe('Widget Visual Regression', () => {
     await page.filebrowser.openDirectory(tmpPath);
   });
 
-  test('Run notebook widgets.ipynb and capture cell outputs', async ({
+  test('Run notebook camera.ipynb and capture cell outputs', async ({
     page,
     tmpPath,
   }) => {
-    const notebook = 'widgets.ipynb';
+    const notebook = 'camera.ipynb';
     await page.notebook.openByPath(`${tmpPath}/${notebook}`);
     await page.notebook.activate(notebook);
 
@@ -29,15 +29,16 @@ test.describe('Widget Visual Regression', () => {
 
     await page.notebook.runCellByCell({
       onAfterCellRun: async (cellIndex: number) => {
-        let cell = await page.notebook.getCellOutput(cellIndex);
+        let cell = await page.notebook.getCellOutput(0);
         const startTime = Date.now();
         const timeout = 60000; // Timeout in milliseconds, adjust as necessary
 
         // Polling for cell output to be not null
         while (!cell && Date.now() - startTime < timeout) {
-          await page.waitForTimeout(3000); // Wait for 3 second before retrying
-          console.log("waiting for cell output to be not null: ", cellIndex);
-          cell = await page.notebook.getCellOutput(cellIndex);
+          await page.waitForTimeout(1000); // Wait for 1 second before retrying
+          console.log("waiting for cell output to be not null");
+          // always use the first cell
+          cell = await page.notebook.getCellOutput(0);
         }
 
         if (cell) {
@@ -57,7 +58,7 @@ test.describe('Widget Visual Regression', () => {
     });
 
     for (let i = 0; i < cellCount; i++) {
-      const image = `widgets-cell-${i}.png`;
+      const image = `camera-cell-${i}.png`;
       expect.soft(captures[i]).toMatchSnapshot(image);
     }
   });

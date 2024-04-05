@@ -21,15 +21,13 @@ Show the atoms on the unit cell:
 
 .. code-block:: python
 
-    viewer.boundary = [[-0.1, 1.1], [-0.1, 1.1], [-0.1, 1.1]]
-    viewer.modelStyle = 1
-    viewer.drawModels()
+    viewer.avr.boundary = [[-0.1, 1.1], [-0.1, 1.1], [-0.1, 1.1]]
+    viewer.avr.model_style = 1
 
 
 Create a supercell:
 
 .. code-block:: python
 
-    viewer.boundary = [[-1, 2], [-1, 2], [-1, 2]]
-    viewer.modelStyle = 1
-    viewer.drawModels()
+    viewer.avr.boundary = [[-1, 2], [-1, 2], [-1, 2]]
+    viewer.avr.model_style = 1

@@ -44,9 +44,9 @@ Here we show how to color the atoms by their forces.
 
     viewer = WeasWidget()
     viewer.from_ase(atoms)
-    viewer.colorBy = "Force"
-    viewer.colorRamp = ["red", "yellow", "blue"]
-    viewer.modelStyle = 1
+    viewer.avr.color_by = "Force"
+    viewer.avr.color_ramp = ["red", "yellow", "blue"]
+    viewer.avr.model_style = 1
     viewer
 
 
