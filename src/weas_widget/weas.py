@@ -3,27 +3,24 @@ from .utils import ASEAdapter, PymatgenAdapter, load_online_example
 from .atoms_viewer import AtomsViewer
 from .camera import Camera
 from .plugins.instanced_mesh_pritimive import InstancedMeshPrimitive
+from .operators.ops import Operators
 import time
 import threading
+import ipywidgets as ipw
 
 
-class WeasWidget:
+class WeasWidget(ipw.HBox):
     def __init__(self, from_ase=None, from_pymatgen=None, **kwargs):
         self._widget = BaseWidget(**kwargs)
+        super().__init__([self._widget])
         self.avr = AtomsViewer(self._widget)
         self.camera = Camera(self._widget)
         self.imp = InstancedMeshPrimitive(self._widget)
+        self.ops = Operators(self._widget)
         if from_ase is not None:
             self.from_ase(from_ase)
         if from_pymatgen is not None:
             self.from_pymatgen(from_pymatgen)
-
-    def _repr_mimebundle_(self, *args, **kwargs):
-        # if ipywdigets > 8.0.0, use _repr_mimebundle_ instead of _ipython_display_
-        if hasattr(self._widget, "_repr_mimebundle_"):
-            return self._widget._repr_mimebundle_(*args, **kwargs)
-        else:
-            return self._widget._ipython_display_(*args, **kwargs)
 
     def from_ase(self, atoms):
         self.avr.atoms = ASEAdapter.to_weas(atoms)

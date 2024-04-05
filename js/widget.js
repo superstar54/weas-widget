@@ -10,6 +10,8 @@ function render({ model, el }) {
     let editor;
     let domElement = document.createElement("div");
     el.appendChild(domElement);
+    // To scope styles to just elements added by this widget, adding a class to the root el.
+    el.classList.add("weas-widget");
     // Stop propagation of mouse and keyboard events from the viewer to jupyter notebook
     // to avoid conflicts with the notebook's keyboard shortcuts
     preventEventPropagation(domElement);

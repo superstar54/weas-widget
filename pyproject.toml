@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "weas_widget"
-version = "0.1.0"
+version = "0.1.1"
 description = "A widget to visualize and interact with atomistic structures in Jupyter Notebook."
 authors = [{name = "Xing Wang", email = "xingwang1991@gmail.com"}]
 readme = "README.md"
@@ -29,7 +29,11 @@ classifiers = [
 keywords = ["atomistic", "visualize", "edit"]
 requires-python = ">=3.6"
 
-dependencies = ["anywidget", "ase", "requests"]
+dependencies = [
+    "anywidget==0.9.2",
+    "ase",
+    "requests",
+]
 
 [project.urls]
 Documentation = "https://weas-widget.readthedocs.io"
