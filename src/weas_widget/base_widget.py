@@ -53,12 +53,8 @@ class BaseWidget(anywidget.AnyWidget):
     python_task = tl.Dict({}).tag(sync=True)
     debug = tl.Bool(False).tag(sync=True)
 
-    def __init__(self, from_ase=None, from_pymatgen=None, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        if from_ase is not None:
-            self.from_ase(from_ase)
-        if from_pymatgen is not None:
-            self.from_pymatgen(from_pymatgen)
 
     def send_js_task(self, task):
         """Send a task to the javascript side.

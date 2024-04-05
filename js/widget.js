@@ -190,6 +190,7 @@ function render({ model, el }) {
     model.on("change:cameraLookAt", () => {
         const cameraLookAt = model.get("cameraLookAt");
         editor.tjs.controls.target.set(cameraLookAt[0], cameraLookAt[1], cameraLookAt[2]);
+        editor.tjs.render();
     });
 }
 function createVolumeData(data, cell=[[1, 0, 0], [0, 1, 0], [0, 0, 1]]) {

@@ -8,11 +8,15 @@ import threading
 
 
 class WeasWidget:
-    def __init__(self, **kwargs):
+    def __init__(self, from_ase=None, from_pymatgen=None, **kwargs):
         self._widget = BaseWidget(**kwargs)
         self.avr = AtomsViewer(self._widget)
         self.camera = Camera(self._widget)
         self.imp = InstancedMeshPrimitive(self._widget)
+        if from_ase is not None:
+            self.from_ase(from_ase)
+        if from_pymatgen is not None:
+            self.from_pymatgen(from_pymatgen)
 
     def _repr_mimebundle_(self, *args, **kwargs):
         # if ipywdigets > 8.0.0, use _repr_mimebundle_ instead of _ipython_display_
@@ -64,7 +68,7 @@ class WeasWidget:
     def download_image(self, filename="weas-model.png"):
         self._widget.send_js_task(
             {
-                "name": "downloadImage",
+                "name": "tjs.downloadImage",
                 "kwargs": {"filename": filename},
             }
         )
