@@ -37,7 +37,7 @@ dependencies = [
 
 [project.urls]
 Documentation = "https://weas-widget.readthedocs.io"
-Source = "https://github.com/superstart54/weas-widget"
+Source = "https://github.com/superstar54/weas-widget"
 
 
 [project.optional-dependencies]
