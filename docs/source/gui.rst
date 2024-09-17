@@ -113,10 +113,14 @@ Select specific components
 .. code-block:: python
 
    from weas_widget import WeasWidget
-   guiConfig={"enabled": True,
-              "components": {"atomsControl": True,
+   guiConfig={
+              "components": {
+                             "enabled": True,
+                             "atomsControl": True,
                              "buttons": True},
-              "buttons": {"fullscreen": True,
+              "buttons": {
+                          "enabled": True,
+                          "fullscreen": True,
                           "download": True,
                           "measurement": True,
                           }
