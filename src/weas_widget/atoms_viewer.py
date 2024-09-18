@@ -24,15 +24,15 @@ class AtomsViewer(WidgetWrapper):
         "model_polyhedras": "modelPolyhedras",
     }
 
-    _extra_allowed_attrs = ["vf", "iso", "atoms"]
+    _extra_allowed_attrs = ["vf", "iso", "lp", "atoms"]
 
     def __init__(self, _widget):
 
         super().__init__(_widget)
         # Initialize plugins
-        object.__setattr__(self, "vf", VectorField(_widget))
-        object.__setattr__(self, "iso", Isosurface(_widget))
-        object.__setattr__(self, "lp", LatticePlane(_widget))
+        setattr(self, "vf", VectorField(_widget))
+        setattr(self, "iso", Isosurface(_widget))
+        setattr(self, "lp", LatticePlane(_widget))
 
     @property
     def atoms(self):

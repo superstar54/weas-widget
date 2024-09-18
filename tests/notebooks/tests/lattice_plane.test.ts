@@ -29,6 +29,7 @@ test.describe('Widget Visual Regression', () => {
 
     await page.notebook.runCellByCell({
       onAfterCellRun: async (cellIndex: number) => {
+        await page.waitForTimeout(1000); // Wait for 1 second for the cell to update
         let cell = await page.notebook.getCellOutput(0);
         const startTime = Date.now();
         const timeout = 60000; // Timeout in milliseconds, adjust as necessary
