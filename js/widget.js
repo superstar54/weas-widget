@@ -48,9 +48,8 @@ function render({ model, el }) {
             _boundary: model.get("boundary"),
 
         };
-        editor = new weas.WEAS({ domElement, viewerConfig, guiConfig });
+        editor = new weas.WEAS({ domElement, atoms, viewerConfig, guiConfig });
         window.editor = editor; // for debugging
-        editor.avr.atoms = atoms;
         editor.avr.selectedAtomsIndices = model.get("selectedAtomsIndices");
         // editor.avr.atomScales = model.get("atomScales");
         // editor.avr.modelSticks = model.get("modelSticks");
