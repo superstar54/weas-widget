@@ -115,7 +115,7 @@ function render({ model, el }) {
         // loop all the atoms and export to a dict
         const trajectory = [];
         event.detail.forEach((atomsData) => {
-            trajectory.push(atomsData.to_dict());
+            trajectory.push(atomsData.toDict());
         });
         trajectory.uuid = editor.avr.uuid;
         model.set("atoms", trajectory);
