@@ -49,7 +49,6 @@ function render({ model, el }) {
 
         };
         editor = new weas.WEAS({ domElement, atoms, viewerConfig, guiConfig });
-        window.editor = editor; // for debugging
         editor.avr.selectedAtomsIndices = model.get("selectedAtomsIndices");
         // editor.avr.atomScales = model.get("atomScales");
         // editor.avr.modelSticks = model.get("modelSticks");
@@ -83,7 +82,7 @@ function render({ model, el }) {
         if (Object.keys(task).length === 0) {
             return;
         }
-        run_task(task, model);
+        run_task(editor, task, model);
     });
     // Listen for changes in the 'atoms' property
     model.on("change:atoms", () => {
@@ -232,7 +231,7 @@ function resolveFunctionFromString(editor, path) {
     }
   }
 
-  function run_task(task, model) {
+  function run_task(editor, task, model) {
     console.log("task: ", task);
     switch (task.name) {
         case "exportImage":
@@ -244,8 +243,7 @@ function resolveFunctionFromString(editor, path) {
         default:
             // Extract the method based on the 'name' path
             const method = resolveFunctionFromString(editor, task.name);
-            console.log("method: ", method)
-            console.log("editor: ", editor.ops.undoStack);
+
             if (typeof method === 'function') {
                 // Prepare args and kwargs
                 const args = task.args || [];

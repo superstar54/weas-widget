@@ -64,8 +64,8 @@ class BaseWidget(anywidget.AnyWidget):
         - name: the name of the task
         - kwargs: a dictionary of arguments
         """
-        self.js_task = task
         self.js_task = {}
+        self.js_task = task
 
     def drawModels(self):
         """Redraw the widget."""
