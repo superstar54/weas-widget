@@ -2,6 +2,7 @@ from .base_class import WidgetWrapper
 from .plugins.vector_field import VectorField
 from .plugins.isosurface import Isosurface
 from .plugins.lattice_plane import LatticePlane
+from copy import deepcopy
 
 
 class AtomsViewer(WidgetWrapper):
@@ -70,3 +71,17 @@ class AtomsViewer(WidgetWrapper):
     def draw(self):
         """Redraw the widget."""
         self._widget.send_js_task({"name": "avr.drawModels", "kwargs": {}})
+
+    def set_attribute(self, name, value, domain="atoms"):
+        """Set an attribute of the widget."""
+        atoms = deepcopy(self._widget.atoms)
+        atoms["attributes"][domain][name] = value
+        self._widget.atoms = atoms
+        # update the widget
+        self._widget.send_js_task(
+            {"name": "avr.setAttribute", "args": [name, value, domain]}
+        )
+
+    def get_attribute(self, name):
+        """Get an attribute of the widget."""
+        raise NotImplementedError("This method is not implemented yet.")
