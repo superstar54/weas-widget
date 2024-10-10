@@ -19,6 +19,25 @@ Supported style are:
 #. **VESTA**: https://jp-minerals.org/vesta/en/
 #. **CPK**: https://en.wikipedia.org/wiki/CPK_coloring
 
+-----------------------------
+Custom color for each species
+-----------------------------
+Use can set custom color for each species. The color can be in the form of hex code or color name.
+
+.. code-block:: python
+
+    from ase.build import molecule
+    from weas_widget import WeasWidget
+    atoms = molecule("C2H6SO")
+    viewer = WeasWidget()
+    viewer.from_ase(atoms)
+    # set the color for each species
+    viewer.avr.set_attribute(name="color", value={ "C": "red", "H": "#b434eb", "O": "#34eb77", "S": "#FFFF00" }, domain="species")
+    viewer
+
+.. image:: _static/images/example_color_by_species.png
+   :width: 6cm
+
 
 Color by attribute
 ----------------------
