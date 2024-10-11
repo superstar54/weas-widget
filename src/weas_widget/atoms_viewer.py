@@ -24,6 +24,7 @@ class AtomsViewer(WidgetWrapper):
         "model_sticks": "modelSticks",
         "atom_scales": "atomScales",
         "model_polyhedras": "modelPolyhedras",
+        "phonon_setting": "phonon",
     }
 
     _extra_allowed_attrs = ["vf", "iso", "lp", "atoms"]

@@ -36,7 +36,7 @@ One can visualize the phonon dispersion via lattice vibrations. One only need to
     from ase.build import bulk
     from weas_widget import WeasWidget
     atoms = bulk("Fe", cubic=True)
-    phonon = {"eigenvectors": np.array([[[0, 0], [0, 0],[0.5, 0]],
+    phonon_setting = {"eigenvectors": np.array([[[0, 0], [0, 0],[0.5, 0]],
                                         [[0, 0], [0, 0], [-0.5, 0]]]
                                        ),
             "kpoint": [0, 0, 0], # optional
@@ -48,7 +48,7 @@ One can visualize the phonon dispersion via lattice vibrations. One only need to
             }
     viewer = WeasWidget()
     viewer.from_ase(atoms)
-    viewer._widget.phonon = phonon
+    viewer.avr.phonon_setting = phonon_setting
     viewer
 
 
