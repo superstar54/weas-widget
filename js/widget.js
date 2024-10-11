@@ -1,7 +1,7 @@
 // if we want test weas package, clone the weas repo and import the weas module, then use the following import
-import * as weas from "../../weas/src/index.js";
+// import * as weas from "../../weas/src/index.js";
 // if not, then use the following import
-// import * as weas from "weas";
+import * as weas from "weas";
 import "./widget.css";
 
 
