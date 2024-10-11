@@ -1,7 +1,7 @@
 // if we want test weas package, clone the weas repo and import the weas module, then use the following import
-// import * as weas from "../../weas/src/index.js";
+import * as weas from "../../weas/src/index.js";
 // if not, then use the following import
-import * as weas from "weas";
+// import * as weas from "weas";
 import "./widget.css";
 
 
@@ -45,6 +45,7 @@ function render({ model, el }) {
             _atomLabelType: model.get("atomLabelType"),
             _showCell: model.get("showCell"),
             _showBondedAtoms: model.get("showBondedAtoms"),
+            _hideLongBonds: model.get("hideLongBonds"),
             _boundary: model.get("boundary"),
 
         };
@@ -67,6 +68,19 @@ function render({ model, el }) {
         editor.instancedMeshPrimitive.fromSettings(model.get("instancedMeshPrimitive"));
         editor.instancedMeshPrimitive.drawMesh();
         //
+        const phonon = model.get("phonon");
+        if (phonon) {
+            editor.avr.fromPhononMode({
+                atoms: atoms,
+                eigenvectors: phonon.eigenvectors,
+                amplitude: phonon.amplitude,
+                nframes: phonon.nframes,
+                kpoint: phonon.kpoint,
+                repeat: phonon.repeat,
+                color: phonon.color,
+                radius: phonon.radius,
+            });
+        }
         editor.render();
         return editor;
     };
@@ -97,12 +111,13 @@ function render({ model, el }) {
         console.log("update viewer from Python.");
     });
     // Listen for changes in the 'objectUpdated' property
-    domElement.addEventListener('weas', (event) => {
-        const detail = event.detail; // event.detail contains the updated data
-        model.set("python_task", event.detail);
-        model.save_changes();
-        console.log("Get event from weas: ");
-    });
+    // disable this event, because it will be triggered too many times in animation
+    // domElement.addEventListener('weas', (event) => {
+    //     const detail = event.detail; // event.detail contains the updated data
+    //     model.set("python_task", event.detail);
+    //     model.save_changes();
+    //     console.log("Get event from weas: ");
+    // });
     model.on("change:python_task", () => {
         const python_task = model.get("python_task");
         console.log("on change, python_task: ", python_task)
