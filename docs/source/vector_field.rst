@@ -28,22 +28,27 @@ Show the magnetic moment as a vector field.
 
 Interactive phonon visualization
 --------------------------------
-One can visualize the phonon dispersion via lattice vibrations. One only need to use the eigenstates (calculated with an external software) to generate the trajectory.
+One can visualize the phonon dispersion via lattice vibrations. One only need to use the eigenstates (calculated with an external software) to generate the trajectory. Each eigenvector should has the real and imaginary part. One can also specify the kpoint, amplitude, nframes, repeat, color, and radius.
 
 .. code-block:: python
 
     import numpy as np
     from ase.build import bulk
     from weas_widget import WeasWidget
-    from weas_widget.utils import generate_phonon_trajectory
-
     atoms = bulk("Fe", cubic=True)
-    eigenvector = np.array([[0, -0.0, 0.5], [0, 0.0, -0.5]])
-    trajectory = generate_phonon_trajectory(atoms, eigenvector, repeat=[4, 4, 1])
+    phonon = {"eigenvectors": np.array([[[0, 0], [0, 0],[0.5, 0]],
+                                        [[0, 0], [0, 0], [-0.5, 0]]]
+                                       ),
+            "kpoint": [0, 0, 0], # optional
+            "amplitude": 5,
+            "nframes": 20,
+            "repeat": [4, 4, 1],
+            "color": "blue",
+            "radius": 0.1,
+            }
     viewer = WeasWidget()
-    viewer.from_ase(trajectory)
-    # set a vector field to show the arrow
-    viewer.avr.vf.settings = [{"origins": "positions", "vectors": "movement", "radius": 0.1}]
+    viewer.from_ase(atoms)
+    viewer._widget.phonon = phonon
     viewer
 
 

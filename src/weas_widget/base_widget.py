@@ -29,6 +29,7 @@ class BaseWidget(anywidget.AnyWidget):
     atomLabelType = tl.Unicode("None").tag(sync=True)
     showCell = tl.Bool(True).tag(sync=True)
     showBondedAtoms = tl.Bool(False).tag(sync=True)
+    hideLongBonds = tl.Bool(True).tag(sync=True)
     atomScales = tl.List([]).tag(sync=True)
     modelSticks = tl.List([]).tag(sync=True)
     modelPolyhedras = tl.List([]).tag(sync=True)
@@ -54,6 +55,8 @@ class BaseWidget(anywidget.AnyWidget):
     js_task = tl.Dict({}).tag(sync=True)
     python_task = tl.Dict({}).tag(sync=True)
     debug = tl.Bool(False).tag(sync=True)
+    # phonon
+    phonon = tl.Dict({}).tag(sync=True)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
