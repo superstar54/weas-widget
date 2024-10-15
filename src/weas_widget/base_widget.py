@@ -34,9 +34,9 @@ class BaseWidget(anywidget.AnyWidget):
     modelSticks = tl.List([]).tag(sync=True)
     modelPolyhedras = tl.List([]).tag(sync=True)
     volumetricData = tl.Dict({"values": [[[]]]}).tag(sync=True)
-    isoSettings = tl.List([]).tag(sync=True)
+    isoSettings = tl.Dict([]).tag(sync=True)
     imageData = tl.Unicode("").tag(sync=True)
-    vectorField = tl.List().tag(sync=True)
+    vectorField = tl.Dict().tag(sync=True)
     showVectorField = tl.Bool(True).tag(sync=True)
     guiConfig = tl.Dict({}).tag(sync=True)
     # instanced mesh primitives
@@ -55,6 +55,8 @@ class BaseWidget(anywidget.AnyWidget):
     js_task = tl.Dict({}).tag(sync=True)
     python_task = tl.Dict({}).tag(sync=True)
     debug = tl.Bool(False).tag(sync=True)
+    # bond
+    bondSettings = tl.Dict({}).tag(sync=True)
     # phonon
     phonon = tl.Dict({}).tag(sync=True)
 

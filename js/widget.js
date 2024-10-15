@@ -1,7 +1,7 @@
 // if we want test weas package, clone the weas repo and import the weas module, then use the following import
-// import * as weas from "../../weas/src/index.js";
+import * as weas from "../../weas/src/index.js";
 // if not, then use the following import
-import * as weas from "weas";
+// import * as weas from "weas";
 import "./widget.css";
 
 
@@ -33,7 +33,7 @@ function render({ model, el }) {
         } else {
             atoms = new weas.Atoms(atomsData);
         }
-        console.log("atoms: ", atoms);
+        // console.log("atoms: ", atoms);
         const guiConfig = model.get("guiConfig");
         const viewerConfig = {
              debug: model.get("debug"),
@@ -47,15 +47,20 @@ function render({ model, el }) {
             _showBondedAtoms: model.get("showBondedAtoms"),
             _hideLongBonds: model.get("hideLongBonds"),
             _boundary: model.get("boundary"),
-
         };
         editor = new weas.WEAS({ domElement, atoms, viewerConfig, guiConfig });
+        window.editor = editor; // for debugging
         editor.avr.selectedAtomsIndices = model.get("selectedAtomsIndices");
         // editor.avr.atomScales = model.get("atomScales");
         // editor.avr.modelSticks = model.get("modelSticks");
         // editor.avr.modelPolyhedras = model.get("modelPolyhedras");
+        // bond settings
+        console.log("bondSettings: ", model.get("bondSettings"));
+        editor.avr.bondManager.fromSettings(model.get("bondSettings"));
+        // console.log("bondManager: ", editor.avr.bondManager);
         // volumetric data
         editor.avr.isosurfaceManager.volumetricData = createVolumeData(model.get("volumetricData"), atoms.cell);
+        console.log("isosettings: ", model.get("isoSettings"));
         editor.avr.isosurfaceManager.fromSettings(model.get("isoSettings"));
         // vector field
         editor.avr.VFManager.fromSettings(model.get("vectorField"));
@@ -69,6 +74,7 @@ function render({ model, el }) {
         editor.instancedMeshPrimitive.drawMesh();
         //
         const phonon = model.get("phonon");
+        console.log("phonon: ", phonon);
         if (phonon) {
             editor.avr.fromPhononMode({
                 atoms: atoms,
@@ -159,6 +165,11 @@ function render({ model, el }) {
     model.on("change:modelPolyhedras", () => {editor.avr.modelPolyhedras = model.get("modelPolyhedras");});
     model.on("change:selectedAtomsIndices", () => {editor.avr.selectedAtomsIndices = model.get("selectedAtomsIndices");});
     model.on("change:boundary", () => {editor.avr.boundary = model.get("boundary");});
+    // bond settings
+    model.on("change:bondSettings", () => {
+        const data = model.get("bondSettings");
+        editor.avr.bondManager.fromSettings(data);
+    });
     // volumetric data
     model.on("change:volumetricData", () => {
         const data = model.get("volumetricData");
