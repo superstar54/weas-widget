@@ -3,6 +3,7 @@ from .plugins.vector_field import VectorField
 from .plugins.isosurface import Isosurface
 from .plugins.lattice_plane import LatticePlane
 from .plugins.bond import BondManager
+from .plugins.species import SpeciesManager
 from copy import deepcopy
 
 
@@ -14,7 +15,6 @@ class AtomsViewer(WidgetWrapper):
         "model_style": "modelStyle",
         "selected_atoms_indices": "selectedAtomsIndices",
         "boundary": "boundary",
-        "color_type": "colorType",
         "color_by": "colorBy",
         "color_ramp": "colorRamp",
         "show_cell": "showCell",
@@ -28,7 +28,7 @@ class AtomsViewer(WidgetWrapper):
         "phonon_setting": "phonon",
     }
 
-    _extra_allowed_attrs = ["vf", "iso", "lp", "atoms", "bond"]
+    _extra_allowed_attrs = ["species", "vf", "iso", "lp", "atoms", "bond", "color_type"]
 
     def __init__(self, _widget):
 
@@ -38,6 +38,7 @@ class AtomsViewer(WidgetWrapper):
         setattr(self, "iso", Isosurface(_widget))
         setattr(self, "lp", LatticePlane(_widget))
         setattr(self, "bond", BondManager(_widget))
+        setattr(self, "species", SpeciesManager(_widget))
 
     @property
     def atoms(self):
@@ -53,6 +54,8 @@ class AtomsViewer(WidgetWrapper):
         self._widget.atomScales = [1] * natom
         self._widget.modelSticks = [0] * natom
         self._widget.modelPolyhedras = [0] * natom
+        # species
+        self.species.update_atoms()
         # bond
         self.bond.update_atoms()
         # vector field
@@ -75,3 +78,13 @@ class AtomsViewer(WidgetWrapper):
     def get_attribute(self, name):
         """Get an attribute of the widget."""
         raise NotImplementedError("This method is not implemented yet.")
+
+    @property
+    def color_type(self):
+        return self._widget.colorType
+
+    @color_type.setter
+    def color_type(self, value):
+        self._widget.colorType = value
+        self.species.update_atoms()
+        self.bond.update_atoms()

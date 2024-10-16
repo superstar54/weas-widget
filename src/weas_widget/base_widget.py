@@ -24,6 +24,8 @@ class BaseWidget(anywidget.AnyWidget):
     colorBy = tl.Unicode("Element").tag(sync=True)
     colorType = tl.Unicode("CPK").tag(sync=True)
     colorRamp = tl.List(["red", "blue"]).tag(sync=True)
+    # radius
+    radiusType = tl.Unicode("Covalent").tag(sync=True)
     # material
     materialType = tl.Unicode("Standard").tag(sync=True)
     atomLabelType = tl.Unicode("None").tag(sync=True)
@@ -55,6 +57,8 @@ class BaseWidget(anywidget.AnyWidget):
     js_task = tl.Dict({}).tag(sync=True)
     python_task = tl.Dict({}).tag(sync=True)
     debug = tl.Bool(False).tag(sync=True)
+    # species
+    speciesSettings = tl.Dict({}).tag(sync=True)
     # bond
     bondSettings = tl.Dict({}).tag(sync=True)
     # phonon

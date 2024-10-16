@@ -1,6 +1,5 @@
 from ..base_class import WidgetWrapper
-from ase.data.colors import cpk_colors
-from ase.data import covalent_radii, atomic_numbers
+from weas_widget.data import default_bond_pairs
 
 
 class BondManager(WidgetWrapper):
@@ -21,19 +20,17 @@ class BondManager(WidgetWrapper):
 
     def get_default_settings(self):
         settings = {}
-        species_dict = self._widget.atoms.get("species", {})
-        for species1 in species_dict:
-            for species2 in species_dict:
-                element1 = atomic_numbers[species_dict[species1]]
-                element2 = atomic_numbers[species_dict[species2]]
-                color1 = cpk_colors[element1]
-                color2 = cpk_colors[element2]
+        species_dict = self._widget.speciesSettings
+        for species1, data1 in species_dict.items():
+            for species2, data2 in species_dict.items():
+                if (data1["element"], data2["element"]) not in default_bond_pairs:
+                    continue
                 settings[f"[{species1}, {species2}]"] = {
                     "species1": species1,
                     "species2": species2,
-                    "color1": color1,
-                    "color2": color2,
+                    "color1": data1["color"],
+                    "color2": data2["color"],
                     "min": 0,
-                    "max": (covalent_radii[element1] + covalent_radii[element2]) * 1.1,
+                    "max": (data1["radius"] + data2["radius"]) * 1.1,
                 }
         return settings

@@ -41,6 +41,7 @@ function render({ model, el }) {
             _colorBy: model.get("colorBy"),
             _colorType: model.get("colorType"),
             _colorRamp: model.get("colorRamp"),
+            _radiusType: model.get("radiusType"),
             _materialType: model.get("materialType"),
             _atomLabelType: model.get("atomLabelType"),
             _showCell: model.get("showCell"),
@@ -49,15 +50,16 @@ function render({ model, el }) {
             _boundary: model.get("boundary"),
         };
         editor = new weas.WEAS({ domElement, atoms, viewerConfig, guiConfig });
-        window.editor = editor; // for debugging
+        // window.editor = editor; // for debugging
         editor.avr.selectedAtomsIndices = model.get("selectedAtomsIndices");
         // editor.avr.atomScales = model.get("atomScales");
         // editor.avr.modelSticks = model.get("modelSticks");
         // editor.avr.modelPolyhedras = model.get("modelPolyhedras");
+        // species settings
+        editor.avr.atomManager.fromSettings(model.get("speciesSettings"));
         // bond settings
-        console.log("bondSettings: ", model.get("bondSettings"));
+        // console.log("bondSettings: ", model.get("bondSettings"));
         editor.avr.bondManager.fromSettings(model.get("bondSettings"));
-        // console.log("bondManager: ", editor.avr.bondManager);
         // volumetric data
         editor.avr.isosurfaceManager.volumetricData = createVolumeData(model.get("volumetricData"), atoms.cell);
         console.log("isosettings: ", model.get("isoSettings"));
