@@ -36,7 +36,7 @@ function render({ model, el }) {
         // console.log("atoms: ", atoms);
         const guiConfig = model.get("guiConfig");
         const viewerConfig = {
-             debug: model.get("debug"),
+             logLevel: model.get("logLevel"),
             _modelStyle: model.get("modelStyle"),
             _colorBy: model.get("colorBy"),
             _colorType: model.get("colorType"),
@@ -67,9 +67,6 @@ function render({ model, el }) {
         // vector field
         editor.avr.VFManager.fromSettings(model.get("vectorField"));
         editor.avr.showVectorField = model.get("showVectorField");
-        // camera settings
-        const cameraSetting = model.get("cameraSetting");
-        editor.tjs.updateCameraAndControls(cameraSetting);
         editor.avr.drawModels();
         // mesh primitives
         editor.instancedMeshPrimitive.fromSettings(model.get("instancedMeshPrimitive"));
@@ -77,7 +74,8 @@ function render({ model, el }) {
         //
         const phonon = model.get("phonon");
         console.log("phonon: ", phonon);
-        if (phonon) {
+        // if phone is not empty object, then create phonon mode
+        if (Object.keys(phonon).length > 0) {
             editor.avr.fromPhononMode({
                 atoms: atoms,
                 eigenvectors: phonon.eigenvectors,
@@ -89,14 +87,14 @@ function render({ model, el }) {
                 radius: phonon.radius,
             });
         }
+        // camera settings
+        const cameraSetting = model.get("cameraSetting");
+        editor.tjs.updateCameraAndControls(cameraSetting);
         editor.render();
         return editor;
     };
     // Initial rendering
-    setTimeout(() => {
-        editor = renderAtoms();
-            }, 10
-    );
+    editor = renderAtoms();
     // js task
     model.on("change:js_task", () => {
         const task = model.get("js_task");

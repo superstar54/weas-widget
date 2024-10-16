@@ -15,6 +15,7 @@ class BaseWidget(anywidget.AnyWidget):
 
     # indicate if the widget is displayed and available for interaction.
     ready = tl.Bool(False).tag(sync=True)
+    logLevel = tl.Unicode("info").tag(sync=True)
     # atoms can be a dictionary or a list of dictionaries
     atoms = tl.Union([tl.Dict({}), tl.List(tl.Dict({}))]).tag(sync=True)
     selectedAtomsIndices = tl.List([]).tag(sync=True)
