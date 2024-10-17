@@ -34,7 +34,7 @@ class SpeciesManager(WidgetWrapper):
         for species in species_dict:
             element = species_dict[species]
             number = atomic_numbers[element]
-            color = color_data[self._widget.colorType][number]
+            color = list(color_data[self._widget.colorType][number])
             settings[species] = {
                 "element": element,
                 "symbol": species,
