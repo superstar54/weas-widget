@@ -1,6 +1,4 @@
 import difflib
-from copy import deepcopy
-from typing import Any, Dict, Optional
 from functools import wraps
 
 
@@ -71,73 +69,76 @@ def with_on_change(method):
     return wrapper
 
 
-class DictWrapper:
-    def __init__(self, widget: Any, key: str):
+class ChangeTrackingDict(dict):
+    def __init__(self, *args, widget=None, key=None, parent=None, **kwargs):
+        self._changed = False
+        self._parent = parent
         self._widget = widget
         self._key = key
+        super().__init__(*args, **kwargs)
 
-    @property
-    def data(self) -> Dict:
-        return getattr(self._widget, self._key)
+        # Wrap any nested dictionaries
+        for k, value in self.items():
+            if isinstance(value, dict):
+                nested_dict = ChangeTrackingDict(value, parent=self)
+                super().__setitem__(k, nested_dict)
+        self._mark_changed()
 
-    def __getitem__(self, key: Any) -> Any:
-        return self.data[key]
+    def __setitem__(self, key, value):
+        if isinstance(value, dict) and not isinstance(value, ChangeTrackingDict):
+            value = ChangeTrackingDict(value, parent=self)
+            value._parent = self
+        super().__setitem__(key, value)
+        self._mark_changed()
 
-    @with_on_change
-    def __setitem__(self, key: Any, value: Any):
-        if self.data.get(key) != value:
-            self.data[key] = value
+    def __delitem__(self, key):
+        super().__delitem__(key)
+        self._mark_changed()
 
-    @with_on_change
-    def __delitem__(self, key: Any):
-        if key in self.data:
-            del self.data[key]
-
-    def __len__(self) -> int:
-        return len(self.data)
-
-    def __iter__(self):
-        return iter(self.data)
-
-    def __repr__(self) -> str:
-        return repr(self.data)
-
-    def __contains__(self, key: Any) -> bool:
-        return key in self.data
-
-    def get(self, key: Any, default: Optional[Any] = None) -> Any:
-        return self.data.get(key, default)
-
-    def items(self):
-        return self.data.items()
-
-    def keys(self):
-        return self.data.keys()
-
-    def values(self):
-        return self.data.values()
-
-    @with_on_change
-    def update(self, other: Dict):
-        if other:
-            self.data.update(other)
-
-    @with_on_change
-    def pop(self, key: Any, default: Optional[Any] = None) -> Any:
-        return self.data.pop(key, default)
-
-    @with_on_change
-    def popitem(self) -> tuple:
-        return self.data.popitem()
-
-    @with_on_change
     def clear(self):
-        if self.data:
-            self.data.clear()
+        super().clear()
+        self._mark_changed()
 
-    def _on_change(self, value=None):
-        print("on_change")
-        if value is not None:
-            setattr(self._widget, self._key, value)
+    def pop(self, key, default=None):
+        data = super().pop(key, default)
+        self._mark_changed()
+        return data
+
+    def popitem(self):
+        data = super().popitem()
+        self._mark_changed()
+        return data
+
+    def update(self, *args, **kwargs):
+        super().update(*args, **kwargs)
+        self._mark_changed()
+
+    def _mark_changed(self):
+        """Set the changed flag to True, notify parent, and update widget if set."""
+        self._changed = True
+        if self._parent:
+            self._parent._mark_changed()
         else:
-            setattr(self._widget, self._key, deepcopy(self.data))
+            if not (self._widget and self._key):
+                raise ValueError("Widget and key must be set to update the widget.")
+            setattr(self._widget, self._key, self.as_dict())
+
+    def has_changed(self):
+        return self._changed
+
+    def reset_changed_flag(self):
+        """Reset the changed flag in this and all nested ChangeTrackingDicts."""
+        self._changed = False
+        for value in self.values():
+            if isinstance(value, ChangeTrackingDict):
+                value.reset_changed_flag()
+
+    def as_dict(self):
+        """Recursively convert ChangeTrackingDict to a standard dict."""
+        result = {}
+        for key, value in self.items():
+            if isinstance(value, ChangeTrackingDict):
+                result[key] = value.as_dict()
+            else:
+                result[key] = value
+        return result
