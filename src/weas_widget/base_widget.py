@@ -42,6 +42,8 @@ class BaseWidget(anywidget.AnyWidget):
     vectorField = tl.Dict().tag(sync=True)
     showVectorField = tl.Bool(True).tag(sync=True)
     guiConfig = tl.Dict({}).tag(sync=True)
+    # animation
+    currentFrame = tl.Int(0).tag(sync=True)
     # instanced mesh primitives
     instancedMeshPrimitive = tl.List(tl.Dict({})).tag(sync=True)
     # any mesh
