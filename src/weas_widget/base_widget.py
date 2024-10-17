@@ -23,7 +23,7 @@ class BaseWidget(anywidget.AnyWidget):
     modelStyle = tl.Int(0).tag(sync=True)
     # color
     colorBy = tl.Unicode("Element").tag(sync=True)
-    colorType = tl.Unicode("CPK").tag(sync=True)
+    colorType = tl.Unicode("JMOL").tag(sync=True)
     colorRamp = tl.List(["red", "blue"]).tag(sync=True)
     # radius
     radiusType = tl.Unicode("Covalent").tag(sync=True)
