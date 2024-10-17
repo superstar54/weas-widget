@@ -4,8 +4,10 @@ Use can control the bond using `avr.bond.settings`. For example, we delete the b
 
 .. code-block:: python
 
+    from copy import deepcopy
+
     # it's important to deepcopy the settings
-    settings = viewer1.avr.bond.settings.copy()
+    settings = deepcopy(viewer1.avr.bond.settings)
     del settings['[Ti, Ca]']
     del settings['[Ca, Ti]']
     # it's important to update the settings as a whole

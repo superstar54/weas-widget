@@ -28,6 +28,8 @@ Use can set custom color for each species. The color can be in the form of hex c
 
     from ase.build import molecule
     from weas_widget import WeasWidget
+    from copy import deepcopy
+
     atoms = molecule("C2H6SO")
     viewer = WeasWidget()
     viewer.from_ase(atoms)
