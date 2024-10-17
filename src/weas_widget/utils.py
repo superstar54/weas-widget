@@ -32,7 +32,7 @@ class ASEAdapter:
         attributes = {"atom": {}, "species": {}}
         for key in ase_atoms.arrays.keys():
             if key not in ["positions", "numbers"]:
-                attributes["atom"][key] = ase_atoms.arrays[key]
+                attributes["atom"][key] = ase_atoms.arrays[key].tolist()
 
         weas_atoms = {
             "species": species,
