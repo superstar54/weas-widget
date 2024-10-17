@@ -33,43 +33,49 @@ function render({ model, el }) {
         } else {
             atoms = new weas.Atoms(atomsData);
         }
-        console.log("atoms: ", atoms);
+        // console.log("atoms: ", atoms);
         const guiConfig = model.get("guiConfig");
         const viewerConfig = {
-             debug: model.get("debug"),
+             logLevel: model.get("logLevel"),
             _modelStyle: model.get("modelStyle"),
             _colorBy: model.get("colorBy"),
             _colorType: model.get("colorType"),
             _colorRamp: model.get("colorRamp"),
+            _radiusType: model.get("radiusType"),
             _materialType: model.get("materialType"),
             _atomLabelType: model.get("atomLabelType"),
             _showCell: model.get("showCell"),
             _showBondedAtoms: model.get("showBondedAtoms"),
             _hideLongBonds: model.get("hideLongBonds"),
             _boundary: model.get("boundary"),
-
         };
         editor = new weas.WEAS({ domElement, atoms, viewerConfig, guiConfig });
+        // window.editor = editor; // for debugging
         editor.avr.selectedAtomsIndices = model.get("selectedAtomsIndices");
         // editor.avr.atomScales = model.get("atomScales");
         // editor.avr.modelSticks = model.get("modelSticks");
         // editor.avr.modelPolyhedras = model.get("modelPolyhedras");
+        // species settings
+        editor.avr.atomManager.fromSettings(model.get("speciesSettings"));
+        // bond settings
+        // console.log("bondSettings: ", model.get("bondSettings"));
+        editor.avr.bondManager.fromSettings(model.get("bondSettings"));
         // volumetric data
         editor.avr.isosurfaceManager.volumetricData = createVolumeData(model.get("volumetricData"), atoms.cell);
+        console.log("isosettings: ", model.get("isoSettings"));
         editor.avr.isosurfaceManager.fromSettings(model.get("isoSettings"));
         // vector field
         editor.avr.VFManager.fromSettings(model.get("vectorField"));
         editor.avr.showVectorField = model.get("showVectorField");
-        // camera settings
-        const cameraSetting = model.get("cameraSetting");
-        editor.tjs.updateCameraAndControls(cameraSetting);
         editor.avr.drawModels();
         // mesh primitives
         editor.instancedMeshPrimitive.fromSettings(model.get("instancedMeshPrimitive"));
         editor.instancedMeshPrimitive.drawMesh();
         //
         const phonon = model.get("phonon");
-        if (phonon) {
+        console.log("phonon: ", phonon);
+        // if phone is not empty object, then create phonon mode
+        if (Object.keys(phonon).length > 0) {
             editor.avr.fromPhononMode({
                 atoms: atoms,
                 eigenvectors: phonon.eigenvectors,
@@ -81,14 +87,14 @@ function render({ model, el }) {
                 radius: phonon.radius,
             });
         }
+        // camera settings
+        const cameraSetting = model.get("cameraSetting");
+        editor.tjs.updateCameraAndControls(cameraSetting);
         editor.render();
         return editor;
     };
     // Initial rendering
-    setTimeout(() => {
-        editor = renderAtoms();
-            }, 10
-    );
+    editor = renderAtoms();
     // js task
     model.on("change:js_task", () => {
         const task = model.get("js_task");
@@ -159,6 +165,11 @@ function render({ model, el }) {
     model.on("change:modelPolyhedras", () => {editor.avr.modelPolyhedras = model.get("modelPolyhedras");});
     model.on("change:selectedAtomsIndices", () => {editor.avr.selectedAtomsIndices = model.get("selectedAtomsIndices");});
     model.on("change:boundary", () => {editor.avr.boundary = model.get("boundary");});
+    // bond settings
+    model.on("change:bondSettings", () => {
+        const data = model.get("bondSettings");
+        editor.avr.bondManager.fromSettings(data);
+    });
     // volumetric data
     model.on("change:volumetricData", () => {
         const data = model.get("volumetricData");

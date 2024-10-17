@@ -2,6 +2,8 @@ from .base_class import WidgetWrapper
 from .plugins.vector_field import VectorField
 from .plugins.isosurface import Isosurface
 from .plugins.lattice_plane import LatticePlane
+from .plugins.bond import BondManager
+from .plugins.species import SpeciesManager
 from copy import deepcopy
 
 
@@ -13,7 +15,6 @@ class AtomsViewer(WidgetWrapper):
         "model_style": "modelStyle",
         "selected_atoms_indices": "selectedAtomsIndices",
         "boundary": "boundary",
-        "color_type": "colorType",
         "color_by": "colorBy",
         "color_ramp": "colorRamp",
         "show_cell": "showCell",
@@ -27,7 +28,7 @@ class AtomsViewer(WidgetWrapper):
         "phonon_setting": "phonon",
     }
 
-    _extra_allowed_attrs = ["vf", "iso", "lp", "atoms"]
+    _extra_allowed_attrs = ["species", "vf", "iso", "lp", "atoms", "bond", "color_type"]
 
     def __init__(self, _widget):
 
@@ -36,6 +37,8 @@ class AtomsViewer(WidgetWrapper):
         setattr(self, "vf", VectorField(_widget))
         setattr(self, "iso", Isosurface(_widget))
         setattr(self, "lp", LatticePlane(_widget))
+        setattr(self, "bond", BondManager(_widget))
+        setattr(self, "species", SpeciesManager(_widget))
 
     @property
     def atoms(self):
@@ -51,24 +54,12 @@ class AtomsViewer(WidgetWrapper):
         self._widget.atomScales = [1] * natom
         self._widget.modelSticks = [0] * natom
         self._widget.modelPolyhedras = [0] * natom
-        # magnetic moment vector field
-        # separate spin up and down, add two vector fields
-        if "moment" in atoms["attributes"]["atom"]:
-            moment = atoms["attributes"]["atom"]["moment"]
-            spin_up = [i for i, m in enumerate(moment) if m > 0]
-            spin_down = [i for i, m in enumerate(moment) if m < 0]
-            self.vf.settings = [
-                {
-                    "origins": [atoms["positions"][i] for i in spin_up],
-                    "vectors": [[0, 0, moment[i]] for i in spin_up],
-                    "color": "blue",
-                },
-                {
-                    "origins": [atoms["positions"][i] for i in spin_down],
-                    "vectors": [[0, 0, moment[i]] for i in spin_down],
-                    "color": "red",
-                },
-            ]
+        # species
+        self.species.update_atoms()
+        # bond
+        self.bond.update_atoms()
+        # vector field
+        self.vf.update_atoms()
 
     def draw(self):
         """Redraw the widget."""
@@ -87,3 +78,13 @@ class AtomsViewer(WidgetWrapper):
     def get_attribute(self, name):
         """Get an attribute of the widget."""
         raise NotImplementedError("This method is not implemented yet.")
+
+    @property
+    def color_type(self):
+        return self._widget.colorType
+
+    @color_type.setter
+    def color_type(self, value):
+        self._widget.colorType = value
+        self.species.update_atoms()
+        self.bond.update_atoms()

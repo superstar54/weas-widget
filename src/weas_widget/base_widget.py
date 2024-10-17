@@ -15,6 +15,7 @@ class BaseWidget(anywidget.AnyWidget):
 
     # indicate if the widget is displayed and available for interaction.
     ready = tl.Bool(False).tag(sync=True)
+    logLevel = tl.Unicode("info").tag(sync=True)
     # atoms can be a dictionary or a list of dictionaries
     atoms = tl.Union([tl.Dict({}), tl.List(tl.Dict({}))]).tag(sync=True)
     selectedAtomsIndices = tl.List([]).tag(sync=True)
@@ -22,8 +23,10 @@ class BaseWidget(anywidget.AnyWidget):
     modelStyle = tl.Int(0).tag(sync=True)
     # color
     colorBy = tl.Unicode("Element").tag(sync=True)
-    colorType = tl.Unicode("CPK").tag(sync=True)
+    colorType = tl.Unicode("JMOL").tag(sync=True)
     colorRamp = tl.List(["red", "blue"]).tag(sync=True)
+    # radius
+    radiusType = tl.Unicode("Covalent").tag(sync=True)
     # material
     materialType = tl.Unicode("Standard").tag(sync=True)
     atomLabelType = tl.Unicode("None").tag(sync=True)
@@ -34,9 +37,9 @@ class BaseWidget(anywidget.AnyWidget):
     modelSticks = tl.List([]).tag(sync=True)
     modelPolyhedras = tl.List([]).tag(sync=True)
     volumetricData = tl.Dict({"values": [[[]]]}).tag(sync=True)
-    isoSettings = tl.List([]).tag(sync=True)
+    isoSettings = tl.Dict([]).tag(sync=True)
     imageData = tl.Unicode("").tag(sync=True)
-    vectorField = tl.List().tag(sync=True)
+    vectorField = tl.Dict().tag(sync=True)
     showVectorField = tl.Bool(True).tag(sync=True)
     guiConfig = tl.Dict({}).tag(sync=True)
     # instanced mesh primitives
@@ -55,6 +58,10 @@ class BaseWidget(anywidget.AnyWidget):
     js_task = tl.Dict({}).tag(sync=True)
     python_task = tl.Dict({}).tag(sync=True)
     debug = tl.Bool(False).tag(sync=True)
+    # species
+    speciesSettings = tl.Dict({}).tag(sync=True)
+    # bond
+    bondSettings = tl.Dict({}).tag(sync=True)
     # phonon
     phonon = tl.Dict({}).tag(sync=True)
 

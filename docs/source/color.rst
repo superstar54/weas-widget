@@ -28,11 +28,20 @@ Use can set custom color for each species. The color can be in the form of hex c
 
     from ase.build import molecule
     from weas_widget import WeasWidget
+    from copy import deepcopy
+
     atoms = molecule("C2H6SO")
     viewer = WeasWidget()
     viewer.from_ase(atoms)
-    # set the color for each species
-    viewer.avr.set_attribute(name="color", value={ "C": "red", "H": "#b434eb", "O": "#34eb77", "S": "#FFFF00" }, domain="species")
+    # set the color and radius for each species
+    # it's important to deepcopy the settings
+    settings = deepcopy(viewer.avr.species.settings)
+    settings["C"].update({"color": "red", "radius": 1.0})
+    settings["H"].update({"color": "green", "radius": 0.5})
+    settings["O"].update({"color": "blue", "radius": 0.6})
+    settings["S"].update({"color": "yellow", "radius": 1.2})
+    # it's important to update the settings as a whole
+    viewer.avr.species.settings = settings
     viewer
 
 .. image:: _static/images/example_color_by_species.png
