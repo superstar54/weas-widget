@@ -30,7 +30,10 @@ class SpeciesManager(WidgetWrapper):
 
     def get_default_settings(self):
         settings = {}
-        species_dict = self._widget.atoms.get("species", {})
+        atoms = self._widget.atoms
+        if isinstance(atoms, list):
+            atoms = atoms[0]
+        species_dict = atoms.get("species", {})
         for species in species_dict:
             element = species_dict[species]
             number = atomic_numbers[element]
