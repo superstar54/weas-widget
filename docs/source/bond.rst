@@ -4,14 +4,9 @@ Use can control the bond using `avr.bond.settings`. For example, we delete the b
 
 .. code-block:: python
 
-    from copy import deepcopy
-
-    # it's important to deepcopy the settings
-    settings = deepcopy(viewer1.avr.bond.settings)
-    del settings['[Ti, Ca]']
-    del settings['[Ca, Ti]']
-    # it's important to update the settings as a whole
-    viewer1.avr.bond.settings = settings
-
-.. image:: _static/images/example_bond.png
-   :width: 6cm
+    # delete the bond between Ca and Ti
+    del viewer1.avr.bond.settings['[Ti, Ca]']
+    # change the bond color between Ti and O
+    viewer1.avr.bond.settings['[Ti, O]'].update({"color": "red"})
+    # change the maximum bond length between Ti and O
+    viewer1.avr.bond.settings['[Ti, O]']["max"] = 3.0
