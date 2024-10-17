@@ -21,6 +21,8 @@ class VectorField(WidgetWrapper):
     def set_moment(self):
         """Set magnetic moment vector field."""
         atoms = self._widget.atoms
+        if isinstance(atoms, list):
+            atoms = atoms[0]
         settings = {}
         # separate spin up and down, add two vector fields
         if "moment" in atoms["attributes"]["atom"]:

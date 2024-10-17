@@ -48,6 +48,7 @@ function render({ model, el }) {
             _showBondedAtoms: model.get("showBondedAtoms"),
             _hideLongBonds: model.get("hideLongBonds"),
             _boundary: model.get("boundary"),
+            _currentFrame: model.get("currentFrame"),
         };
         editor = new weas.WEAS({ domElement, atoms, viewerConfig, guiConfig });
         // window.editor = editor; // for debugging
@@ -165,6 +166,10 @@ function render({ model, el }) {
     model.on("change:modelPolyhedras", () => {editor.avr.modelPolyhedras = model.get("modelPolyhedras");});
     model.on("change:selectedAtomsIndices", () => {editor.avr.selectedAtomsIndices = model.get("selectedAtomsIndices");});
     model.on("change:boundary", () => {editor.avr.boundary = model.get("boundary");});
+    // frame
+    model.on("change:currentFrame", () => {
+        editor.avr.currentFrame = model.get("currentFrame");
+    });
     // bond settings
     model.on("change:bondSettings", () => {
         const data = model.get("bondSettings");

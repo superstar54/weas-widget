@@ -25,6 +25,7 @@ class AtomsViewer(WidgetWrapper):
         "model_sticks": "modelSticks",
         "atom_scales": "atomScales",
         "model_polyhedras": "modelPolyhedras",
+        "current_frame": "currentFrame",
         "phonon_setting": "phonon",
     }
 

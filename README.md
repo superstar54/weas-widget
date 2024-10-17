@@ -20,6 +20,9 @@ Features:
 - Isosurfaces
 - Vector fields, e.g., magnetic moments, phonons, ...
 
+## Demo
+Please try the widget in the following links:
+[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/superstar54/weas-widget/blob/main/examples/example.ipynb)
 
 ## Installation
 
