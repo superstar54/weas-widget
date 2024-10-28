@@ -4,6 +4,7 @@ from .plugins.isosurface import Isosurface
 from .plugins.lattice_plane import LatticePlane
 from .plugins.bond import BondManager
 from .plugins.species import SpeciesManager
+from .plugins.highlight import HighlightManager
 from copy import deepcopy
 
 
@@ -30,7 +31,16 @@ class AtomsViewer(WidgetWrapper):
         "phonon_setting": "phonon",
     }
 
-    _extra_allowed_attrs = ["species", "vf", "iso", "lp", "atoms", "bond", "color_type"]
+    _extra_allowed_attrs = [
+        "species",
+        "vf",
+        "iso",
+        "lp",
+        "atoms",
+        "bond",
+        "highlight",
+        "color_type",
+    ]
 
     def __init__(self, _widget):
 
@@ -41,6 +51,7 @@ class AtomsViewer(WidgetWrapper):
         setattr(self, "lp", LatticePlane(_widget))
         setattr(self, "bond", BondManager(_widget))
         setattr(self, "species", SpeciesManager(_widget))
+        setattr(self, "highlight", HighlightManager(_widget))
 
     @property
     def atoms(self):
@@ -62,6 +73,8 @@ class AtomsViewer(WidgetWrapper):
         self.bond.update_atoms()
         # vector field
         self.vf.update_atoms()
+        # highlight
+        self.highlight.update_atoms()
 
     def draw(self):
         """Redraw the widget."""

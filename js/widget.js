@@ -62,6 +62,9 @@ function render({ model, el }) {
         // bond settings
         // console.log("bondSettings: ", model.get("bondSettings"));
         editor.avr.bondManager.fromSettings(model.get("bondSettings"));
+        // highlight settings
+        // console.log("highlightSettings: ", model.get("highlightSettings"));
+        editor.avr.highlightManager.fromSettings(model.get("highlightSettings"));
         // volumetric data
         editor.avr.isosurfaceManager.volumetricData = createVolumeData(model.get("volumetricData"), atoms.cell);
         console.log("isosettings: ", model.get("isoSettings"));

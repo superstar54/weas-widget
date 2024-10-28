@@ -67,6 +67,8 @@ class BaseWidget(anywidget.AnyWidget):
     bondSettings = tl.Dict({}).tag(sync=True)
     # phonon
     phonon = tl.Dict({}).tag(sync=True)
+    # highlight
+    highlightSettings = tl.Dict({}).tag(sync=True)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
