@@ -34,12 +34,27 @@ class BondManager(WidgetWrapper):
             for species2, data2 in species_dict.items():
                 if (data1["element"], data2["element"]) not in default_bond_pairs:
                     continue
-                settings[f"[{species1}, {species2}]"] = {
+                bond_type = default_bond_pairs[(data1["element"], data2["element"])][2]
+                min = 0
+                max = (data1["radius"] + data2["radius"]) * 1.1
+                color1 = data1["color"]
+                color2 = data2["color"]
+                if bond_type == 1:
+                    min = max + 0.4
+                    max = min + 1
+                    color1 = "#808080"
+                    color2 = "#808080"
+                    bond_line_type = 1
+                else:
+                    bond_line_type = 0
+
+                settings[f"{species1}-{species2}"] = {
                     "species1": species1,
                     "species2": species2,
-                    "color1": data1["color"],
-                    "color2": data2["color"],
-                    "min": 0,
-                    "max": (data1["radius"] + data2["radius"]) * 1.1,
+                    "color1": color1,
+                    "color2": color2,
+                    "min": min,
+                    "max": max,
+                    "type": bond_line_type,
                 }
         return settings
