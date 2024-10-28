@@ -47,11 +47,12 @@ function render({ model, el }) {
             _showCell: model.get("showCell"),
             _showBondedAtoms: model.get("showBondedAtoms"),
             _hideLongBonds: model.get("hideLongBonds"),
+            _showHydrogenBonds: model.get("showHydrogenBonds"),
             _boundary: model.get("boundary"),
             _currentFrame: model.get("currentFrame"),
         };
         editor = new weas.WEAS({ domElement, atoms, viewerConfig, guiConfig });
-        // window.editor = editor; // for debugging
+        window.editor = editor; // for debugging
         editor.avr.selectedAtomsIndices = model.get("selectedAtomsIndices");
         // editor.avr.atomScales = model.get("atomScales");
         // editor.avr.modelSticks = model.get("modelSticks");
@@ -221,14 +222,17 @@ function render({ model, el }) {
     model.on("change:cameraZoom", () => {
         const cameraZoom = model.get("cameraZoom");
         editor.tjs.camera.updateZoom(cameraZoom);
+        editor.tjs.render();
     });
     model.on("change:cameraPosition", () => {
         const cameraPosition = model.get("cameraPosition");
         editor.tjs.camera.updatePosition(cameraPosition[0], cameraPosition[1], cameraPosition[2]);
+        editor.tjs.render();
     });
     model.on("change:cameraLookAt", () => {
         const cameraLookAt = model.get("cameraLookAt");
         editor.tjs.controls.target.set(cameraLookAt[0], cameraLookAt[1], cameraLookAt[2]);
+        editor.tjs.controls.update();
         editor.tjs.render();
     });
 }

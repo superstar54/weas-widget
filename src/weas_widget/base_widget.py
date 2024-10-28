@@ -32,6 +32,7 @@ class BaseWidget(anywidget.AnyWidget):
     atomLabelType = tl.Unicode("None").tag(sync=True)
     showCell = tl.Bool(True).tag(sync=True)
     showBondedAtoms = tl.Bool(False).tag(sync=True)
+    showHydrogenBonds = tl.Bool(False).tag(sync=True)
     hideLongBonds = tl.Bool(True).tag(sync=True)
     atomScales = tl.List([]).tag(sync=True)
     modelSticks = tl.List([]).tag(sync=True)
