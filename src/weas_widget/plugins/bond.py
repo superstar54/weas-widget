@@ -30,8 +30,8 @@ class BondManager(WidgetWrapper):
     def get_default_settings(self):
         settings = {}
         species_dict = self._widget.speciesSettings
-        for species1, data1 in species_dict.items():
-            for species2, data2 in species_dict.items():
+        for specie1, data1 in species_dict.items():
+            for specie2, data2 in species_dict.items():
                 if (data1["element"], data2["element"]) not in default_bond_pairs:
                     continue
                 bond_type = default_bond_pairs[(data1["element"], data2["element"])][2]
@@ -48,9 +48,9 @@ class BondManager(WidgetWrapper):
                 else:
                     bond_line_type = 0
 
-                settings[f"{species1}-{species2}"] = {
-                    "species1": species1,
-                    "species2": species2,
+                settings[f"{specie1}-{specie2}"] = {
+                    "specie1": specie1,
+                    "specie2": specie2,
                     "color1": color1,
                     "color2": color2,
                     "min": min,
