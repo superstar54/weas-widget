@@ -52,7 +52,7 @@ function render({ model, el }) {
             _currentFrame: model.get("currentFrame"),
         };
         editor = new weas.WEAS({ domElement, atoms, viewerConfig, guiConfig });
-        window.editor = editor; // for debugging
+        // window.editor = editor; // for debugging
         editor.avr.selectedAtomsIndices = model.get("selectedAtomsIndices");
         // editor.avr.atomScales = model.get("atomScales");
         // editor.avr.modelSticks = model.get("modelSticks");
@@ -82,14 +82,8 @@ function render({ model, el }) {
         // if phone is not empty object, then create phonon mode
         if (Object.keys(phonon).length > 0) {
             editor.avr.fromPhononMode({
+                ...phonon,
                 atoms: atoms,
-                eigenvectors: phonon.eigenvectors,
-                amplitude: phonon.amplitude,
-                nframes: phonon.nframes,
-                kpoint: phonon.kpoint,
-                repeat: phonon.repeat,
-                color: phonon.color,
-                radius: phonon.radius,
             });
         }
         // camera settings

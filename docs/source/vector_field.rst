@@ -40,7 +40,8 @@ One can visualize the phonon dispersion via lattice vibrations. One only need to
                                         [[0, 0], [0, 0], [-0.5, 0]]]
                                        ),
             "kpoint": [0, 0, 0], # optional
-            "amplitude": 5,
+            "amplitude": 5, # scale the motion of the atoms
+            "factor": 1.5, # scale the length of the arrows
             "nframes": 20,
             "repeat": [4, 4, 1],
             "color": "blue",
