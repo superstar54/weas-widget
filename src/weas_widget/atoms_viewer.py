@@ -21,6 +21,7 @@ class AtomsViewer(WidgetWrapper):
         "show_cell": "showCell",
         "show_bonded_atoms": "showBondedAtoms",
         "hide_long_bonds": "hideLongBonds",
+        "show_atom_legend": "showAtomLegend",
         "show_hydrogen_bonds": "showHydrogenBonds",
         "atom_label_type": "atomLabelType",
         "material_type": "materialType",
