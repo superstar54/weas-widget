@@ -17,7 +17,9 @@ Here is an example of drawing isosurfaces for HOMO of H2O molecule.
    viewer = WeasWidget()
    viewer.from_ase(atoms)
    viewer.avr.iso.volumetric_data = {"values": volume}
-   viewer.avr.iso.settings = [{"isovalue": 0.0001, "mode": 0}]
+   viewer.avr.iso.settings = {"positive": {"isovalue": 0.001},
+                              "negative": {"isovalue": -0.001, "color": "yellow"}
+                             }
    viewer
 
 .. figure:: _static/images/example-isosurface.png
