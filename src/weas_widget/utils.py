@@ -40,6 +40,7 @@ class ASEAdapter:
             "positions": positions.tolist(),
             "symbols": symbols,
             "attributes": attributes,
+            "pbc": ase_atoms.get_pbc().tolist(),
         }
         return weas_atoms
 
@@ -56,7 +57,9 @@ class ASEAdapter:
         symbols = [weas_atoms["species"][s] for s in weas_atoms["symbols"]]
         positions = weas_atoms["positions"]
         cell = np.array(weas_atoms["cell"]).reshape(3, 3)
-        ase_atoms = Atoms(symbols=symbols, positions=positions, cell=cell)
+        ase_atoms = Atoms(
+            symbols=symbols, positions=positions, cell=cell, pbc=weas_atoms["pbc"]
+        )
         return ase_atoms
 
 
@@ -72,8 +75,10 @@ class PymatgenAdapter:
         # structure is a Molecule, convert it to Structure
         if isinstance(pymatgen_structure, Molecule):
             cell = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
+            pbc = [False, False, False]
         else:
             cell = pymatgen_structure.lattice.matrix.flatten().tolist()
+            pbc = pymatgen_structure.lattice.pbc
         positions = [site.coords.tolist() for site in pymatgen_structure.sites]
         symbols = [site.species_string for site in pymatgen_structure.sites]
         for i in range(len(symbols)):
@@ -91,6 +96,7 @@ class PymatgenAdapter:
             "positions": positions,
             "symbols": symbols,
             "attributes": attributes,
+            "pbc": pbc,
         }
         return weas_atoms
 
@@ -108,7 +114,7 @@ class PymatgenAdapter:
         if np.allclose(cell, np.zeros((3, 3))):
             structure = Molecule(species, sites)
         else:
-            lattice = Lattice(weas_atoms["cell"])
+            lattice = Lattice(weas_atoms["cell"], pbc=weas_atoms["pbc"])
             structure = Structure(lattice, species, sites, coords_are_cartesian=True)
         return structure
 

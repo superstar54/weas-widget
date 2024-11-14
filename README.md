@@ -135,7 +135,9 @@ volume, atoms = read_cube_data("h2o-homo.cube")
 viewer = WeasWidget()
 viewer.from_ase(atoms)
 viewer.avr.iso.volumetric_data = {"values": volume}
-viewer.avr.iso.settings = [{"isovalue": 0.0001, "mode": 0}]
+viewer.avr.iso.settings = {"positive": {"isovalue": 0.001},
+                           "negative": {"isovalue": -0.001, "color": "yellow"}
+                           }
 viewer
 ```
 <img src="docs/source/_static/images/example-isosurface.png"  width="300px"/>
@@ -166,16 +168,21 @@ Animate vibrational (phonon) modes (computed with external software).
 import numpy as np
 from ase.build import bulk
 from weas_widget import WeasWidget
-from weas_widget.utils import generate_phonon_trajectory
-
 atoms = bulk("Fe", cubic=True)
-eigenvector = np.array([[0, -0.0, 0.5], [0, 0.0, -0.5]])
-trajectory = generate_phonon_trajectory(atoms, eigenvector, repeat=[4, 4, 1])
+phonon_setting = {"eigenvectors": np.array([[[0, 0], [0, 0],[0.5, 0]],
+                                    [[0, 0], [0, 0], [-0.5, 0]]]
+                                    ),
+        "kpoint": [0, 0, 0], # optional
+        "amplitude": 5, # scale the motion of the atoms
+        "factor": 1.5, # scale the length of the arrows
+        "nframes": 20,
+        "repeat": [4, 4, 1],
+        "color": "blue",
+        "radius": 0.1,
+        }
 viewer = WeasWidget()
-viewer.from_ase(trajectory)
-# set a vector field to show the arrow
-viewer.avr.vf.settings = [{"origins": "positions", "vectors": "movement", "radius": 0.1}]
-viewer.avr.vf.show = True
+viewer.from_ase(atoms)
+viewer.avr.phonon_setting = phonon_setting
 viewer
 ```
 
