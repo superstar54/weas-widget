@@ -35,6 +35,14 @@ function render({ model, el }) {
         }
         // console.log("atoms: ", atoms);
         const guiConfig = model.get("guiConfig");
+        if (guiConfig.legend) {
+            guiConfig.legend.enabled = model.get("showAtomLegend");
+        } else {
+            guiConfig.legend = {enabled: model.get("showAtomLegend"),
+                position: "bottom-right",
+            };
+        }
+
         const viewerConfig = {
              logLevel: model.get("logLevel"),
             _modelStyle: model.get("modelStyle"),
@@ -231,6 +239,11 @@ function render({ model, el }) {
         editor.tjs.controls.target.set(cameraLookAt[0], cameraLookAt[1], cameraLookAt[2]);
         editor.tjs.controls.update();
         editor.tjs.render();
+    });
+    // frame
+    model.on("change:showAtomLegend", () => {
+        editor.avr.guiManager.guiConfig.legend.enabled = model.get("showAtomLegend");
+        editor.avr.guiManager.updateLegend();
     });
 }
 function createVolumeData(data, cell=[[1, 0, 0], [0, 1, 0], [0, 0, 1]]) {

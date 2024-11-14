@@ -1,4 +1,4 @@
-from ..base_class import WidgetWrapper
+from ..base_class import WidgetWrapper, ChangeTrackingDict
 
 
 class VectorField(WidgetWrapper):
@@ -6,14 +6,23 @@ class VectorField(WidgetWrapper):
     catalog = "vector_field"
 
     _attribute_map = {
-        "settings": "vectorField",
         "show": "showVectorField",
     }
 
-    _extra_allowed_attrs = []
+    _extra_allowed_attrs = ["_settings", "settings"]
 
     def __init__(self, _widget):
         super().__init__(_widget)
+
+    @property
+    def settings(self):
+        return self._settings
+
+    @settings.setter
+    def settings(self, value):
+        self._settings = ChangeTrackingDict(
+            value, widget=self._widget, key="vectorField"
+        )
 
     def update_atoms(self):
         self.settings = self.set_moment()

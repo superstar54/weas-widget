@@ -69,6 +69,8 @@ class BaseWidget(anywidget.AnyWidget):
     phonon = tl.Dict({}).tag(sync=True)
     # highlight
     highlightSettings = tl.Dict({}).tag(sync=True)
+    #
+    showAtomLegend = tl.Bool(False).tag(sync=True)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
