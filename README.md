@@ -202,6 +202,23 @@ viewer.avr.lp.build_plane()
 
 <img src="docs/source/_static/images/lattice_plane.png"  width="300px"/>
 
+### Slice 2D
+```python
+from ase.build import molecule
+from weas_widget import WeasWidget
+from ase.io.cube import read_cube_data
+volume, atoms = read_cube_data("h2o-homo.cube")
+viewer = WeasWidget()
+viewer.from_ase(atoms)
+viewer.avr.model_style = 1
+viewer.avr.volume_slice.volumetric_data = {"values": volume}
+viewer.avr.volume_slice.settings = {"Slice 1": {"h": 0, "k": 1, "l": 0, "distance": 5.5, "samplingDistance": 0.1 },
+                                    "Slice 2": {"h": 1, "k": 1, "l": 0, "distance": 5.5, "samplingDistance": 0.1 },
+                                   }
+viewer.camera.setting = {"direction": [0.5, 1, 2], "zoom": 1.5}
+viewer
+```
+<img src="docs/source/_static/images/example-volume-slice.png"  width="300px"/>
 
 
 ## Test

@@ -74,9 +74,11 @@ function render({ model, el }) {
         // console.log("highlightSettings: ", model.get("highlightSettings"));
         editor.avr.highlightManager.fromSettings(model.get("highlightSettings"));
         // volumetric data
-        editor.avr.isosurfaceManager.volumetricData = createVolumeData(model.get("volumetricData"), atoms.cell);
-        console.log("isosettings: ", model.get("isoSettings"));
+        editor.avr.volumetricData = createVolumeData(model.get("volumetricData"), atoms.cell);
+        // isosurface
         editor.avr.isosurfaceManager.fromSettings(model.get("isoSettings"));
+        // volume slice
+        editor.avr.volumeSliceManager.fromSettings(model.get("sliceSettings"));
         // vector field
         editor.avr.VFManager.fromSettings(model.get("vectorField"));
         editor.avr.showVectorField = model.get("showVectorField");

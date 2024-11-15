@@ -38,7 +38,6 @@ class BaseWidget(anywidget.AnyWidget):
     modelSticks = tl.List([]).tag(sync=True)
     modelPolyhedras = tl.List([]).tag(sync=True)
     volumetricData = tl.Dict({"values": [[[]]]}).tag(sync=True)
-    isoSettings = tl.Dict([]).tag(sync=True)
     imageData = tl.Unicode("").tag(sync=True)
     vectorField = tl.Dict().tag(sync=True)
     showVectorField = tl.Bool(True).tag(sync=True)
@@ -65,6 +64,10 @@ class BaseWidget(anywidget.AnyWidget):
     speciesSettings = tl.Dict({}).tag(sync=True)
     # bond
     bondSettings = tl.Dict({}).tag(sync=True)
+    # isosurface
+    isoSettings = tl.Dict({}).tag(sync=True)
+    # volume slice
+    sliceSettings = tl.Dict({}).tag(sync=True)
     # phonon
     phonon = tl.Dict({}).tag(sync=True)
     # highlight

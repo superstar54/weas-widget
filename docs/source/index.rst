@@ -29,6 +29,7 @@ A widget to visualize and interact with atomic structures in Jupyter Notebook. I
    boundary
    measurement
    isosurface
+   volume_slice
    vector_field
    lattice_plane
    highlight
