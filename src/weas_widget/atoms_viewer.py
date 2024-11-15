@@ -1,6 +1,7 @@
 from .base_class import WidgetWrapper
 from .plugins.vector_field import VectorField
 from .plugins.isosurface import Isosurface
+from .plugins.volume_slice import VolumeSlice
 from .plugins.lattice_plane import LatticePlane
 from .plugins.bond import BondManager
 from .plugins.species import SpeciesManager
@@ -36,6 +37,7 @@ class AtomsViewer(WidgetWrapper):
         "species",
         "vf",
         "iso",
+        "volume_slice",
         "lp",
         "atoms",
         "bond",
@@ -53,6 +55,7 @@ class AtomsViewer(WidgetWrapper):
         setattr(self, "bond", BondManager(_widget))
         setattr(self, "species", SpeciesManager(_widget))
         setattr(self, "highlight", HighlightManager(_widget))
+        setattr(self, "volume_slice", VolumeSlice(_widget))
 
     @property
     def atoms(self):
