@@ -62,9 +62,6 @@ function render({ model, el }) {
         editor = new weas.WEAS({ domElement, atoms, viewerConfig, guiConfig });
         // window.editor = editor; // for debugging
         editor.avr.selectedAtomsIndices = model.get("selectedAtomsIndices");
-        // editor.avr.atomScales = model.get("atomScales");
-        // editor.avr.modelSticks = model.get("modelSticks");
-        // editor.avr.modelPolyhedras = model.get("modelPolyhedras");
         // species settings
         editor.avr.atomManager.fromSettings(model.get("speciesSettings"));
         // bond settings
@@ -82,6 +79,16 @@ function render({ model, el }) {
         // vector field
         editor.avr.VFManager.fromSettings(model.get("vectorField"));
         editor.avr.showVectorField = model.get("showVectorField");
+        // if the atomScales is not a empty array, then update the atomScales
+        if (model.get("atomScales").length > 0) {
+            editor.avr.atomScales = model.get("atomScales");
+        }
+        if (model.get("modelSticks").length > 0) {
+            editor.avr.modelSticks = model.get("modelSticks");
+        }
+        if (model.get("modelPolyhedras").length > 0) {
+            editor.avr.modelPolyhedras = model.get("modelPolyhedras");
+        }
         editor.avr.drawModels();
         // mesh primitives
         editor.instancedMeshPrimitive.fromSettings(model.get("instancedMeshPrimitive"));
