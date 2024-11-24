@@ -67,6 +67,7 @@ function render({ model, el }) {
         // bond settings
         // console.log("bondSettings: ", model.get("bondSettings"));
         editor.avr.bondManager.fromSettings(model.get("bondSettings"));
+        editor.avr.bondManager.showOutBoundaryBonds = model.get("showOutBoundaryBonds");
         // highlight settings
         // console.log("highlightSettings: ", model.get("highlightSettings"));
         editor.avr.highlightManager.fromSettings(model.get("highlightSettings"));

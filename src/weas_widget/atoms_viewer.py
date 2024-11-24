@@ -24,6 +24,7 @@ class AtomsViewer(WidgetWrapper):
         "hide_long_bonds": "hideLongBonds",
         "show_atom_legend": "showAtomLegend",
         "show_hydrogen_bonds": "showHydrogenBonds",
+        "show_out_boundary_bonds": "showOutBoundaryBonds",
         "atom_label_type": "atomLabelType",
         "material_type": "materialType",
         "model_sticks": "modelSticks",
