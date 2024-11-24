@@ -105,6 +105,13 @@ viewer.save_image("/home/xing/filename.png")
 viewer.download_image("filename.png")
 ```
 
+### Different styles for the atoms.
+
+
+<img src="docs/source/_static/images/example-custom-model-style.png"  width="500px"/>
+
+
+
 ### Visualizing crystal structures
 For a nice visualization of a crystal, show
 - unit cell
