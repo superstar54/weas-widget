@@ -67,10 +67,6 @@ class AtomsViewer(WidgetWrapper):
         # initialize atomScales
         if isinstance(atoms, list):
             atoms = atoms[0]
-        natom = len(atoms["symbols"])
-        self._widget.atomScales = [1] * natom
-        self._widget.modelSticks = [0] * natom
-        self._widget.modelPolyhedras = [0] * natom
         # species
         self.species.update_atoms()
         # bond
