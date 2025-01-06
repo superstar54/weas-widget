@@ -195,8 +195,8 @@ function render({ model, el }) {
     model.on("change:volumetricData", () => {
         const data = model.get("volumetricData");
         console.log("volumetricData: ", data);
-        editor.avr.isosurfaceManager.volumetricData = createVolumeData(data, editor.avr.atoms.cell);
-        console.log("volumeData: ", editor.avr.isosurfaceManager.volumetricData);
+        editor.avr.volumetricData = createVolumeData(data, editor.avr.atoms.cell);
+        console.log("volumeData: ", editor.avr.volumetricData);
     });
     model.on("change:isoSettings", () => {
         const isoSettings = model.get("isoSettings");
