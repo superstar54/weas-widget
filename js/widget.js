@@ -10,6 +10,36 @@ function render({ model, el }) {
     let editor;
     let domElement = document.createElement("div");
     el.appendChild(domElement);
+    // Listen for the custom 'atomsUpdated' event
+    domElement.addEventListener('atomsUpdated', (event) => {
+        // event detail is a trajectory: a array of atoms data
+        // loop all the atoms and export to a dict
+        const trajectory = [];
+        event.detail.forEach((atomsData) => {
+            trajectory.push(atomsData.toDict());
+        });
+        trajectory.uuid = editor.avr.uuid;
+        model.set("atoms", trajectory);
+        model.save_changes();
+        // console.log("updatedAtoms: ", trajectory);
+        console.log("Updated atoms from event.")
+    });
+    // Listen for the custom 'viewerUpdated' event
+    // this include modelStyle, colorType, materialType, atomLabelType, etc
+    domElement.addEventListener('viewerUpdated', (event) => {
+        const data = event.detail; // event.detail contains the updated data
+        // loop through the data and update the model
+        // console.log("viewerUpdated: ", data);
+        for (const key in data) {
+            // skip atomScales, modelSticks, modelPolyhedras
+            if (key === "atomScales" || key === "modelSticks" || key === "modelPolyhedras") {
+                continue;
+            }
+            model.set(key, data[key]);
+        }
+        model.save_changes();
+        console.log("Updated viewer: ", data);
+    });
     // To scope styles to just elements added by this widget, adding a class to the root el.
     el.classList.add("weas-widget");
     // Stop propagation of mouse and keyboard events from the viewer to jupyter notebook
@@ -145,31 +175,7 @@ function render({ model, el }) {
         const python_task = model.get("python_task");
         console.log("on change, python_task: ", python_task)
       });
-    // Listen for the custom 'atomsUpdated' event
-    domElement.addEventListener('atomsUpdated', (event) => {
-        // event detail is a trajectory: a array of atoms data
-        // loop all the atoms and export to a dict
-        const trajectory = [];
-        event.detail.forEach((atomsData) => {
-            trajectory.push(atomsData.toDict());
-        });
-        trajectory.uuid = editor.avr.uuid;
-        model.set("atoms", trajectory);
-        model.save_changes();
-        // console.log("updatedAtoms: ", trajectory);
-        console.log("Updated atoms from event.")
-    });
-    // Listen for the custom 'viewerUpdated' event
-    // this include modelStyle, colorType, materialType, atomLabelType, etc
-    domElement.addEventListener('viewerUpdated', (event) => {
-        const data = event.detail; // event.detail contains the updated data
-        // loop through the data and update the model
-        for (const key in data) {
-            model.set(key, data[key]);
-        }
-        model.save_changes();
-        console.log("Updated viewer: ", data);
-    });
+
     // Listen for changes in the 'viewer' property
     model.on("change:modelStyle", () => {editor.avr.modelStyle = model.get("modelStyle");});
     model.on("change:colorType", () => {editor.avr.colorType = model.get("colorType");});

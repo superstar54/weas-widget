@@ -70,7 +70,7 @@ class WeasWidget(ipw.HBox):
             }
         )
 
-    def save_image(self, filename="weas-model.png", resolutionScale=5):
+    def save_image(self, filename="weas-model.png", resolutionScale=5, callback=None):
         import base64
 
         def _save_image():
@@ -85,6 +85,8 @@ class WeasWidget(ipw.HBox):
             image_data = base64.b64decode(base64_data)
             with open(filename, "wb") as f:
                 f.write(image_data)
+            if callback:
+                callback(filename)
 
         thread = threading.Thread(target=_save_image, args=(), daemon=False)
         thread.start()
