@@ -31,6 +31,10 @@ function render({ model, el }) {
         // loop through the data and update the model
         // console.log("viewerUpdated: ", data);
         for (const key in data) {
+            // skip atomScales, modelSticks, modelPolyhedras
+            if (key === "atomScales" || key === "modelSticks" || key === "modelPolyhedras") {
+                continue;
+            }
             model.set(key, data[key]);
         }
         model.save_changes();
