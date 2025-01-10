@@ -1,3 +1,4 @@
+from __future__ import annotations
 from ..base_class import WidgetWrapper, ChangeTrackingDict
 from weas_widget.data import default_bond_pairs
 
@@ -58,3 +59,41 @@ class BondManager(WidgetWrapper):
                     "type": bond_line_type,
                 }
         return settings
+
+    def add_bond_pair(
+        self,
+        species1: str,
+        species2: str | None = None,
+        min: float = 0.0,
+        max: float = None,
+        color1: list | None = None,
+        color2: list | None = None,
+        type: int = 0,
+    ) -> None:
+        """Add a bond between two species."""
+
+        species2 = species1 if species2 is None else species2
+        if max is None:
+            max = (
+                self._widget.speciesSettings[species1]["radius"]
+                + self._widget.speciesSettings[species2]["radius"]
+            ) * 1.1
+        color1 = (
+            self._widget.speciesSettings[species1]["color"]
+            if color1 is None
+            else color1
+        )
+        color2 = (
+            self._widget.speciesSettings[species2]["color"]
+            if color2 is None
+            else color2
+        )
+        self.settings[f"{species1}-{species2}"] = {
+            "specie1": species1,
+            "specie2": species2,
+            "color1": color1,
+            "color2": color2,
+            "min": min,
+            "max": max,
+            "type": type,
+        }

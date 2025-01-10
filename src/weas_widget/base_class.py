@@ -116,7 +116,7 @@ class ChangeTrackingDict(dict):
     def _mark_changed(self):
         """Set the changed flag to True, notify parent, and update widget if set."""
         self._changed = True
-        if self._parent:
+        if self._parent is not None:
             self._parent._mark_changed()
         else:
             if not (self._widget and self._key):

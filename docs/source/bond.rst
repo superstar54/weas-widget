@@ -1,6 +1,12 @@
 Bond
 ===============
-Use can control the bond using `avr.bond.settings`. For example, we delete the bond between Ca and Ti, and Ti and Ca.
+Use can control the bond using `avr.bond.settings`.
+
+
+Delete bond pair
+----------------
+
+For example, we delete the bond between Ca and Ti, and Ti and Ca.
 
 .. code-block:: python
 
@@ -11,6 +17,13 @@ Use can control the bond using `avr.bond.settings`. For example, we delete the b
     # change the maximum bond length between Ti and O
     viewer.avr.bond.settings['Ti-O']["max"] = 3.0
 
+Add bond pair
+-------------
+
+.. code-block:: python
+
+    # add the bond between Pt and Au
+    viewer.avr.bond.add_bond_pair('Pt', 'Au', max=3.2)
 
 Hydrogen bond
 -------------
