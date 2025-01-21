@@ -56,6 +56,9 @@ tests = [
     "playwright",
     "httpx",
 ]
+aiida = [
+    "aiida-core"
+]
 dev = ["watchfiles", "jupyterlab"]
 
 # automatically add the dev feature to the default env (e.g., hatch shell)
