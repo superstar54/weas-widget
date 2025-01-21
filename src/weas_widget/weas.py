@@ -10,7 +10,7 @@ import ipywidgets as ipw
 
 
 class WeasWidget(ipw.HBox):
-    def __init__(self, from_ase=None, from_pymatgen=None, **kwargs):
+    def __init__(self, from_ase=None, from_pymatgen=None, from_aiida=None, **kwargs):
         self._widget = BaseWidget(**kwargs)
         super().__init__([self._widget])
         self.avr = AtomsViewer(self._widget)
@@ -21,6 +21,8 @@ class WeasWidget(ipw.HBox):
             self.from_ase(from_ase)
         if from_pymatgen is not None:
             self.from_pymatgen(from_pymatgen)
+        if from_aiida is not None:
+            self.from_aiida(from_aiida)
 
     def from_ase(self, atoms):
         self.avr.atoms = ASEAdapter.to_weas(atoms)
@@ -33,6 +35,44 @@ class WeasWidget(ipw.HBox):
 
     def to_pymatgen(self):
         return PymatgenAdapter.to_pymatgen(self.avr.atoms)
+
+    def from_aiida(self, structure, cell=None):
+        from aiida.orm import StructureData, TrajectoryData
+
+        if isinstance(structure, TrajectoryData):
+            images = []
+            for i in range(structure.numsteps):
+                # it is not efficient to get the structure for each step
+                # but this way we can use the built-in get_ase() method
+                atoms = structure.get_step_structure(i).get_ase()
+                if cell is not None:
+                    atoms.set_cell(cell)
+                images.append(atoms)
+            atoms = images
+        elif isinstance(structure, StructureData):
+            atoms = structure.get_ase()
+        else:
+            raise ValueError("Input should be either StructureData or TrajectoryData")
+        self.from_ase(atoms)
+
+    def to_aiida(self):
+        from aiida.orm import StructureData, TrajectoryData
+        import numpy as np
+
+        if isinstance(self.avr.atoms, list):
+            traj = TrajectoryData()
+            cells = np.array(
+                [np.array(atoms["cell"]).reshape(3, 3) for atoms in self.avr.atoms]
+            )
+            traj.set_trajectory(
+                stepids=np.array([i + 1 for i in range(len(self.avr.atoms))]),
+                symbols=self.avr.atoms[0]["symbols"],
+                cells=cells,
+                positions=np.array([atoms["positions"] for atoms in self.avr.atoms]),
+            )
+            return traj
+        else:
+            return StructureData(ase=self.to_ase())
 
     def load_example(self, name="tio2.cif"):
         atoms = load_online_example(name)
