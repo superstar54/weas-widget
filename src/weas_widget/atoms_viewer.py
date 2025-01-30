@@ -3,6 +3,7 @@ from .plugins.vector_field import VectorField
 from .plugins.isosurface import Isosurface
 from .plugins.volume_slice import VolumeSlice
 from .plugins.lattice_plane import LatticePlane
+from .plugins.cell import CellManager
 from .plugins.bond import BondManager
 from .plugins.species import SpeciesManager
 from .plugins.highlight import HighlightManager
@@ -41,6 +42,7 @@ class AtomsViewer(WidgetWrapper):
         "volume_slice",
         "lp",
         "atoms",
+        "cell",
         "bond",
         "highlight",
         "color_type",
@@ -53,6 +55,7 @@ class AtomsViewer(WidgetWrapper):
         setattr(self, "vf", VectorField(_widget))
         setattr(self, "iso", Isosurface(_widget))
         setattr(self, "lp", LatticePlane(_widget))
+        setattr(self, "cell", CellManager(_widget))
         setattr(self, "bond", BondManager(_widget))
         setattr(self, "species", SpeciesManager(_widget))
         setattr(self, "highlight", HighlightManager(_widget))

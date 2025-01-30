@@ -74,30 +74,32 @@ function render({ model, el }) {
         }
 
         const viewerConfig = {
-             logLevel: model.get("logLevel"),
-            _modelStyle: model.get("modelStyle"),
-            _colorBy: model.get("colorBy"),
-            _colorType: model.get("colorType"),
-            _colorRamp: model.get("colorRamp"),
-            _radiusType: model.get("radiusType"),
-            _materialType: model.get("materialType"),
-            _atomLabelType: model.get("atomLabelType"),
-            _showCell: model.get("showCell"),
-            _showBondedAtoms: model.get("showBondedAtoms"),
-            _hideLongBonds: model.get("hideLongBonds"),
-            _showHydrogenBonds: model.get("showHydrogenBonds"),
-            _boundary: model.get("boundary"),
-            _currentFrame: model.get("currentFrame"),
+            logLevel: model.get("logLevel"),
+            modelStyle: model.get("modelStyle"),
+            colorBy: model.get("colorBy"),
+            colorType: model.get("colorType"),
+            colorRamp: model.get("colorRamp"),
+            radiusType: model.get("radiusType"),
+            materialType: model.get("materialType"),
+            atomLabelType: model.get("atomLabelType"),
+            showBondedAtoms: model.get("showBondedAtoms"),
+            cellSettings: model.get("cellSettings"),
+            bondSettings: {
+                hideLongBonds: model.get("hideLongBonds"),
+                showHydrogenBonds: model.get("showHydrogenBonds"),
+                showOutBoundaryBonds: model.get("showOutBoundaryBonds"),
+            },
+            boundary: model.get("boundary"),
+            currentFrame: model.get("currentFrame"),
         };
         editor = new weas.WEAS({ domElement, atoms, viewerConfig, guiConfig });
-        // window.editor = editor; // for debugging
+        window.editor = editor; // for debugging
         editor.avr.selectedAtomsIndices = model.get("selectedAtomsIndices");
         // species settings
         editor.avr.atomManager.fromSettings(model.get("speciesSettings"));
         // bond settings
         // console.log("bondSettings: ", model.get("bondSettings"));
         editor.avr.bondManager.fromSettings(model.get("bondSettings"));
-        editor.avr.bondManager.showOutBoundaryBonds = model.get("showOutBoundaryBonds");
         // highlight settings
         // console.log("highlightSettings: ", model.get("highlightSettings"));
         editor.avr.highlightManager.fromSettings(model.get("highlightSettings"));
@@ -181,7 +183,6 @@ function render({ model, el }) {
     model.on("change:colorType", () => {editor.avr.colorType = model.get("colorType");});
     model.on("change:materialType", () => {editor.avr.materialType = model.get("materialType");});
     model.on("change:atomLabelType", () => {editor.avr.atomLabelType = model.get("atomLabelType");});
-    model.on("change:showCell", () => {editor.avr.showCell = model.get("showCell");});
     model.on("change:showBondedAtoms", () => {editor.avr.showBondedAtoms = model.get("showBondedAtoms");});
     model.on("change:atomScales", () => {editor.avr.atomScales = model.get("atomScales");});
     model.on("change:modelSticks", () => {editor.avr.modelSticks = model.get("modelSticks");});

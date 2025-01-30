@@ -24,6 +24,7 @@ A widget to visualize and interact with atomic structures in Jupyter Notebook. I
    edit
    gui
    color
+   cell
    bond
    operation
    boundary

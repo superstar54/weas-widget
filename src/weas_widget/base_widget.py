@@ -30,7 +30,6 @@ class BaseWidget(anywidget.AnyWidget):
     # material
     materialType = tl.Unicode("Standard").tag(sync=True)
     atomLabelType = tl.Unicode("None").tag(sync=True)
-    showCell = tl.Bool(True).tag(sync=True)
     showBondedAtoms = tl.Bool(False).tag(sync=True)
     showHydrogenBonds = tl.Bool(False).tag(sync=True)
     showOutBoundaryBonds = tl.Bool(False).tag(sync=True)
@@ -63,6 +62,8 @@ class BaseWidget(anywidget.AnyWidget):
     debug = tl.Bool(False).tag(sync=True)
     # species
     speciesSettings = tl.Dict().tag(sync=True)
+    # cell
+    cellSettings = tl.Dict().tag(sync=True)
     # bond
     bondSettings = tl.Dict().tag(sync=True)
     # isosurface
