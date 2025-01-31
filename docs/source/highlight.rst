@@ -22,10 +22,10 @@ One can add one highlight item with the following code:
 .. code-block:: python
 
     # highlight the first two atoms with a cross, e.g., show the atoms which are fixed
-    viewer.avr.highlight.settings['my_highlight'] = {"shape": "cross", "indices": [0, 1], color: "black"}
+    viewer.avr.highlight.settings['my_highlight'] = {"type": "cross", "indices": [0, 1], "color": "black"}
     viewer.avr.draw()
     viewer
 
 
-.. image:: ../_static/images/example-highlight.png
+.. image:: _static/images/example-highlight.png
    :width: 4cm
