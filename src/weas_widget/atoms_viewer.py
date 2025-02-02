@@ -33,6 +33,7 @@ class AtomsViewer(WidgetWrapper):
         "model_polyhedras": "modelPolyhedras",
         "current_frame": "currentFrame",
         "phonon_setting": "phonon",
+        "continuous_update": "continuousUpdate",
     }
 
     _extra_allowed_attrs = [

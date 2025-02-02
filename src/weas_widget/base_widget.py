@@ -76,6 +76,7 @@ class BaseWidget(anywidget.AnyWidget):
     highlightSettings = tl.Dict().tag(sync=True)
     #
     showAtomLegend = tl.Bool(False).tag(sync=True)
+    continuousUpdate = tl.Bool(True).tag(sync=True)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
