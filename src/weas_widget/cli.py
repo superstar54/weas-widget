@@ -41,9 +41,7 @@ def auto_find_isovalue(volume):
 @click.option(
     "--eigenvectors", default=None, help="Eigenvectors for phonon visualization."
 )
-@click.option(
-    "--kpoint", default="[0.31, 0.31, 0]", help="K-point for phonon visualization."
-)
+@click.option("--kpoint", default="[0, 0, 0]", help="K-point for phonon visualization.")
 @click.option("--amplitude", default=2, help="Phonon amplitude.")
 @click.option("--nframes", default=50, help="Number of frames in phonon animation.")
 def weas(
@@ -154,16 +152,19 @@ def weas(
       window.editor = editor;
 
       // Load atoms directly from Python (ASE parsed)
-      let atoms = {atoms_json};
+      let trajectory = {atoms_json};
+      let atoms;
 
       // Convert atoms to WEAS format
-      if (Array.isArray(atoms)) {{
-          atoms = atoms.map((atom) => new Atoms(atom));
+      if (Array.isArray(trajectory)) {{
+          trajectory = trajectory.map((atom) => new Atoms(atom));
+          atoms = trajectory[0];
       }} else {{
-          atoms = new Atoms(atoms);
+          atoms = new Atoms(trajectory);
+          trajectory = atoms;
       }}
 
-      editor.avr.atoms = atoms;
+      editor.avr.atoms = trajectory;
       editor.avr.modelStyle = {settings["style"]};
       editor.avr.colorType = "{settings["color_type"]}";
       editor.avr.showBondedAtoms = {"true" if settings.get("showBondedAtoms", False) else "false"};
