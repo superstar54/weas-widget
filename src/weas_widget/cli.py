@@ -4,8 +4,24 @@ import tempfile
 import webbrowser
 import json
 from ase.io import read
-from weas_widget.utils import ASEAdapter
+from weas_widget.utils import ASEAdapter, create_volume_data
 from ase.io.cube import read_cube_data
+import numpy as np
+
+
+def auto_find_isovalue(volume):
+    """
+    Automatically determine a suitable isovalue for isosurface rendering.
+
+    Uses mean and standard deviation or percentiles.
+    """
+    values = np.array(volume["values"])
+
+    # Use percentile-based approach to avoid outliers affecting the isovalue
+    iso_value = np.percentile(
+        np.abs(values), 85
+    )  # Take the 85th percentile as threshold
+    return round(float(iso_value), 5)  # Round for better formatting
 
 
 @click.command()
@@ -44,15 +60,22 @@ def weas(
     """
     CLI to visualize atomic structures (XYZ, CIF, CUBE) using WEAS.
     """
+
     # Identify file format
     extension = os.path.splitext(filename)[1].lower()
 
-    # if cube file, read the atoms and volume data
+    # Read file using ASE
     if extension == ".cube":
-        volume, atoms = read_cube_data("h2o-homo.cube")
+        volume, atoms = read_cube_data(filename)
+        atoms_json = json.dumps(ASEAdapter.to_weas(atoms))
+        volume_json = create_volume_data(volume, cell=atoms.get_cell().array.tolist())
+        # Automatically determine isovalue
+        isovalue = auto_find_isovalue(volume_json)
     else:
         atoms = read(filename, index=":")
-    atoms = json.dumps(ASEAdapter.to_weas(atoms))
+        atoms_json = json.dumps(ASEAdapter.to_weas(atoms))
+        volume_json = "null"  # No volumetric data for XYZ and CIF
+        isovalue = None  # No volumetric data
 
     # Set default settings based on file format
     default_settings = {
@@ -64,6 +87,7 @@ def weas(
         ".cif": {
             "style": 2 if style is None else style,  # Polyhedral representation
             "color_type": "VESTA" if color_type is None else color_type,
+            "showBondedAtoms": True,
             "boundary": "[[-0.01, 1.01], [-0.01, 1.01], [-0.01, 1.01]]"
             if boundary is None
             else boundary,
@@ -130,22 +154,35 @@ def weas(
       window.editor = editor;
 
       // Load atoms directly from Python (ASE parsed)
-      let atoms = {atoms};
+      let atoms = {atoms_json};
 
-      // if atoms is a array of atoms, create a array of Atoms objects
-        if (Array.isArray(atoms)) {{
-            atoms = atoms.map((atom) => new Atoms(atom));
-        }} else {{
-            atoms = new Atoms(atoms);
-        }}
+      // Convert atoms to WEAS format
+      if (Array.isArray(atoms)) {{
+          atoms = atoms.map((atom) => new Atoms(atom));
+      }} else {{
+          atoms = new Atoms(atoms);
+      }}
 
       editor.avr.atoms = atoms;
       editor.avr.modelStyle = {settings["style"]};
       editor.avr.colorType = "{settings["color_type"]}";
+      editor.avr.showBondedAtoms = {"true" if settings.get("showBondedAtoms", False) else "false"};
 
       // Apply boundary settings if necessary
       if ({boundary_json} !== null) {{
         editor.avr.boundary = {boundary_json};
+      }}
+
+      // Handle Cube files (Isosurface visualization)
+      let volume_json = {volume_json};
+      if (volume_json !== null) {{
+        console.log("Volumetric data loaded.");
+        editor.avr.volumetricData = volume_json;
+        editor.avr.isosurfaceManager.fromSettings({{
+          positive: {{ isovalue: {isovalue}, mode: 1, step_size: 1 }},
+          negative: {{ isovalue: -{isovalue}, color: "#ff0000", mode: 1 }}
+        }});
+        editor.avr.isosurfaceManager.drawIsosurfaces();
       }}
 
       editor.avr.drawModels();
@@ -207,3 +244,7 @@ def weas(
         temp_html = f.name
 
     webbrowser.open("file://" + os.path.abspath(temp_html))
+
+
+if __name__ == "__main__":
+    weas()
