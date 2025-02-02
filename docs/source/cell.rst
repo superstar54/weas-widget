@@ -5,8 +5,9 @@ Use can control the cell using `avr.cell.settings`.
 
 .. code-block:: python
 
-    # delete the cell between Ca and Ti
+    # cell line width
     viewer.avr.cell.settings['cellLineWidth'] = 1
-    viewer.avr.cell.settings['cellColor'] = 'red'
+    # cell line color, hex format
+    viewer.avr.cell.settings['cellColor'] = '#FF0000'
     # hide the crystal axes
     viewer.avr.cell.settings['showAxes'] = False

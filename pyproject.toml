@@ -39,6 +39,9 @@ dependencies = [
 Documentation = "https://weas-widget.readthedocs.io"
 Source = "https://github.com/superstar54/weas-widget"
 
+[project.scripts]
+weas = "weas_widget.cli:weas"
+
 
 [project.optional-dependencies]
 docs = [

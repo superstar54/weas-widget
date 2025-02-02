@@ -137,3 +137,23 @@ def load_online_example(name="tio2.cif"):
         return atoms
     else:
         raise ValueError(f"Failed to download the file {name}")
+
+
+def create_volume_data(data, cell=[[1, 0, 0], [0, 1, 0], [0, 0, 1]]):
+    """
+    Convert a 3D nested list (data.values) into a structured volume data format.
+
+    Parameters:
+        data (dict): A dictionary containing a 3D list `values`.
+        cell (list, optional): The transformation matrix for the cell. Default is identity matrix.
+
+    Returns:
+        dict: A dictionary with dimensions, flattened values, cell, and origin.
+    """
+    # Get the dimensions of the 3D data
+    dims = [len(data), len(data[0]), len(data[0][0])]
+
+    # Flatten the 3D data into a 1D list
+    values = np.array(data).flatten().tolist()
+
+    return {"dims": dims, "values": values, "cell": cell, "origin": [0, 0, 0]}
