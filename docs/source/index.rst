@@ -27,6 +27,7 @@ A widget to visualize and interact with atomic structures in Jupyter Notebook. I
    cell
    bond
    operation
+   animation
    boundary
    measurement
    isosurface
