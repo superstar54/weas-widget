@@ -1,4 +1,5 @@
 import numpy as np
+from ase.io.trajectory import TrajectoryReader
 
 
 class ASEAdapter:
@@ -10,7 +11,7 @@ class ASEAdapter:
         """Convert an ASE Atoms object to the widget's format."""
         # if atoms is a list of atoms, check if they are the same species and number of atoms
         # then convert all atoms to weas format as a list of atoms
-        if isinstance(ase_atoms, list):
+        if isinstance(ase_atoms, (list, TrajectoryReader)):
             if len(ase_atoms) > 0:
                 for atoms in ase_atoms:
                     if (
