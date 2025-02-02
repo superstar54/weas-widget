@@ -91,6 +91,7 @@ function render({ model, el }) {
             },
             boundary: model.get("boundary"),
             currentFrame: model.get("currentFrame"),
+            continuousUpdate: model.get("continuousUpdate"),
         };
         editor = new weas.WEAS({ domElement, atoms, viewerConfig, guiConfig });
         window.editor = editor; // for debugging
