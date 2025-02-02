@@ -23,6 +23,7 @@ A widget to visualize and interact with atomic structures in Jupyter Notebook. I
    installation
    edit
    gui
+   cli
    color
    cell
    bond
