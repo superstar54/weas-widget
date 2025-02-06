@@ -127,6 +127,9 @@ function render({ model, el }) {
         // mesh primitives
         editor.instancedMeshPrimitive.fromSettings(model.get("instancedMeshPrimitive"));
         editor.instancedMeshPrimitive.drawMesh();
+        // any mesh
+        editor.anyMesh.fromSettings(model.get("anyMesh"));
+        editor.anyMesh.drawMesh();
         //
         const phonon = model.get("phonon");
         console.log("phonon: ", phonon);

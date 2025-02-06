@@ -29,10 +29,16 @@ The following example shows how to use the mesh primitive to draw two cubes and 
     from weas_widget import WeasWidget
     viewer = WeasWidget()
     data = [
+    {
+        "type": "cube",
+        "materialType": "Standard",
+        "shape": {
+        "width": 1,
+        "height": 1,
+        "depth": 1
+        },
+        "instances": [
         {
-            "type": "cube",
-            "data": [
-                {
                     "position": [-5, 0, 0],
                     "size": 2,
                     "scale": [1, 0.5, 1],
@@ -45,22 +51,28 @@ The following example shows how to use the mesh primitive to draw two cubes and 
                     "rotation": [1, 1, 0],
                     "color": "#bd0d87"
                 }
-            ]
+        ]
+    },
+    {
+        "type": "cylinder",
+        "shape": {
+        "radiusTop": 1,
+        "radiusBottom": 1,
+        "height": 1,
+        "radialSegments": 12,
+        "heightSegments": 1
         },
+        "instances": [
         {
-            "type": "cylinder",
-            "data": [
-                {
                     "position": [0, 0, 0],
                     "segments": 12,
                     "radius": 1,
-                    "depth": 5,
-                    "scale": [1, 1, 1],
+                    "scale": [1, 5, 1],
                     "rotation": [0, 0, 0],
                     "color": "#0d87bd"
                 }
-            ]
-        },
+        ]
+    },
     ]
 
     viewer.imp.settings = data

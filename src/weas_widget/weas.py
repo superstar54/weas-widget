@@ -3,6 +3,7 @@ from .utils import ASEAdapter, PymatgenAdapter, load_online_example
 from .atoms_viewer import AtomsViewer
 from .camera import Camera
 from .plugins.instanced_mesh_pritimive import InstancedMeshPrimitive
+from .plugins.any_mesh import AnyMesh
 from .operators.ops import Operators
 import time
 import threading
@@ -16,6 +17,7 @@ class WeasWidget(ipw.HBox):
         self.avr = AtomsViewer(self._widget)
         self.camera = Camera(self._widget)
         self.imp = InstancedMeshPrimitive(self._widget)
+        self.any_mesh = AnyMesh(self._widget)
         self.ops = Operators(self._widget)
         if from_ase is not None:
             self.from_ase(from_ase)
