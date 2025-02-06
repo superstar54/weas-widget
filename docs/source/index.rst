@@ -37,6 +37,7 @@ A widget to visualize and interact with atomic structures in Jupyter Notebook. I
    lattice_plane
    highlight
    mesh_primitive
+   any_mesh
    search_operator
    selection
    camera
