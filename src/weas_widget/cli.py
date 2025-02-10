@@ -1,28 +1,13 @@
 import click
 import os
-import http.server
-import socketserver
 import webbrowser
 import json
 from ase.io import read
 from weas_widget.utils import ASEAdapter, create_volume_data
 from ase.io.cube import read_cube_data
 import numpy as np
-from appdirs import user_config_dir  # Works across Linux, macOS, and Windows
-
-# Get the appropriate config directory for the system
-CONFIG_DIR = user_config_dir("weas-widget")
-
-# Ensure the directory exists
-os.makedirs(CONFIG_DIR, exist_ok=True)
-
-
-def run_http_server(PORT=8000):
-    os.chdir(CONFIG_DIR)
-    handler = http.server.SimpleHTTPRequestHandler
-    with socketserver.TCPServer(("", PORT), handler) as httpd:
-        print(f"Serving at http://localhost:{PORT}")
-        httpd.serve_forever()
+from .server import run_http_server
+from .config import CONFIG_DIR, DEFAULT_PORT
 
 
 def auto_find_isovalue(volume):
@@ -252,8 +237,7 @@ def weas(
     with open(html_filename, "w", encoding="utf-8") as f:
         f.write(html_content)
     if use_server:
-        PORT = 8000
-        run_http_server(PORT)
+        run_http_server(DEFAULT_PORT)
         # webbrowser.open(f"http://localhost:{PORT}/{os.path.basename(html_filename)}")
     else:
         webbrowser.open("file://" + os.path.abspath(html_filename))
