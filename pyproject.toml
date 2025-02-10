@@ -33,6 +33,8 @@ dependencies = [
     "anywidget>=0.9.11",
     "ase",
     "requests",
+    "click>=8.1.7",
+    "appdirs>=1.4.4",
 ]
 
 [project.urls]

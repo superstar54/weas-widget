@@ -44,3 +44,37 @@ Options
 - `--kpoint <json>` : K-point for phonon mode.
 - `--amplitude <float>` : Phonon amplitude (default: 2).
 - `--nframes <int>` : Number of animation frames (default: 50).
+
+
+Running on a Remote Computer
+----------------------------
+
+If you are running `weas` on a remote server, you can access the visualization locally using SSH port forwarding.
+
+1. **Start the visualization on the remote machine**:
+
+   .. code-block:: bash
+
+       weas structure.cif --use-server
+
+   The command will print a message like:
+
+   .. code-block::
+
+       Serving at http://localhost:8000
+       Open this URL in your browser to access the visualization.
+
+2. **Forward the port to your local machine**:
+
+   On your local machine, run:
+
+   .. code-block:: bash
+
+       ssh -L 8000:localhost:8000 your_remote_user@your_remote_host
+
+   Then, open `http://localhost:8000` in your browser.
+
+
+.. note::
+
+    If you are using **Visual Studio Code** with Remote SSH, port forwarding is handled automatically. When you start the server with `--use-server`, VS Code will detect the port and provide a clickable link in the terminal.

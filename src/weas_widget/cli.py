@@ -1,12 +1,13 @@
 import click
 import os
-import tempfile
 import webbrowser
 import json
 from ase.io import read
 from weas_widget.utils import ASEAdapter, create_volume_data
 from ase.io.cube import read_cube_data
 import numpy as np
+from .server import run_http_server
+from .config import CONFIG_DIR, DEFAULT_PORT
 
 
 def auto_find_isovalue(volume):
@@ -44,6 +45,7 @@ def auto_find_isovalue(volume):
 @click.option("--kpoint", default="[0, 0, 0]", help="K-point for phonon visualization.")
 @click.option("--amplitude", default=2, help="Phonon amplitude.")
 @click.option("--nframes", default=50, help="Number of frames in phonon animation.")
+@click.option("--use-server", is_flag=True, help="Serve the file via HTTP.")
 def weas(
     filename,
     style,
@@ -54,6 +56,7 @@ def weas(
     kpoint,
     amplitude,
     nframes,
+    use_server,
 ):
     """
     CLI to visualize atomic structures (XYZ, CIF, CUBE) using WEAS.
@@ -72,6 +75,7 @@ def weas(
     else:
         atoms = read(filename, index=":")
         atoms_json = json.dumps(ASEAdapter.to_weas(atoms))
+        atoms = atoms[0]  # Use the first frame for visualization
         volume_json = "null"  # No volumetric data for XYZ and CIF
         isovalue = None  # No volumetric data
 
@@ -227,13 +231,13 @@ def weas(
     </html>
     """
 
-    # Create a temporary HTML file & open in the browser
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".html") as f:
-        f.write(html_content.encode("utf-8"))
-        temp_html = f.name
+    formula = atoms.get_chemical_formula()
+    html_filename = os.path.join(CONFIG_DIR, f"{formula}.html")
 
-    webbrowser.open("file://" + os.path.abspath(temp_html))
-
-
-if __name__ == "__main__":
-    weas()
+    with open(html_filename, "w", encoding="utf-8") as f:
+        f.write(html_content)
+    if use_server:
+        run_http_server(DEFAULT_PORT)
+        # webbrowser.open(f"http://localhost:{PORT}/{os.path.basename(html_filename)}")
+    else:
+        webbrowser.open("file://" + os.path.abspath(html_filename))
