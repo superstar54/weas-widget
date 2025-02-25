@@ -15,6 +15,11 @@ This module allow user to draw custom geometry. The supported geometry are:
    :align: center
 
 
+Color
+----------------------------
+The transparency of the color can be set by using the `opacity` parameter.
+
+
 Example
 -----------------------------
 The following example shows how to use the mesh primitive to draw two cubes and a sphere.
@@ -32,10 +37,11 @@ The following example shows how to use the mesh primitive to draw two cubes and 
     {
         "type": "cube",
         "materialType": "Standard",
+        "opacity": 0.5,
         "shape": {
-        "width": 1,
-        "height": 1,
-        "depth": 1
+            "width": 1,
+            "height": 1,
+            "depth": 1
         },
         "instances": [
         {
@@ -56,11 +62,11 @@ The following example shows how to use the mesh primitive to draw two cubes and 
     {
         "type": "cylinder",
         "shape": {
-        "radiusTop": 1,
-        "radiusBottom": 1,
-        "height": 1,
-        "radialSegments": 12,
-        "heightSegments": 1
+            "radiusTop": 1,
+            "radiusBottom": 1,
+            "height": 1,
+            "radialSegments": 12,
+            "heightSegments": 1
         },
         "instances": [
         {
