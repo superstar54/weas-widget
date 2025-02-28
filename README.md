@@ -24,6 +24,22 @@ Features:
 Please try the widget in the following links:
 [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/superstar54/weas-widget/blob/main/examples/example.ipynb)
 
+## 🌟 Gallery: projects using `weas-widget`
+
+- **AiiDAlab Plugins:**
+    - [aiidalab-qe-vibroscopy](https://github.com/mikibonacci/aiidalab-qe-vibroscopy)
+    - [aiidalab-qe-pp](https://github.com/AndresOrtegaGuerrero/aiidalab-qe-pp)
+    - [aiidalab-qe-wannier90](https://github.com/superstar54/aiidalab-qe-wannier90)
+- [pack-mm](https://ddmms.github.io/pack-mm/tutorials/basic.html)
+- [ipyvasp](https://github.com/asaboor-gh/ipyvasp)
+
+### 📢 Want to Feature Your Project?
+If your project uses `weas-widget`, we’d love to showcase it here!
+- Submit a **pull request (PR)** with a link to your project.
+- Need a project removed? Open a PR or issue, and we’ll take care of it.
+
+🚀 Let's build a growing community of `weas-widget` users!
+
 ## Installation
 
 With `pip`:
