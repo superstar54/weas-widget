@@ -244,6 +244,34 @@ viewer
 <img src="docs/source/_static/images/example-volume-slice.png"  width="300px"/>
 
 
+### Integrate with LangChain Agent
+
+```python
+from weas_widget import WeasWidget, WeasToolkit
+from langchain_openai import ChatOpenAI
+from langchain_widget import LangChainWidget
+from langchain_openai import ChatOpenAI
+from dotenv import load_dotenv
+import ipywidgets as ipw
+
+load_dotenv()
+
+viewer = WeasWidget()
+
+chat_model = ChatOpenAI(model="gpt-4o-mini")
+
+chat = LangChainWidget(
+    chat_model=chat_model,
+    tools=WeasToolkit(viewer=viewer),
+    title="WEAS Agent Chat",
+    system_prompt=(
+        "You are a scientific assistant. "
+        "Use the available tools to inspect and manipulate the 3D structure."
+    ),
+)
+ipw.VBox([viewer, chat])
+```
+
 ## Test
 
 ### Unit test
