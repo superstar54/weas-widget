@@ -6,8 +6,8 @@
 	},
 	"dependencies": {
 		"dat.gui": "^0.7.9",
-		"three": "^0.161.0",
-		"weas": ">=0.1.46"
+		"three": "^0.169.0",
+		"weas": ">=0.1.54"
 	},
 	"devDependencies": {
 		"esbuild": "^0.20.0"

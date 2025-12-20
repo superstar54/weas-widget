@@ -1,5 +1,5 @@
 // if we want test weas package, clone the weas repo and import the weas module, then use the following import
-// import * as weas from "../../weas/src/index.js";
+// import * as weas from "../../weas-js/src/index.js";
 // if not, then use the following import
 import * as weas from "weas";
 import "./widget.css";
@@ -112,7 +112,7 @@ function render({ model, el }) {
         editor.avr.volumeSliceManager.fromSettings(model.get("sliceSettings"));
         // vector field
         editor.avr.VFManager.fromSettings(model.get("vectorField"));
-        editor.avr.showVectorField = model.get("showVectorField");
+        editor.avr.VFManager.show = model.get("showVectorField");
         // if the atomScales is not a empty array, then update the atomScales
         if (model.get("atomScales").length > 0) {
             editor.avr.atomScales = model.get("atomScales");
@@ -144,6 +144,7 @@ function render({ model, el }) {
         const cameraSetting = model.get("cameraSetting");
         editor.tjs.updateCameraAndControls(cameraSetting);
         editor.render();
+        editor.tjs.onWindowResize();
         return editor;
     };
     // Initial rendering
@@ -202,6 +203,28 @@ function render({ model, el }) {
         const data = model.get("bondSettings");
         editor.avr.bondManager.fromSettings(data);
     });
+    // species settings
+    model.on("change:speciesSettings", () => {
+        const data = model.get("speciesSettings");
+        editor.avr.atomManager.fromSettings(data);
+        editor.avr.drawModels();
+    });
+    // highlight settings
+    model.on("change:highlightSettings", () => {
+        const data = model.get("highlightSettings");
+        editor.avr.highlightManager.fromSettings(data);
+        editor.avr.highlightManager.drawHighlightAtoms();
+        editor.tjs.render();
+    });
+    // cell settings
+    model.on("change:cellSettings", () => {
+        const data = model.get("cellSettings") || {};
+        Object.assign(editor.avr.cellManager.settings, data);
+        if (data.showCell !== undefined) editor.avr.cellManager.showCell = data.showCell;
+        if (data.showAxes !== undefined) editor.avr.cellManager.showAxes = data.showAxes;
+        editor.avr.cellManager.draw();
+        editor.tjs.render();
+    });
     // volumetric data
     model.on("change:volumetricData", () => {
         const data = model.get("volumetricData");
@@ -216,12 +239,24 @@ function render({ model, el }) {
         editor.avr.isosurfaceManager.drawIsosurfaces();
         console.log("drawIsosurfaces");
     });
+    // volume slice
+    model.on("change:sliceSettings", () => {
+        const data = model.get("sliceSettings");
+        editor.avr.volumeSliceManager.fromSettings(data);
+        editor.avr.volumeSliceManager.drawSlices();
+        editor.tjs.render();
+    });
 
     // Vector field
     model.on("change:vectorField", () => {
         const data = model.get("vectorField");
         editor.avr.VFManager.fromSettings(data);
         editor.avr.VFManager.drawVectorFields();
+    });
+    model.on("change:showVectorField", () => {
+        const show = model.get("showVectorField");
+        editor.avr.VFManager.show = show;
+        editor.tjs.render();
     });
     // instanced mesh primitives
     model.on("change:instancedMeshPrimitive", () => {
@@ -313,12 +348,20 @@ function resolveFunctionFromString(editor, path) {
             if (typeof method === 'function') {
                 // Prepare args and kwargs
                 const args = task.args || [];
-                const kwargs = task.kwargs || {};
+                const kwargs = task.kwargs || null;
                 // Handle both args and kwargs if method supports it
                 if (args.length > 0) {
-                    method.apply(null, [...args, kwargs]);
+                    const finalArgs = [...args];
+                    if (kwargs && Object.keys(kwargs).length > 0) {
+                        finalArgs.push(kwargs);
+                    }
+                    method.apply(null, finalArgs);
                 } else {
-                    method(kwargs);
+                    if (kwargs && Object.keys(kwargs).length > 0) {
+                        method(...Object.values(kwargs));
+                    } else {
+                        method();
+                    }
                 }
             } else {
                 console.error('Method not found or is not a function');
