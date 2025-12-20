@@ -13,12 +13,6 @@ class ASEAdapter:
         # then convert all atoms to weas format as a list of atoms
         if isinstance(ase_atoms, (list, TrajectoryReader)):
             if len(ase_atoms) > 0:
-                for atoms in ase_atoms:
-                    if (
-                        atoms.get_chemical_symbols()
-                        != ase_atoms[0].get_chemical_symbols()
-                    ):
-                        raise ValueError("All atoms must have the same species")
                 weas_atoms = [cls.to_weas(atom) for atom in ase_atoms]
                 return weas_atoms
             else:

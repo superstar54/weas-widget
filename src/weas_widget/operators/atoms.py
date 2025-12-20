@@ -11,25 +11,30 @@ class AtomsOperation:
     def __init__(self, base_widget):
         self.base_widget = base_widget
 
-    def replace(self, **kwargs):
+    def replace(self, symbol: str):
         self.base_widget.send_js_task(
-            {"name": "ops.atoms.ReplaceOperation", "kwargs": kwargs}
+            {"name": "ops.atoms.ReplaceOperation", "kwargs": {"symbol": symbol}}
         )
 
-    def add_atom(self, **kwargs):
+    def add_atom(self, symbol: str, position: list[float] | dict = [0, 0, 0]):
+        if isinstance(position, list):
+            position = {"x": position[0], "y": position[1], "z": position[2]}
         self.base_widget.send_js_task(
-            {"name": "ops.atoms.AddAtomOperation", "kwargs": kwargs}
+            {
+                "name": "ops.atoms.AddAtomOperation",
+                "kwargs": {"symbol": symbol, "position": position},
+            }
         )
 
-    def color_by_attribute(self, **kwargs):
+    def color_by_attribute(
+        self,
+        attribute: str = "Element",
+        color1: str = "#ff0000",
+        color2: str = "#0000ff",
+    ):
         self.base_widget.send_js_task(
-            {"name": "ops.atoms.ColorByAttribute", "kwargs": kwargs}
+            {
+                "name": "ops.atoms.ColorByAttribute",
+                "kwargs": {"attribute": attribute, "color1": color1, "color2": color2},
+            }
         )
-
-    def add_molecule(self, *args, **kwargs):
-        from ase.build import molecule
-        from weas_widget.utils import ASE_Adapter
-
-        mol = molecule(*args, **kwargs)
-        atoms = ASE_Adapter.to_weas(mol)
-        self.base_widget.atoms = atoms
