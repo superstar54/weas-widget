@@ -35,6 +35,9 @@ dependencies = [
     "requests",
     "click>=8.1.7",
     "appdirs>=1.4.4",
+    "numpy",
+    "scikit-image",
+    "seekpath",
 ]
 
 [project.urls]

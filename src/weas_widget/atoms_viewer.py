@@ -80,6 +80,7 @@ class AtomsViewer(WidgetWrapper):
         self.vf.update_atoms()
         # highlight
         self.highlight.update_atoms()
+        self._widget.send_js_task({"name": "tjs.onWindowResize"})
 
     def draw(self):
         """Redraw the widget."""

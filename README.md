@@ -166,6 +166,17 @@ viewer
 <img src="docs/source/_static/images/example-isosurface.png"  width="300px"/>
 
 
+### Fermi surface
+
+```python
+from weas_widget import WeasWidget
+viewer = WeasWidget()
+viewer.add_fermi_surface_from_bxsf("copper.bxsf", clip_bz=True)
+viewer
+```
+<img src="docs/source/_static/images/fermi-surface.png"  width="300px"/>
+
+
 ### Magnetic moments
 Show the magnetic moments as a vector field.
 
