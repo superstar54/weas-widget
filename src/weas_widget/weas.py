@@ -5,6 +5,7 @@ from .camera import Camera
 from .plugins.instanced_mesh_pritimive import InstancedMeshPrimitive
 from .plugins.any_mesh import AnyMesh
 from .operators.ops import Operators
+from .fermi_surface import add_fermi_surface_from_bxsf
 import time
 import threading
 import ipywidgets as ipw
@@ -132,3 +133,37 @@ class WeasWidget(ipw.HBox):
 
         thread = threading.Thread(target=_save_image, args=(), daemon=False)
         thread.start()
+
+    def add_fermi_surface_from_bxsf(
+        self,
+        file_path: str,
+        band_index: int = None,
+        fermi_energy: float = None,
+        supercell_size: tuple = (2, 2, 2),
+        drop_periodic: bool = True,
+        clip_bz: bool = False,
+        show_bz: bool = True,
+        show_reciprocal_axes: bool = True,
+        combine_bands: bool = True,
+        name: str = None,
+        color: list = None,
+        opacity: float = 0.6,
+        material_type: str = "Standard",
+    ):
+        """Compute Fermi surface meshes from a BXSF file and render via AnyMesh."""
+        add_fermi_surface_from_bxsf(
+            viewer=self,
+            file_path=file_path,
+            band_index=band_index,
+            fermi_energy=fermi_energy,
+            supercell_size=supercell_size,
+            drop_periodic=drop_periodic,
+            clip_bz=clip_bz,
+            show_bz=show_bz,
+            show_reciprocal_axes=show_reciprocal_axes,
+            combine_bands=combine_bands,
+            name=name,
+            color=color,
+            opacity=opacity,
+            material_type=material_type,
+        )
