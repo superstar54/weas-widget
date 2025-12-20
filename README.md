@@ -246,6 +246,8 @@ viewer
 
 ### Integrate with LangChain Agent
 
+`WeasToolkit` provides agent-ready tools for inspection and editing (style controls, selection, structure loading, atom edits, camera, measurements, meshes, and more). You can also extend it with your own tools.
+
 ```python
 from weas_widget import WeasWidget, WeasToolkit
 from langchain_openai import ChatOpenAI
@@ -271,6 +273,8 @@ chat = LangChainWidget(
 )
 ipw.VBox([viewer, chat])
 ```
+
+See the agent tools reference in the docs: https://weas-widget.readthedocs.io/en/latest/agent_tools.html
 
 ## Test
 

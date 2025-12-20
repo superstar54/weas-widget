@@ -33,6 +33,19 @@ MATERIAL_TYPES: Tuple[str, ...] = ("Standard", "Phong", "Basic")
 ATOM_LABEL_TYPES: Tuple[str, ...] = ("None", "Symbol", "Index")
 
 
+def _to_jsonable(value: Any) -> Any:
+    """Convert common scientific Python types to JSON-serializable structures."""
+    if isinstance(value, (np.integer, np.floating)):
+        return value.item()
+    if isinstance(value, np.ndarray):
+        return value.tolist()
+    if isinstance(value, dict):
+        return {str(k): _to_jsonable(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_to_jsonable(v) for v in value]
+    return value
+
+
 def _get_current_ase_atoms(viewer: Any):
     atoms_or_traj = viewer.to_ase()
     if isinstance(atoms_or_traj, list):
@@ -70,6 +83,15 @@ def _normalize_indices(
             f"Atom indices out of range: {bad}. Valid range is [0, {n_atoms - 1}]."
         )
     return use
+
+
+def _get_current_atoms_and_use_indices(
+    viewer: Any, indices: Optional[Sequence[int]]
+) -> Tuple[Any, bool, Optional[int], Optional[list], List[int]]:
+    atoms, is_traj, frame, traj = _get_current_ase_atoms(viewer)
+    selected = getattr(viewer.avr, "selected_atoms_indices", []) or []
+    use = _normalize_indices(indices, selected=selected, n_atoms=len(atoms))
+    return atoms, is_traj, frame, traj, use
 
 
 def _canonical_style_key(key: str) -> str:
@@ -850,30 +872,32 @@ class WeasToolkit:
         @tool
         def add_atom(symbol: str, x: float, y: float, z: float) -> Dict[str, Any]:
             """Add a single atom at (x, y, z) in Angstrom."""
-            from ase.atom import Atom
 
-            atoms, is_traj, frame, traj = _get_current_ase_atoms(viewer)
-            atoms.append(Atom(symbol=symbol, position=(float(x), float(y), float(z))))
-            _set_current_ase_atoms(
-                viewer, atoms, is_trajectory=is_traj, frame=frame, trajectory=traj
+            viewer._widget.send_js_task(
+                {
+                    "name": "avr.addAtom",
+                    "kwargs": {
+                        "element": symbol,
+                        "position": {"x": float(x), "y": float(y), "z": float(z)},
+                    },
+                }
             )
+            viewer._widget.send_js_task({"name": "avr.drawModels"})
+
             return WeasToolResult(f"Added {symbol} at ({x}, {y}, {z}).").to_dict()
 
         @tool
         def delete_atoms(indices: Optional[List[int]] = None) -> Dict[str, Any]:
             """Delete atoms by indices; if omitted, deletes the current selection."""
 
-            atoms, is_traj, frame, traj = _get_current_ase_atoms(viewer)
-            selected = getattr(viewer.avr, "selected_atoms_indices", []) or []
-            use = _normalize_indices(indices, selected=selected, n_atoms=len(atoms))
+            _, _, _, _, use = _get_current_atoms_and_use_indices(viewer, indices)
             if not use:
                 return WeasToolResult(
                     "Nothing to delete (no indices and empty selection)."
                 ).to_dict()
-            del atoms[use]
-            viewer.avr.selected_atoms_indices = []
-            _set_current_ase_atoms(
-                viewer, atoms, is_trajectory=is_traj, frame=frame, trajectory=traj
+
+            viewer._widget.send_js_task(
+                {"name": "avr.deleteSelectedAtoms", "kwargs": {"indices": use}}
             )
             return WeasToolResult(f"Deleted {len(use)} atoms.").to_dict()
 
@@ -883,19 +907,16 @@ class WeasToolkit:
         ) -> Dict[str, Any]:
             """Replace atoms (change element) by indices; if omitted, uses the current selection."""
 
-            atoms, is_traj, frame, traj = _get_current_ase_atoms(viewer)
-            selected = getattr(viewer.avr, "selected_atoms_indices", []) or []
-            use = _normalize_indices(indices, selected=selected, n_atoms=len(atoms))
+            _, _, _, _, use = _get_current_atoms_and_use_indices(viewer, indices)
             if not use:
                 return WeasToolResult(
                     "Nothing to replace (no indices and empty selection)."
                 ).to_dict()
-            symbols = atoms.get_chemical_symbols()
-            for i in use:
-                symbols[i] = symbol
-            atoms.set_chemical_symbols(symbols)
-            _set_current_ase_atoms(
-                viewer, atoms, is_trajectory=is_traj, frame=frame, trajectory=traj
+            viewer._widget.send_js_task(
+                {
+                    "name": "avr.replaceSelectedAtoms",
+                    "kwargs": {"element": symbol, "indices": use},
+                }
             )
             return WeasToolResult(
                 f"Replaced {len(use)} atoms with '{symbol}'."
@@ -907,24 +928,22 @@ class WeasToolkit:
         ) -> Dict[str, Any]:
             """Translate atoms by (dx, dy, dz) in Angstrom; if indices omitted, uses selection."""
 
-            atoms, is_traj, frame, traj = _get_current_ase_atoms(viewer)
-            selected = getattr(viewer.avr, "selected_atoms_indices", []) or []
-            use = _normalize_indices(indices, selected=selected, n_atoms=len(atoms))
+            _, _, _, _, use = _get_current_atoms_and_use_indices(viewer, indices)
             if not use:
                 return WeasToolResult(
                     "Nothing to translate (no indices and empty selection)."
                 ).to_dict()
             if len(vector) != 3:
                 raise ValueError("vector must be a length-3 list like [dx, dy, dz].")
-            dx, dy, dz = (float(vector[0]), float(vector[1]), float(vector[2]))
-            pos = atoms.get_positions()
-            pos[use] = pos[use] + np.array([dx, dy, dz], dtype=float)
-            atoms.set_positions(pos)
-            _set_current_ase_atoms(
-                viewer, atoms, is_trajectory=is_traj, frame=frame, trajectory=traj
+            viewer._widget.send_js_task(
+                {
+                    "name": "avr.translateSelectedAtoms",
+                    "kwargs": {"translateVector": vector, "indices": use},
+                }
             )
+            viewer._widget.send_js_task({"name": "avr.drawModels"})
             return WeasToolResult(
-                f"Translated {len(use)} atoms by ({dx}, {dy}, {dz})."
+                f"Translated {len(use)} atoms by ({vector[0]}, {vector[1]}, {vector[2]})."
             ).to_dict()
 
         @tool
@@ -936,31 +955,520 @@ class WeasToolkit:
         ) -> Dict[str, Any]:
             """Rotate atoms around an axis by angle degrees; indices omitted => selection; about='com' or 'origin'."""
 
-            atoms, is_traj, frame, traj = _get_current_ase_atoms(viewer)
-            selected = getattr(viewer.avr, "selected_atoms_indices", []) or []
-            use = _normalize_indices(indices, selected=selected, n_atoms=len(atoms))
+            _, _, _, _, use = _get_current_atoms_and_use_indices(viewer, indices)
             if not use:
                 return WeasToolResult(
                     "Nothing to rotate (no indices and empty selection)."
                 ).to_dict()
             if len(axis) != 3:
                 raise ValueError("axis must be a length-3 list like [ax, ay, az].")
-
-            pos = atoms.get_positions()
-            center = np.zeros(3, dtype=float)
-            if about == "com":
-                center = pos[use].mean(axis=0)
-            elif about != "origin":
+            if about not in ("com", "origin"):
                 raise ValueError("about must be 'com' or 'origin'.")
-            R = _rotation_matrix(np.array(axis, dtype=float), float(angle_degrees))
-            pos_sel = pos[use] - center
-            pos[use] = (pos_sel @ R.T) + center
-            atoms.set_positions(pos)
-            _set_current_ase_atoms(
-                viewer, atoms, is_trajectory=is_traj, frame=frame, trajectory=traj
+
+            axis_obj = {"x": float(axis[0]), "y": float(axis[1]), "z": float(axis[2])}
+            args: List[Any] = [axis_obj, float(angle_degrees), use]
+            if about == "origin":
+                args.append({"x": 0.0, "y": 0.0, "z": 0.0})
+            viewer._widget.send_js_task(
+                {"name": "avr.rotateSelectedAtoms", "args": args}
             )
             return WeasToolResult(
                 f"Rotated {len(use)} atoms by {angle_degrees} degrees."
+            ).to_dict()
+
+        @tool
+        def undo() -> Dict[str, Any]:
+            """Undo the last operation (equivalent to clicking the GUI undo)."""
+            ops = getattr(viewer, "ops", None)
+            if ops is None:
+                raise AttributeError(
+                    "Viewer does not have .ops; expected a WeasWidget."
+                )
+            ops.undo()
+            return WeasToolResult("Undid last operation.").to_dict()
+
+        @tool
+        def redo() -> Dict[str, Any]:
+            """Redo the last undone operation (equivalent to clicking the GUI redo)."""
+            ops = getattr(viewer, "ops", None)
+            if ops is None:
+                raise AttributeError(
+                    "Viewer does not have .ops; expected a WeasWidget."
+                )
+            ops.redo()
+            return WeasToolResult("Redid last operation.").to_dict()
+
+        @tool
+        def select_all_atoms() -> Dict[str, Any]:
+            """Select all atoms using the operation system (undoable)."""
+            ops = getattr(viewer, "ops", None)
+            if ops is None:
+                raise AttributeError(
+                    "Viewer does not have .ops; expected a WeasWidget."
+                )
+            ops.selection.select_all()
+            return WeasToolResult("Selected all atoms.").to_dict()
+
+        @tool
+        def invert_selection() -> Dict[str, Any]:
+            """Invert the atom selection (undoable)."""
+            ops = getattr(viewer, "ops", None)
+            if ops is None:
+                raise AttributeError(
+                    "Viewer does not have .ops; expected a WeasWidget."
+                )
+            ops.selection.invert_selection()
+            return WeasToolResult("Inverted selection.").to_dict()
+
+        @tool
+        def select_atoms_inside_selected_objects() -> Dict[str, Any]:
+            """
+            Select atoms inside currently selected objects/meshes (undoable).
+
+            This corresponds to the "Select inside" operation (docs: operation.rst).
+            """
+            ops = getattr(viewer, "ops", None)
+            if ops is None:
+                raise AttributeError(
+                    "Viewer does not have .ops; expected a WeasWidget."
+                )
+            ops.selection.inside_selection()
+            return WeasToolResult("Selected atoms inside selected objects.").to_dict()
+
+        @tool
+        def op_translate(
+            vector: List[float], indices: Optional[List[int]] = None
+        ) -> Dict[str, Any]:
+            """Translate selection via the operation system (undoable)."""
+            if len(vector) != 3:
+                raise ValueError("vector must be a length-3 list like [dx, dy, dz].")
+            if indices is not None:
+                atoms, *_ = _get_current_ase_atoms(viewer)
+                _normalize_indices(indices, selected=[], n_atoms=len(atoms))
+                viewer.avr.selected_atoms_indices = list(indices)
+            ops = getattr(viewer, "ops", None)
+            if ops is None:
+                raise AttributeError(
+                    "Viewer does not have .ops; expected a WeasWidget."
+                )
+            ops.transform.translate(vector=list(vector))
+            return WeasToolResult("Translated selection (undoable).").to_dict()
+
+        @tool
+        def op_rotate(
+            axis: List[float],
+            angle_degrees: float,
+            indices: Optional[List[int]] = None,
+        ) -> Dict[str, Any]:
+            """Rotate selection via the operation system (undoable)."""
+            if len(axis) != 3:
+                raise ValueError("axis must be a length-3 list like [ax, ay, az].")
+            if indices is not None:
+                atoms, *_ = _get_current_ase_atoms(viewer)
+                _normalize_indices(indices, selected=[], n_atoms=len(atoms))
+                viewer.avr.selected_atoms_indices = list(indices)
+            ops = getattr(viewer, "ops", None)
+            if ops is None:
+                raise AttributeError(
+                    "Viewer does not have .ops; expected a WeasWidget."
+                )
+            ops.transform.rotate(axis=list(axis), angle=float(angle_degrees))
+            return WeasToolResult("Rotated selection (undoable).").to_dict()
+
+        @tool
+        def op_scale(scale: List[float]) -> Dict[str, Any]:
+            """Scale selected objects via the operation system (undoable)."""
+            if len(scale) != 3:
+                raise ValueError("scale must be a length-3 list like [sx, sy, sz].")
+            ops = getattr(viewer, "ops", None)
+            if ops is None:
+                raise AttributeError(
+                    "Viewer does not have .ops; expected a WeasWidget."
+                )
+            ops.transform.scale(scale=list(scale))
+            return WeasToolResult("Scaled selection (undoable).").to_dict()
+
+        @tool
+        def delete_selected_objects() -> Dict[str, Any]:
+            """Delete selected objects/meshes via the operation system (undoable)."""
+            ops = getattr(viewer, "ops", None)
+            if ops is None:
+                raise AttributeError(
+                    "Viewer does not have .ops; expected a WeasWidget."
+                )
+            ops.object.delete()
+            return WeasToolResult("Deleted selected objects.").to_dict()
+
+        @tool
+        def duplicate_selected_objects() -> Dict[str, Any]:
+            """Duplicate selected objects/meshes via the operation system (undoable)."""
+            ops = getattr(viewer, "ops", None)
+            if ops is None:
+                raise AttributeError(
+                    "Viewer does not have .ops; expected a WeasWidget."
+                )
+            ops.object.copy()
+            return WeasToolResult("Duplicated selected objects.").to_dict()
+
+        @tool
+        def add_mesh_primitive(
+            kind: Literal[
+                "cube",
+                "plane",
+                "cylinder",
+                "icosahedron",
+                "cone",
+                "sphere",
+                "torus",
+                "arrow",
+            ],
+            params: Optional[Dict[str, Any]] = None,
+        ) -> Dict[str, Any]:
+            """Add a mesh primitive via the operation system (undoable)."""
+            ops = getattr(viewer, "ops", None)
+            if ops is None:
+                raise AttributeError(
+                    "Viewer does not have .ops; expected a WeasWidget."
+                )
+            params = {} if params is None else dict(params)
+            meth = getattr(ops.mesh, f"add_{kind}", None)
+            if meth is None:
+                raise ValueError(f"Unsupported mesh primitive kind: {kind!r}.")
+            meth(**_to_jsonable(params))
+            return WeasToolResult(f"Added mesh primitive '{kind}'.").to_dict()
+
+        @tool
+        def set_instanced_mesh_primitives(
+            settings: List[Dict[str, Any]]
+        ) -> Dict[str, Any]:
+            """Set instanced mesh primitives (viewer.imp.settings)."""
+            imp = getattr(viewer, "imp", None)
+            if imp is None:
+                raise AttributeError(
+                    "Viewer does not have .imp; expected a WeasWidget."
+                )
+            imp.settings = _to_jsonable(settings)
+            return WeasToolResult(
+                f"Set {len(settings)} instanced mesh primitive groups."
+            ).to_dict()
+
+        @tool
+        def clear_instanced_mesh_primitives() -> Dict[str, Any]:
+            """Clear instanced mesh primitives."""
+            imp = getattr(viewer, "imp", None)
+            if imp is None:
+                raise AttributeError(
+                    "Viewer does not have .imp; expected a WeasWidget."
+                )
+            imp.settings = []
+            return WeasToolResult("Cleared instanced mesh primitives.").to_dict()
+
+        @tool
+        def set_any_mesh(settings: List[Dict[str, Any]]) -> Dict[str, Any]:
+            """Set custom meshes (viewer.any_mesh.settings)."""
+            any_mesh = getattr(viewer, "any_mesh", None)
+            if any_mesh is None:
+                raise AttributeError(
+                    "Viewer does not have .any_mesh; expected a WeasWidget."
+                )
+            any_mesh.settings = _to_jsonable(settings)
+            return WeasToolResult(f"Set {len(settings)} custom meshes.").to_dict()
+
+        @tool
+        def clear_any_mesh() -> Dict[str, Any]:
+            """Clear custom meshes."""
+            any_mesh = getattr(viewer, "any_mesh", None)
+            if any_mesh is None:
+                raise AttributeError(
+                    "Viewer does not have .any_mesh; expected a WeasWidget."
+                )
+            any_mesh.settings = []
+            return WeasToolResult("Cleared custom meshes.").to_dict()
+
+        @tool
+        def get_camera(
+            key: Optional[Literal["zoom", "position", "look_at", "setting"]] = None
+        ) -> Dict[str, Any]:
+            """Get camera settings (zoom/position/look_at/setting)."""
+            cam = getattr(viewer, "camera", None)
+            if cam is None:
+                raise AttributeError(
+                    "Viewer does not have .camera; expected a WeasWidget."
+                )
+            data = {
+                "zoom": getattr(cam, "zoom", None),
+                "position": getattr(cam, "position", None),
+                "look_at": getattr(cam, "look_at", None),
+                "setting": getattr(cam, "setting", None),
+            }
+            if key is None:
+                return WeasToolResult("OK", summary=_to_jsonable(data)).to_dict()
+            return WeasToolResult(
+                "OK", summary={key: _to_jsonable(data.get(key))}
+            ).to_dict()
+
+        @tool
+        def set_camera(
+            key: Literal["zoom", "position", "look_at", "setting"], value: Any
+        ) -> Dict[str, Any]:
+            """Set camera settings (zoom/position/look_at/setting)."""
+            cam = getattr(viewer, "camera", None)
+            if cam is None:
+                raise AttributeError(
+                    "Viewer does not have .camera; expected a WeasWidget."
+                )
+            if key == "zoom":
+                cam.zoom = float(value)
+            elif key in {"position", "look_at"}:
+                if not isinstance(value, (list, tuple)) or len(value) != 3:
+                    raise ValueError(f"{key} must be a length-3 list like [x,y,z].")
+                setattr(cam, key, [float(value[0]), float(value[1]), float(value[2])])
+            elif key == "setting":
+                if not isinstance(value, dict):
+                    raise ValueError(
+                        "setting must be a dict, e.g. {'direction':[0,5,1],'distance':50,'zoom':2}."
+                    )
+                cam.setting = _to_jsonable(value)
+            else:
+                raise ValueError(f"Unknown camera key: {key!r}.")
+            return WeasToolResult(f"Set camera.{key}.").to_dict()
+
+        @tool
+        def set_current_frame(frame: int) -> Dict[str, Any]:
+            """Set the current frame (for trajectories)."""
+            atoms_or_traj = viewer.to_ase()
+            if not isinstance(atoms_or_traj, list):
+                return WeasToolResult(
+                    "Not a trajectory; current_frame unchanged."
+                ).to_dict()
+            n = len(atoms_or_traj)
+            f = max(0, min(int(frame), n - 1))
+            viewer.avr.current_frame = f
+            return WeasToolResult(
+                f"Set current frame to {f}.", summary={"n_frames": n}
+            ).to_dict()
+
+        @tool
+        def get_animation_info() -> Dict[str, Any]:
+            """Get trajectory/animation info (n_frames/current_frame)."""
+            atoms_or_traj = viewer.to_ase()
+            if not isinstance(atoms_or_traj, list):
+                return WeasToolResult("OK", summary={"is_trajectory": False}).to_dict()
+            return WeasToolResult(
+                "OK",
+                summary={
+                    "is_trajectory": True,
+                    "n_frames": len(atoms_or_traj),
+                    "current_frame": int(getattr(viewer.avr, "current_frame", 0)),
+                },
+            ).to_dict()
+
+        @tool
+        def measure(indices: Optional[List[int]] = None) -> Dict[str, Any]:
+            """
+            Add a measurement overlay for 0-4 atoms.
+
+            If indices is omitted, uses the current selection. Passing [] clears measurements.
+            """
+            atoms, *_ = _get_current_ase_atoms(viewer)
+            selected = getattr(viewer.avr, "selected_atoms_indices", []) or []
+            use = (
+                _normalize_indices(indices, selected=selected, n_atoms=len(atoms))
+                if indices is not None
+                else list(selected)
+            )
+            if indices is None and not use:
+                use = []
+            viewer._widget.send_js_task(
+                {"name": "avr.Measurement.measure", "args": [use]}
+            )
+            return WeasToolResult(
+                "Measurement updated.", summary={"indices": use}
+            ).to_dict()
+
+        @tool
+        def clear_measurements() -> Dict[str, Any]:
+            """Clear all measurement overlays."""
+            viewer._widget.send_js_task({"name": "avr.Measurement.reset", "kwargs": {}})
+            return WeasToolResult("Cleared measurements.").to_dict()
+
+        @tool
+        def set_volumetric_data(values: Any) -> Dict[str, Any]:
+            """
+            Set volumetric data (shared by isosurface and volume slice).
+
+            `values` should be a 3D array-like (z/y/x or x/y/z depending on your cube reader).
+            """
+            viewer.avr.iso.volumetric_data = {"values": _to_jsonable(values)}
+            return WeasToolResult("Set volumetric data.").to_dict()
+
+        @tool
+        def set_isosurface_settings(settings: Dict[str, Any]) -> Dict[str, Any]:
+            """Set isosurface settings (viewer.avr.iso.settings)."""
+            viewer.avr.iso.settings = _to_jsonable(settings)
+            return WeasToolResult("Set isosurface settings.").to_dict()
+
+        @tool
+        def set_volume_slice_settings(settings: Dict[str, Any]) -> Dict[str, Any]:
+            """Set volume slice settings (viewer.avr.volume_slice.settings)."""
+            viewer.avr.volume_slice.settings = _to_jsonable(settings)
+            return WeasToolResult("Set volume slice settings.").to_dict()
+
+        @tool
+        def set_vector_field_settings(settings: Dict[str, Any]) -> Dict[str, Any]:
+            """Set vector field settings (viewer.avr.vf.settings)."""
+            viewer.avr.vf.settings = _to_jsonable(settings)
+            return WeasToolResult("Set vector field settings.").to_dict()
+
+        @tool
+        def set_show_vector_field(show: bool) -> Dict[str, Any]:
+            """Toggle vector field visibility."""
+            viewer._widget.showVectorField = bool(show)
+            return WeasToolResult(f"Set show_vector_field to {bool(show)}.").to_dict()
+
+        @tool
+        def set_phonon_setting(setting: Dict[str, Any]) -> Dict[str, Any]:
+            """Set phonon visualization settings (viewer.avr.phonon_setting)."""
+            viewer.avr.phonon_setting = _to_jsonable(setting)
+            return WeasToolResult("Set phonon setting.").to_dict()
+
+        @tool
+        def get_bond_pair(key: str) -> Dict[str, Any]:
+            """Get a bond pair setting by key (e.g., 'Ti-O')."""
+            data = dict(getattr(viewer.avr.bond, "settings", {}))
+            return WeasToolResult(
+                "OK", summary={key: _to_jsonable(data.get(key))}
+            ).to_dict()
+
+        @tool
+        def update_bond_pair(key: str, updates: Dict[str, Any]) -> Dict[str, Any]:
+            """Update a bond pair setting (e.g., set max/color)."""
+            if not isinstance(updates, dict):
+                raise ValueError("updates must be a dict.")
+            settings = viewer.avr.bond.settings
+            if key not in settings:
+                raise KeyError(f"Bond pair {key!r} not found.")
+            cur = settings[key]
+            if isinstance(cur, dict):
+                cur.update(_to_jsonable(updates))
+            else:
+                settings[key] = _to_jsonable(updates)
+            return WeasToolResult(f"Updated bond pair {key}.").to_dict()
+
+        @tool
+        def delete_bond_pair(key: str) -> Dict[str, Any]:
+            """Delete a bond pair setting (e.g., 'Ti-Ca')."""
+            settings = viewer.avr.bond.settings
+            if key in settings:
+                del settings[key]
+                return WeasToolResult(f"Deleted bond pair {key}.").to_dict()
+            return WeasToolResult(
+                f"Bond pair {key} not found; nothing deleted."
+            ).to_dict()
+
+        @tool
+        def add_bond_pair(
+            species1: str,
+            species2: Optional[str] = None,
+            min: float = 0.0,
+            max: Optional[float] = None,
+            color1: Optional[Any] = None,
+            color2: Optional[Any] = None,
+            type: int = 0,
+        ) -> Dict[str, Any]:
+            """Add a bond pair (wrapper over viewer.avr.bond.add_bond_pair)."""
+            viewer.avr.bond.add_bond_pair(
+                species1,
+                species2,
+                min=float(min),
+                max=float(max) if max is not None else None,
+                color1=_to_jsonable(color1) if color1 is not None else None,
+                color2=_to_jsonable(color2) if color2 is not None else None,
+                type=int(type),
+            )
+            key = f"{species1}-{species1 if species2 is None else species2}"
+            return WeasToolResult(f"Added bond pair {key}.").to_dict()
+
+        @tool
+        def set_highlight_item(
+            name: str,
+            indices: List[int],
+            type: Literal["sphere", "box", "cross"] = "sphere",
+            color: Any = "yellow",
+            scale: float = 1.1,
+        ) -> Dict[str, Any]:
+            """Add/update a highlight item (viewer.avr.highlight.settings[name])."""
+            atoms, *_ = _get_current_ase_atoms(viewer)
+            _normalize_indices(indices, selected=[], n_atoms=len(atoms))
+            viewer.avr.highlight.settings[str(name)] = {
+                "type": str(type),
+                "indices": list(indices),
+                "color": _to_jsonable(color),
+                "scale": float(scale),
+            }
+            viewer.avr.draw()
+            return WeasToolResult(
+                f"Set highlight '{name}' for {len(indices)} atoms."
+            ).to_dict()
+
+        @tool
+        def delete_highlight_item(name: str) -> Dict[str, Any]:
+            """Delete a highlight item."""
+            settings = viewer.avr.highlight.settings
+            if name in settings:
+                del settings[name]
+                viewer.avr.draw()
+                return WeasToolResult(f"Deleted highlight '{name}'.").to_dict()
+            return WeasToolResult(
+                f"Highlight '{name}' not found; nothing deleted."
+            ).to_dict()
+
+        @tool
+        def add_lattice_plane_from_miller(
+            name: str,
+            miller: List[int],
+            distance: float = 1.0,
+            color: Optional[List[float]] = None,
+            scale: float = 1.0,
+            width: float = 0.1,
+        ) -> Dict[str, Any]:
+            """Add a lattice plane from Miller indices and rebuild planes."""
+            if len(miller) != 3:
+                raise ValueError("miller must be a length-3 list like [h,k,l].")
+            kwargs: Dict[str, Any] = {
+                "distance": float(distance),
+                "scale": float(scale),
+                "width": float(width),
+            }
+            if color is not None:
+                if len(color) != 4:
+                    raise ValueError("color must be RGBA like [r,g,b,a].")
+                kwargs["color"] = [float(x) for x in color]
+            viewer.avr.lp.add_plane_from_indices(
+                str(name), [int(x) for x in miller], **kwargs
+            )
+            viewer.avr.lp.build_plane()
+            return WeasToolResult(
+                f"Added lattice plane '{name}' and rebuilt planes."
+            ).to_dict()
+
+        @tool
+        def add_lattice_plane_from_selected_atoms(
+            name: str,
+            color: Optional[List[float]] = None,
+            scale: float = 1.0,
+            width: float = 0.1,
+        ) -> Dict[str, Any]:
+            """Add a lattice plane from 3 selected atoms and rebuild planes."""
+            kwargs: Dict[str, Any] = {"scale": float(scale), "width": float(width)}
+            if color is not None:
+                if len(color) != 4:
+                    raise ValueError("color must be RGBA like [r,g,b,a].")
+                kwargs["color"] = [float(x) for x in color]
+            viewer.avr.lp.add_plane_from_selected_atoms(str(name), **kwargs)
+            viewer.avr.lp.build_plane()
+            return WeasToolResult(
+                f"Added lattice plane '{name}' from selection and rebuilt planes."
             ).to_dict()
 
         return [
@@ -981,6 +1489,41 @@ class WeasToolkit:
             replace_atoms,
             translate,
             rotate,
+            undo,
+            redo,
+            select_all_atoms,
+            invert_selection,
+            select_atoms_inside_selected_objects,
+            op_translate,
+            op_rotate,
+            op_scale,
+            delete_selected_objects,
+            duplicate_selected_objects,
+            add_mesh_primitive,
+            set_instanced_mesh_primitives,
+            clear_instanced_mesh_primitives,
+            set_any_mesh,
+            clear_any_mesh,
+            get_camera,
+            set_camera,
+            set_current_frame,
+            get_animation_info,
+            measure,
+            clear_measurements,
+            set_volumetric_data,
+            set_isosurface_settings,
+            set_volume_slice_settings,
+            set_vector_field_settings,
+            set_show_vector_field,
+            set_phonon_setting,
+            get_bond_pair,
+            update_bond_pair,
+            delete_bond_pair,
+            add_bond_pair,
+            set_highlight_item,
+            delete_highlight_item,
+            add_lattice_plane_from_miller,
+            add_lattice_plane_from_selected_atoms,
         ]
 
 
