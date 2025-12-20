@@ -358,7 +358,7 @@ function resolveFunctionFromString(editor, path) {
                     method.apply(null, finalArgs);
                 } else {
                     if (kwargs && Object.keys(kwargs).length > 0) {
-                        method(...Object.values(kwargs));
+                        method(kwargs);
                     } else {
                         method();
                     }
