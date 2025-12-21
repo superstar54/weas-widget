@@ -187,27 +187,6 @@ def _cell_center_xy(atoms: Any) -> np.ndarray:
     return 0.5 * (cell[0] + cell[1])
 
 
-def _rotation_matrix(axis: np.ndarray, angle_degrees: float) -> np.ndarray:
-    axis = np.asarray(axis, dtype=float)
-    norm = np.linalg.norm(axis)
-    if norm == 0:
-        raise ValueError("Rotation axis must be non-zero.")
-    axis = axis / norm
-    angle = np.deg2rad(float(angle_degrees))
-    x, y, z = axis
-    c = np.cos(angle)
-    s = np.sin(angle)
-    C = 1 - c
-    return np.array(
-        [
-            [x * x * C + c, x * y * C - z * s, x * z * C + y * s],
-            [y * x * C + z * s, y * y * C + c, y * z * C - x * s],
-            [z * x * C - y * s, z * y * C + x * s, z * z * C + c],
-        ],
-        dtype=float,
-    )
-
-
 @dataclass(frozen=True)
 class WeasToolResult:
     message: str
@@ -315,6 +294,8 @@ class WeasToolkit:
             )
 
     def _build_tools(self):
+        from weas_widget import WeasWidget
+
         try:
             from langchain_core.tools import tool
         except Exception as e:
@@ -322,7 +303,7 @@ class WeasToolkit:
                 "Missing optional dependencies for the agent. Install with `pip install weas-widget[agent]`."
             ) from e
 
-        viewer = self.viewer
+        viewer: WeasWidget = self.viewer
 
         @tool
         def list_style_options(topic: Optional[str] = None) -> Dict[str, Any]:
@@ -330,7 +311,7 @@ class WeasToolkit:
             List supported visualization/style controls and their allowed values.
 
             Topics:
-            - "viewer": model_style, boundary, color_by, color_type, color_ramp,
+            - "viewer": model_style, boundary, color_type, color_ramp,
                         radius_type, material_type, atom_label_type
             - "bond": show_bonded_atoms, hide_long_bonds, show_hydrogen_bonds, show_out_boundary_bonds
             - "cell": cell.* settings such as cell.showCell, cell.cellColor, cell.axisColors, ...
@@ -441,7 +422,6 @@ class WeasToolkit:
             Examples:
             - set_style("model_style", "Polyhedra")
             - set_style("color_type", "VESTA")
-            - set_style("color_by", "Element") or set_style("color_by", "Force")  # attribute coloring
             - set_style("boundary", [[-0.1,1.1],[-0.1,1.1],[-0.1,1.1]])
             - set_style("cell.showCell", True)
             - set_style("atom_label_type", "Index")
@@ -465,24 +445,6 @@ class WeasToolkit:
                 return WeasToolResult(
                     f"Set color_type to {viewer.avr.color_type}."
                 ).to_dict()
-
-            if k == "color_by":
-                if not isinstance(value, str):
-                    raise ValueError("color_by must be a string.")
-                viewer.avr.color_by = str(value)
-                return WeasToolResult(
-                    f"Set color_by to {viewer.avr.color_by}."
-                ).to_dict()
-
-            if k == "color_ramp":
-                if not isinstance(value, list) or not all(
-                    isinstance(x, str) for x in value
-                ):
-                    raise ValueError(
-                        "color_ramp must be a list of color strings, e.g. ['red','blue']."
-                    )
-                viewer.avr.color_ramp = list(value)
-                return WeasToolResult("Set color_ramp.").to_dict()
 
             if k == "radius_type":
                 viewer.avr.radius_type = _parse_enum(
@@ -569,6 +531,20 @@ class WeasToolkit:
             _normalize_indices(indices, selected=[], n_atoms=len(atoms))
             viewer.avr.selected_atoms_indices = list(indices)
             return WeasToolResult(f"Selected {len(indices)} atoms.").to_dict()
+
+        @tool
+        def read_atoms_from_file(file_path: str) -> Dict[str, Any]:
+            """Read atoms from a file and load into the viewer.
+            Supported formats depend on ASE installation, e.g., XYZ, CIF, POSCAR, etc.
+            """
+            from ase.io import read
+
+            atoms = read(file_path)
+            viewer.from_ase(atoms)
+            viewer.avr.selected_atoms_indices = []
+            return WeasToolResult(
+                f"Loaded structure from '{file_path}' with {len(atoms)} atoms."
+            ).to_dict()
 
         @tool
         def load_molecule(name: str) -> Dict[str, Any]:
@@ -873,16 +849,9 @@ class WeasToolkit:
         def add_atom(symbol: str, x: float, y: float, z: float) -> Dict[str, Any]:
             """Add a single atom at (x, y, z) in Angstrom."""
 
-            viewer._widget.send_js_task(
-                {
-                    "name": "avr.addAtom",
-                    "kwargs": {
-                        "element": symbol,
-                        "position": {"x": float(x), "y": float(y), "z": float(z)},
-                    },
-                }
+            viewer.ops.atoms.add_atom(
+                symbol=symbol, position={"x": float(x), "y": float(y), "z": float(z)}
             )
-            viewer._widget.send_js_task({"name": "avr.drawModels"})
 
             return WeasToolResult(f"Added {symbol} at ({x}, {y}, {z}).").to_dict()
 
@@ -896,10 +865,21 @@ class WeasToolkit:
                     "Nothing to delete (no indices and empty selection)."
                 ).to_dict()
 
-            viewer._widget.send_js_task(
-                {"name": "avr.deleteSelectedAtoms", "kwargs": {"indices": use}}
-            )
+            viewer.ops.object.delete(indices=use)
             return WeasToolResult(f"Deleted {len(use)} atoms.").to_dict()
+
+        @tool
+        def copy_atoms(indices: Optional[List[int]] = None) -> Dict[str, Any]:
+            """Copy atoms by indices; if omitted, uses the current selection."""
+
+            _, _, _, _, use = _get_current_atoms_and_use_indices(viewer, indices)
+            if not use:
+                return WeasToolResult(
+                    "Nothing to copy (no indices and empty selection)."
+                ).to_dict()
+
+            viewer.ops.object.copy(indices=use)
+            return WeasToolResult(f"Copied {len(use)} atoms.").to_dict()
 
         @tool
         def replace_atoms(
@@ -907,19 +887,29 @@ class WeasToolkit:
         ) -> Dict[str, Any]:
             """Replace atoms (change element) by indices; if omitted, uses the current selection."""
 
-            _, _, _, _, use = _get_current_atoms_and_use_indices(viewer, indices)
-            if not use:
-                return WeasToolResult(
-                    "Nothing to replace (no indices and empty selection)."
-                ).to_dict()
-            viewer._widget.send_js_task(
-                {
-                    "name": "avr.replaceSelectedAtoms",
-                    "kwargs": {"element": symbol, "indices": use},
-                }
+            if indices is not None:
+                viewer.avr.selected_atoms_indices = list(indices)
+            else:
+                indices = viewer.avr.selected_atoms_indices or []
+            viewer.ops.atoms.replace(symbol=symbol, indices=indices)
+            return WeasToolResult(
+                f"Replaced {len(indices)} atoms with '{symbol}'."
+            ).to_dict()
+
+        @tool
+        def color_by_attribute(
+            attribute: str = "Element",
+            color1: Optional[str] = "#ff0000",
+            color2: Optional[str] = "#0000ff",
+        ):
+            """Color selected atoms by a given atomic attribute (e.g., 'magmom', 'charge');
+            if indices omitted, uses selection."""
+
+            viewer.ops.atoms.color_by_attribute(
+                attribute=attribute, color1=color1, color2=color2
             )
             return WeasToolResult(
-                f"Replaced {len(use)} atoms with '{symbol}'."
+                f"Colored atoms by attribute '{attribute}', from {color1} to {color2}."
             ).to_dict()
 
         @tool
@@ -928,52 +918,32 @@ class WeasToolkit:
         ) -> Dict[str, Any]:
             """Translate atoms by (dx, dy, dz) in Angstrom; if indices omitted, uses selection."""
 
-            _, _, _, _, use = _get_current_atoms_and_use_indices(viewer, indices)
-            if not use:
-                return WeasToolResult(
-                    "Nothing to translate (no indices and empty selection)."
-                ).to_dict()
             if len(vector) != 3:
                 raise ValueError("vector must be a length-3 list like [dx, dy, dz].")
-            viewer._widget.send_js_task(
-                {
-                    "name": "avr.translateSelectedAtoms",
-                    "kwargs": {"translateVector": vector, "indices": use},
-                }
-            )
-            viewer._widget.send_js_task({"name": "avr.drawModels"})
+            if indices is not None:
+                viewer.avr.selected_atoms_indices = list(indices)
+            else:
+                indices = viewer.avr.selected_atoms_indices or []
+            viewer.ops.transform.translate(vector=list(vector))
             return WeasToolResult(
-                f"Translated {len(use)} atoms by ({vector[0]}, {vector[1]}, {vector[2]})."
+                f"Translated {len(indices)} atoms by ({vector[0]}, {vector[1]}, {vector[2]})."
             ).to_dict()
 
         @tool
         def rotate(
-            axis: List[float],
-            angle_degrees: float,
-            indices: Optional[List[int]] = None,
-            about: str = "com",
+            axis: List[float], angle: float, indices: Optional[List[int]] = None
         ) -> Dict[str, Any]:
             """Rotate atoms around an axis by angle degrees; indices omitted => selection; about='com' or 'origin'."""
 
-            _, _, _, _, use = _get_current_atoms_and_use_indices(viewer, indices)
-            if not use:
-                return WeasToolResult(
-                    "Nothing to rotate (no indices and empty selection)."
-                ).to_dict()
             if len(axis) != 3:
                 raise ValueError("axis must be a length-3 list like [ax, ay, az].")
-            if about not in ("com", "origin"):
-                raise ValueError("about must be 'com' or 'origin'.")
-
-            axis_obj = {"x": float(axis[0]), "y": float(axis[1]), "z": float(axis[2])}
-            args: List[Any] = [axis_obj, float(angle_degrees), use]
-            if about == "origin":
-                args.append({"x": 0.0, "y": 0.0, "z": 0.0})
-            viewer._widget.send_js_task(
-                {"name": "avr.rotateSelectedAtoms", "args": args}
-            )
+            if indices is not None:
+                viewer.avr.selected_atoms_indices = list(indices)
+            else:
+                indices = viewer.avr.selected_atoms_indices or []
+            viewer.ops.transform.rotate(axis=list(axis), angle=float(angle))
             return WeasToolResult(
-                f"Rotated {len(use)} atoms by {angle_degrees} degrees."
+                f"Rotated {len(indices)} atoms by {angle} degrees."
             ).to_dict()
 
         @tool
@@ -1034,46 +1004,6 @@ class WeasToolkit:
                 )
             ops.selection.inside_selection()
             return WeasToolResult("Selected atoms inside selected objects.").to_dict()
-
-        @tool
-        def op_translate(
-            vector: List[float], indices: Optional[List[int]] = None
-        ) -> Dict[str, Any]:
-            """Translate selection via the operation system (undoable)."""
-            if len(vector) != 3:
-                raise ValueError("vector must be a length-3 list like [dx, dy, dz].")
-            if indices is not None:
-                atoms, *_ = _get_current_ase_atoms(viewer)
-                _normalize_indices(indices, selected=[], n_atoms=len(atoms))
-                viewer.avr.selected_atoms_indices = list(indices)
-            ops = getattr(viewer, "ops", None)
-            if ops is None:
-                raise AttributeError(
-                    "Viewer does not have .ops; expected a WeasWidget."
-                )
-            ops.transform.translate(vector=list(vector))
-            return WeasToolResult("Translated selection (undoable).").to_dict()
-
-        @tool
-        def op_rotate(
-            axis: List[float],
-            angle_degrees: float,
-            indices: Optional[List[int]] = None,
-        ) -> Dict[str, Any]:
-            """Rotate selection via the operation system (undoable)."""
-            if len(axis) != 3:
-                raise ValueError("axis must be a length-3 list like [ax, ay, az].")
-            if indices is not None:
-                atoms, *_ = _get_current_ase_atoms(viewer)
-                _normalize_indices(indices, selected=[], n_atoms=len(atoms))
-                viewer.avr.selected_atoms_indices = list(indices)
-            ops = getattr(viewer, "ops", None)
-            if ops is None:
-                raise AttributeError(
-                    "Viewer does not have .ops; expected a WeasWidget."
-                )
-            ops.transform.rotate(axis=list(axis), angle=float(angle_degrees))
-            return WeasToolResult("Rotated selection (undoable).").to_dict()
 
         @tool
         def op_scale(scale: List[float]) -> Dict[str, Any]:
@@ -1477,6 +1407,7 @@ class WeasToolkit:
             set_style,
             get_selected_atoms,
             get_structure_summary,
+            read_atoms_from_file,
             load_molecule,
             load_bulk,
             load_fcc_surface,
@@ -1486,7 +1417,9 @@ class WeasToolkit:
             select_atoms,
             add_atom,
             delete_atoms,
+            copy_atoms,
             replace_atoms,
+            color_by_attribute,
             translate,
             rotate,
             undo,
@@ -1494,8 +1427,6 @@ class WeasToolkit:
             select_all_atoms,
             invert_selection,
             select_atoms_inside_selected_objects,
-            op_translate,
-            op_rotate,
             op_scale,
             delete_selected_objects,
             duplicate_selected_objects,
