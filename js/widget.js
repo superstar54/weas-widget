@@ -95,7 +95,35 @@ function render({ model, el }) {
         window.editor = editor; // for debugging
         // volumetric data
         setVolumetricData(editor, model.get("volumetricData"), atoms.cell);
+        editor.avr.transaction(() => {
+            const initialState = {
+                modelStyle: model.get("modelStyle"),
+                colorBy: model.get("colorBy"),
+                colorType: model.get("colorType"),
+                colorRamp: model.get("colorRamp"),
+                radiusType: model.get("radiusType"),
+                materialType: model.get("materialType"),
+                atomLabelType: model.get("atomLabelType"),
+                showBondedAtoms: model.get("showBondedAtoms"),
+                boundary: model.get("boundary"),
+                selectedAtomsIndices: model.get("selectedAtomsIndices") || [],
+            };
+            const atomScales = model.get("atomScales");
+            if (atomScales.length > 0) {
+                initialState.atomScales = atomScales;
+            }
+            const modelSticks = model.get("modelSticks");
+            if (modelSticks.length > 0) {
+                initialState.modelSticks = modelSticks;
+            }
+            const modelPolyhedras = model.get("modelPolyhedras");
+            if (modelPolyhedras.length > 0) {
+                initialState.modelPolyhedras = modelPolyhedras;
+            }
+            editor.avr.applyState(initialState, { redraw: "full" });
+        });
         editor.state.transaction(() => {
+            console.log("set plugin settings");
             const bondSettings = model.get("bondSettings") || {};
             const hideLongBonds = model.get("hideLongBonds");
             const showHydrogenBonds = model.get("showHydrogenBonds");
@@ -127,33 +155,7 @@ function render({ model, el }) {
                 },
             });
         });
-        editor.avr.transaction(() => {
-            const initialState = {
-                modelStyle: model.get("modelStyle"),
-                colorBy: model.get("colorBy"),
-                colorType: model.get("colorType"),
-                colorRamp: model.get("colorRamp"),
-                radiusType: model.get("radiusType"),
-                materialType: model.get("materialType"),
-                atomLabelType: model.get("atomLabelType"),
-                showBondedAtoms: model.get("showBondedAtoms"),
-                boundary: model.get("boundary"),
-                selectedAtomsIndices: model.get("selectedAtomsIndices") || [],
-            };
-            const atomScales = model.get("atomScales");
-            if (atomScales.length > 0) {
-                initialState.atomScales = atomScales;
-            }
-            const modelSticks = model.get("modelSticks");
-            if (modelSticks.length > 0) {
-                initialState.modelSticks = modelSticks;
-            }
-            const modelPolyhedras = model.get("modelPolyhedras");
-            if (modelPolyhedras.length > 0) {
-                initialState.modelPolyhedras = modelPolyhedras;
-            }
-            editor.avr.applyState(initialState, { redraw: "full" });
-        });
+
         //
         const phonon = model.get("phonon");
         console.log("phonon: ", phonon);
