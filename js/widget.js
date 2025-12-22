@@ -42,16 +42,14 @@ function render({ model, el }) {
     });
     // To scope styles to just elements added by this widget, adding a class to the root el.
     el.classList.add("weas-widget");
+    domElement.classList.add("weas-viewer");
     // Stop propagation of mouse and keyboard events from the viewer to jupyter notebook
     // to avoid conflicts with the notebook's keyboard shortcuts
     preventEventPropagation(domElement);
-    domElement.style.cssText = "position: relative; width: 600px; height: 400px;";
-    const viewerStyle = model.get("viewerStyle");
-    // set the style ortherwise use the default value
-    if (viewerStyle) {
-        domElement.style.width = viewerStyle.width;
-        domElement.style.height = viewerStyle.height;
-    }
+    domElement.style.position = "relative";
+    const vs = model.get("viewerStyle") || {};
+    domElement.style.width = vs.width || "600px";
+    domElement.style.height = vs.height || "400px";
     // Function to render atoms
     const renderAtoms = () => {
         // load init parameters from the model
@@ -95,41 +93,67 @@ function render({ model, el }) {
         };
         editor = new weas.WEAS({ domElement, atoms, viewerConfig, guiConfig });
         window.editor = editor; // for debugging
-        editor.avr.selectedAtomsIndices = model.get("selectedAtomsIndices");
-        // species settings
-        editor.avr.atomManager.fromSettings(model.get("speciesSettings"));
-        // bond settings
-        // console.log("bondSettings: ", model.get("bondSettings"));
-        editor.avr.bondManager.fromSettings(model.get("bondSettings"));
-        // highlight settings
-        // console.log("highlightSettings: ", model.get("highlightSettings"));
-        editor.avr.highlightManager.fromSettings(model.get("highlightSettings"));
         // volumetric data
-        editor.avr.volumetricData = createVolumeData(model.get("volumetricData"), atoms.cell);
-        // isosurface
-        editor.avr.isosurfaceManager.fromSettings(model.get("isoSettings"));
-        // volume slice
-        editor.avr.volumeSliceManager.fromSettings(model.get("sliceSettings"));
-        // vector field
-        editor.avr.VFManager.fromSettings(model.get("vectorField"));
-        editor.avr.VFManager.show = model.get("showVectorField");
-        // if the atomScales is not a empty array, then update the atomScales
-        if (model.get("atomScales").length > 0) {
-            editor.avr.atomScales = model.get("atomScales");
-        }
-        if (model.get("modelSticks").length > 0) {
-            editor.avr.modelSticks = model.get("modelSticks");
-        }
-        if (model.get("modelPolyhedras").length > 0) {
-            editor.avr.modelPolyhedras = model.get("modelPolyhedras");
-        }
-        editor.avr.drawModels();
-        // mesh primitives
-        editor.instancedMeshPrimitive.fromSettings(model.get("instancedMeshPrimitive"));
-        editor.instancedMeshPrimitive.drawMesh();
-        // any mesh
-        editor.anyMesh.fromSettings(model.get("anyMesh"));
-        editor.anyMesh.drawMesh();
+        setVolumetricData(editor, model.get("volumetricData"), atoms.cell);
+        editor.state.transaction(() => {
+            const bondSettings = model.get("bondSettings") || {};
+            const hideLongBonds = model.get("hideLongBonds");
+            const showHydrogenBonds = model.get("showHydrogenBonds");
+            const showOutBoundaryBonds = model.get("showOutBoundaryBonds");
+            const highlightSettings = model.get("highlightSettings") || {};
+            const isoSettings = model.get("isoSettings") || {};
+            const sliceSettings = model.get("sliceSettings") || {};
+            const vectorField = model.get("vectorField") || {};
+            const showVectorField = model.get("showVectorField");
+            const cellSettings = model.get("cellSettings") || {};
+            editor.state.set({
+                bond: {
+                    settings: bondSettings,
+                    hideLongBonds,
+                    showHydrogenBonds,
+                    showOutBoundaryBonds,
+                },
+            });
+            editor.state.set({ plugins: { highlight: { settings: highlightSettings } } });
+            editor.state.set({
+                cell: cellSettings,
+                plugins: {
+                    isosurface: { settings: isoSettings },
+                    volumeSlice: { settings: sliceSettings },
+                    vectorField: { settings: vectorField, show: showVectorField },
+                    instancedMeshPrimitive: { settings: model.get("instancedMeshPrimitive") || [] },
+                    anyMesh: { settings: model.get("anyMesh") || [] },
+                    species: { settings: model.get("speciesSettings") || {} },
+                },
+            });
+        });
+        editor.avr.transaction(() => {
+            const initialState = {
+                modelStyle: model.get("modelStyle"),
+                colorBy: model.get("colorBy"),
+                colorType: model.get("colorType"),
+                colorRamp: model.get("colorRamp"),
+                radiusType: model.get("radiusType"),
+                materialType: model.get("materialType"),
+                atomLabelType: model.get("atomLabelType"),
+                showBondedAtoms: model.get("showBondedAtoms"),
+                boundary: model.get("boundary"),
+                selectedAtomsIndices: model.get("selectedAtomsIndices") || [],
+            };
+            const atomScales = model.get("atomScales");
+            if (atomScales.length > 0) {
+                initialState.atomScales = atomScales;
+            }
+            const modelSticks = model.get("modelSticks");
+            if (modelSticks.length > 0) {
+                initialState.modelSticks = modelSticks;
+            }
+            const modelPolyhedras = model.get("modelPolyhedras");
+            if (modelPolyhedras.length > 0) {
+                initialState.modelPolyhedras = modelPolyhedras;
+            }
+            editor.avr.applyState(initialState, { redraw: "full" });
+        });
         //
         const phonon = model.get("phonon");
         console.log("phonon: ", phonon);
@@ -144,7 +168,6 @@ function render({ model, el }) {
         const cameraSetting = model.get("cameraSetting");
         editor.tjs.updateCameraAndControls(cameraSetting);
         editor.render();
-        editor.tjs.onWindowResize();
         return editor;
     };
     // Initial rendering
@@ -184,94 +207,94 @@ function render({ model, el }) {
       });
 
     // Listen for changes in the 'viewer' property
-    model.on("change:modelStyle", () => {editor.avr.modelStyle = model.get("modelStyle");});
-    model.on("change:colorType", () => {editor.avr.colorType = model.get("colorType");});
-    model.on("change:materialType", () => {editor.avr.materialType = model.get("materialType");});
-    model.on("change:atomLabelType", () => {editor.avr.atomLabelType = model.get("atomLabelType");});
-    model.on("change:showBondedAtoms", () => {editor.avr.showBondedAtoms = model.get("showBondedAtoms");});
-    model.on("change:atomScales", () => {editor.avr.atomScales = model.get("atomScales");});
-    model.on("change:modelSticks", () => {editor.avr.modelSticks = model.get("modelSticks");});
-    model.on("change:modelPolyhedras", () => {editor.avr.modelPolyhedras = model.get("modelPolyhedras");});
-    model.on("change:selectedAtomsIndices", () => {editor.avr.selectedAtomsIndices = model.get("selectedAtomsIndices");});
-    model.on("change:boundary", () => {editor.avr.boundary = model.get("boundary");});
+    model.on("change:modelStyle", () => {editor.avr.applyState({ modelStyle: model.get("modelStyle") }, { redraw: "full" });});
+    model.on("change:colorType", () => {editor.avr.applyState({ colorType: model.get("colorType") }, { redraw: "full" });});
+    model.on("change:colorBy", () => {editor.avr.applyState({ colorBy: model.get("colorBy") }, { redraw: "full" });});
+    model.on("change:colorRamp", () => {editor.avr.applyState({ colorRamp: model.get("colorRamp") }, { redraw: "full" });});
+    model.on("change:materialType", () => {editor.avr.applyState({ materialType: model.get("materialType") }, { redraw: "full" });});
+    model.on("change:atomLabelType", () => {editor.avr.applyState({ atomLabelType: model.get("atomLabelType") }, { redraw: "render" });});
+    model.on("change:showBondedAtoms", () => {editor.avr.applyState({ showBondedAtoms: model.get("showBondedAtoms") }, { redraw: "full" });});
+    model.on("change:continuousUpdate", () => {editor.avr.applyState({ continuousUpdate: model.get("continuousUpdate") }, { redraw: "none" });});
+    model.on("change:atomScales", () => {editor.avr.applyState({ atomScales: model.get("atomScales") }, { redraw: "full" });});
+    model.on("change:modelSticks", () => {editor.avr.applyState({ modelSticks: model.get("modelSticks") }, { redraw: "full" });});
+    model.on("change:modelPolyhedras", () => {editor.avr.applyState({ modelPolyhedras: model.get("modelPolyhedras") }, { redraw: "full" });});
+    model.on("change:selectedAtomsIndices", () => {editor.avr.applyState({ selectedAtomsIndices: model.get("selectedAtomsIndices") || [] }, { redraw: "render" });});
+    model.on("change:boundary", () => {editor.avr.applyState({ boundary: model.get("boundary") }, { redraw: "full" });});
     // frame
     model.on("change:currentFrame", () => {
+        console.log("change:currentFrame", model.get("currentFrame"));
         editor.avr.currentFrame = model.get("currentFrame");
     });
     // bond settings
     model.on("change:bondSettings", () => {
-        const data = model.get("bondSettings");
-        editor.avr.bondManager.fromSettings(data);
+        const data = model.get("bondSettings") || {};
+        editor.state.set({ bond: { settings: data } });
+    });
+    model.on("change:hideLongBonds", () => {
+        const hideLongBonds = model.get("hideLongBonds");
+        editor.state.set({ bond: { hideLongBonds } });
+    });
+    model.on("change:showHydrogenBonds", () => {
+        const showHydrogenBonds = model.get("showHydrogenBonds");
+        editor.state.set({ bond: { showHydrogenBonds } });
+    });
+    model.on("change:showOutBoundaryBonds", () => {
+        const showOutBoundaryBonds = model.get("showOutBoundaryBonds");
+        editor.state.set({ bond: { showOutBoundaryBonds } });
     });
     // species settings
     model.on("change:speciesSettings", () => {
-        const data = model.get("speciesSettings");
-        editor.avr.atomManager.fromSettings(data);
-        editor.avr.drawModels();
+        const data = model.get("speciesSettings") || {};
+        editor.state.set({ plugins: { species: { settings: data } } });
     });
     // highlight settings
     model.on("change:highlightSettings", () => {
-        const data = model.get("highlightSettings");
-        editor.avr.highlightManager.fromSettings(data);
-        editor.avr.highlightManager.drawHighlightAtoms();
-        editor.tjs.render();
+        const data = model.get("highlightSettings") || {};
+        editor.state.set({ plugins: { highlight: { settings: data } } });
     });
     // cell settings
     model.on("change:cellSettings", () => {
         const data = model.get("cellSettings") || {};
-        Object.assign(editor.avr.cellManager.settings, data);
-        if (data.showCell !== undefined) editor.avr.cellManager.showCell = data.showCell;
-        if (data.showAxes !== undefined) editor.avr.cellManager.showAxes = data.showAxes;
-        editor.avr.cellManager.draw();
-        editor.tjs.render();
+        editor.state.set({ cell: data });
     });
     // volumetric data
     model.on("change:volumetricData", () => {
         const data = model.get("volumetricData");
         console.log("volumetricData: ", data);
-        editor.avr.volumetricData = createVolumeData(data, editor.avr.atoms.cell);
+        setVolumetricData(editor, data, editor.avr.atoms.cell);
         console.log("volumeData: ", editor.avr.volumetricData);
     });
     model.on("change:isoSettings", () => {
-        const isoSettings = model.get("isoSettings");
-        console.log("isoSettings: ", isoSettings);
-        editor.avr.isosurfaceManager.fromSettings(isoSettings);
-        editor.avr.isosurfaceManager.drawIsosurfaces();
-        console.log("drawIsosurfaces");
+        const isoSettings = model.get("isoSettings") || {};
+        editor.state.set({ plugins: { isosurface: { settings: isoSettings } } });
     });
     // volume slice
     model.on("change:sliceSettings", () => {
-        const data = model.get("sliceSettings");
-        editor.avr.volumeSliceManager.fromSettings(data);
-        editor.avr.volumeSliceManager.drawSlices();
-        editor.tjs.render();
+        const data = model.get("sliceSettings") || {};
+        editor.state.set({ plugins: { volumeSlice: { settings: data } } });
     });
 
     // Vector field
     model.on("change:vectorField", () => {
-        const data = model.get("vectorField");
-        editor.avr.VFManager.fromSettings(data);
-        editor.avr.VFManager.drawVectorFields();
+        const data = model.get("vectorField") || {};
+        editor.state.set({ plugins: { vectorField: { settings: data } } });
     });
     model.on("change:showVectorField", () => {
         const show = model.get("showVectorField");
-        editor.avr.VFManager.show = show;
-        editor.tjs.render();
+        editor.state.set({ plugins: { vectorField: { show } } });
     });
     // instanced mesh primitives
     model.on("change:instancedMeshPrimitive", () => {
-        const data = model.get("instancedMeshPrimitive");
+        const data = model.get("instancedMeshPrimitive") || [];
         console.log("instancedMeshPrimitive: ", data);
-        editor.instancedMeshPrimitive.fromSettings(data);
-        editor.instancedMeshPrimitive.drawMesh();
+        editor.state.set({ plugins: { instancedMeshPrimitive: { settings: data } } });
     });
 
     // any mesh
     model.on("change:anyMesh", () => {
-        const data = model.get("anyMesh");
+        const data = model.get("anyMesh") || [];
         console.log("anyMesh: ", data);
-        editor.anyMesh.fromSettings(data);
-        editor.anyMesh.drawMesh();
+        editor.state.set({ plugins: { anyMesh: { settings: data } } });
     });
 
     // camera settings
@@ -283,18 +306,18 @@ function render({ model, el }) {
     model.on("change:cameraZoom", () => {
         const cameraZoom = model.get("cameraZoom");
         editor.tjs.camera.updateZoom(cameraZoom);
-        editor.tjs.render();
+        editor.requestRedraw("render");
     });
     model.on("change:cameraPosition", () => {
         const cameraPosition = model.get("cameraPosition");
         editor.tjs.camera.updatePosition(cameraPosition[0], cameraPosition[1], cameraPosition[2]);
-        editor.tjs.render();
+        editor.requestRedraw("render");
     });
     model.on("change:cameraLookAt", () => {
         const cameraLookAt = model.get("cameraLookAt");
         editor.tjs.controls.target.set(cameraLookAt[0], cameraLookAt[1], cameraLookAt[2]);
         editor.tjs.controls.update();
-        editor.tjs.render();
+        editor.requestRedraw("render");
     });
     // frame
     model.on("change:showAtomLegend", () => {
@@ -303,11 +326,38 @@ function render({ model, el }) {
     });
 }
 function createVolumeData(data, cell=[[1, 0, 0], [0, 1, 0], [0, 0, 1]]) {
+    if (!data || !data.values || !Array.isArray(data.values) || data.values.length === 0) {
+        return null;
+    }
     // get the dimensions
     const dims = [data.values.length, data.values[0].length, data.values[0][0].length];
     // flatten the 3d data to 1d
     const values = [].concat.apply([], [].concat.apply([], data.values));
     return {dims, values, cell: cell, origin: [0, 0, 0]};
+}
+
+function setVolumetricData(editor, data, cell) {
+    if (!editor || !editor.avr) {
+        return;
+    }
+    const volumeData = createVolumeData(data, cell);
+    if (!volumeData) {
+        return;
+    }
+    if (typeof editor.avr.setVolumetricData === "function") {
+        editor.avr.setVolumetricData(volumeData);
+        return;
+    }
+    editor.avr.volumetricData = volumeData;
+    if (editor.avr.isosurfaceManager && typeof editor.avr.isosurfaceManager.drawIsosurfaces === "function") {
+        editor.avr.isosurfaceManager.drawIsosurfaces();
+    }
+    if (editor.avr.volumeSliceManager && typeof editor.avr.volumeSliceManager.drawSlices === "function") {
+        editor.avr.volumeSliceManager.drawSlices();
+    }
+    if (typeof editor.avr.requestRedraw === "function") {
+        editor.avr.requestRedraw("render");
+    }
 }
 
 function preventEventPropagation(element) {

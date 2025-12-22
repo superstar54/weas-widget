@@ -132,10 +132,16 @@ Select specific components
 Set viewer width and height
 ----------------------------
 
+Use the widget layout (or container CSS) to control size.
+
 .. code-block:: python
 
+   import ipywidgets as ipw
    from weas_widget import WeasWidget
+   # this sets the style of the viewer inside the widget
    viewer = WeasWidget(viewerStyle = {"width": "800px", "height": "600px"})
+   # This sets the layout of the widget itself
+   # viewer.layout = ipw.Layout(width="800px", height="600px")
    viewer
 
 Show atoms legend
