@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from copy import deepcopy
 import inspect
 import warnings
 from typing import (
@@ -70,6 +71,55 @@ def _set_current_ase_atoms(
         viewer.from_ase(trajectory)
     else:
         viewer.from_ase(atoms)
+
+
+def _get_current_atoms_data(
+    viewer: Any,
+) -> Tuple[Dict[str, Any], bool, Optional[int], Optional[list]]:
+    atoms_data = deepcopy(getattr(viewer, "_widget").atoms)
+    if isinstance(atoms_data, list):
+        frame = int(getattr(viewer.avr, "current_frame", 0))
+        frame = max(0, min(frame, len(atoms_data) - 1))
+        return deepcopy(atoms_data[frame]), True, frame, atoms_data
+    return atoms_data, False, None, None
+
+
+def _set_current_atoms_data(
+    viewer: Any,
+    atoms_data: Dict[str, Any],
+    *,
+    is_trajectory: bool,
+    frame: Optional[int],
+    trajectory: Optional[list],
+):
+    if is_trajectory:
+        assert trajectory is not None and frame is not None
+        trajectory = list(trajectory)
+        trajectory[frame] = atoms_data
+        viewer._widget.atoms = trajectory
+    else:
+        viewer._widget.atoms = atoms_data
+
+
+def _ensure_group_attribute(atoms_data: Dict[str, Any]) -> List[List[str]]:
+    symbols = atoms_data.get("symbols") or []
+    attributes = atoms_data.setdefault("attributes", {})
+    atom_attrs = attributes.setdefault("atom", {})
+    groups = atom_attrs.get("groups")
+    if not isinstance(groups, list):
+        groups = [[] for _ in range(len(symbols))]
+        atom_attrs["groups"] = groups
+    if len(groups) < len(symbols):
+        groups.extend([[] for _ in range(len(symbols) - len(groups))])
+    elif len(groups) > len(symbols):
+        groups = list(groups[: len(symbols)])
+        atom_attrs["groups"] = groups
+    for i, entry in enumerate(groups):
+        if not isinstance(entry, list):
+            groups[i] = []
+        else:
+            groups[i] = [str(name) for name in entry]
+    return groups
 
 
 def _normalize_indices(
@@ -187,15 +237,32 @@ def _cell_center_xy(atoms: Any) -> np.ndarray:
     return 0.5 * (cell[0] + cell[1])
 
 
+def _group_layers_by_z(z_values: np.ndarray, tolerance: float) -> List[List[int]]:
+    order = np.argsort(z_values)[::-1]
+    layers: List[List[int]] = []
+    z_ref: Optional[float] = None
+    for idx in order:
+        z = float(z_values[idx])
+        if z_ref is None or abs(z - z_ref) > tolerance:
+            layers.append([int(idx)])
+            z_ref = z
+        else:
+            layers[-1].append(int(idx))
+    return layers
+
+
 @dataclass(frozen=True)
 class WeasToolResult:
     message: str
     summary: Optional[Dict[str, Any]] = None
+    confirmation: Optional[Dict[str, Any]] = None
 
     def to_dict(self) -> Dict[str, Any]:
         out: Dict[str, Any] = {"message": self.message}
         if self.summary is not None:
             out["summary"] = self.summary
+        if self.confirmation is not None:
+            out["confirmation"] = self.confirmation
         return out
 
 
@@ -533,6 +600,123 @@ class WeasToolkit:
             return WeasToolResult(f"Selected {len(indices)} atoms.").to_dict()
 
         @tool
+        def select_atoms_by_element(elements: List[str]) -> Dict[str, Any]:
+            """Select atoms by element symbols (e.g., ['C', 'O'])."""
+            atoms, *_ = _get_current_ase_atoms(viewer)
+            elements_set = set(str(e).strip() for e in elements)
+            selected = [
+                i for i, atom in enumerate(atoms) if str(atom.symbol) in elements_set
+            ]
+            viewer.avr.selected_atoms_indices = selected
+            return WeasToolResult(
+                f"Selected {len(selected)} atoms with elements {sorted(elements_set)}."
+            ).to_dict()
+
+        @tool
+        def list_groups() -> Dict[str, Any]:
+            """List all atom groups defined on the current structure."""
+            atoms_data, *_ = _get_current_atoms_data(viewer)
+            attributes = atoms_data.get("attributes", {})
+            atom_attrs = attributes.get("atom", {})
+            groups = atom_attrs.get("groups")
+            if not isinstance(groups, list):
+                return WeasToolResult(
+                    "No groups defined.", summary={"groups": []}
+                ).to_dict()
+            names = sorted(
+                {
+                    str(name)
+                    for entry in groups
+                    if isinstance(entry, list)
+                    for name in entry
+                }
+            )
+            return WeasToolResult("OK", summary={"groups": names}).to_dict()
+
+        @tool
+        def add_atoms_to_group(
+            group: str, indices: Optional[List[int]] = None
+        ) -> Dict[str, Any]:
+            """Add atoms to a named group; indices omitted => current selection."""
+            atoms_data, is_traj, frame, traj = _get_current_atoms_data(viewer)
+            selected = getattr(viewer.avr, "selected_atoms_indices", []) or []
+            n_atoms = len(atoms_data.get("symbols") or [])
+            use = _normalize_indices(indices, selected=selected, n_atoms=n_atoms)
+            if not use:
+                return WeasToolResult(
+                    "Nothing to group (no indices and empty selection)."
+                ).to_dict()
+            groups = _ensure_group_attribute(atoms_data)
+            name = str(group)
+            for idx in use:
+                if name not in groups[idx]:
+                    groups[idx].append(name)
+            _set_current_atoms_data(
+                viewer, atoms_data, is_trajectory=is_traj, frame=frame, trajectory=traj
+            )
+            return WeasToolResult(
+                f"Added {len(use)} atoms to group '{name}'.",
+                summary={"group": name, "indices": use},
+            ).to_dict()
+
+        @tool
+        def remove_atoms_from_group(
+            group: str, indices: Optional[List[int]] = None
+        ) -> Dict[str, Any]:
+            """Remove atoms from a named group; indices omitted => current selection."""
+            atoms_data, is_traj, frame, traj = _get_current_atoms_data(viewer)
+            selected = getattr(viewer.avr, "selected_atoms_indices", []) or []
+            n_atoms = len(atoms_data.get("symbols") or [])
+            use = _normalize_indices(indices, selected=selected, n_atoms=n_atoms)
+            if not use:
+                return WeasToolResult(
+                    "Nothing to ungroup (no indices and empty selection)."
+                ).to_dict()
+            groups = _ensure_group_attribute(atoms_data)
+            name = str(group)
+            for idx in use:
+                groups[idx] = [entry for entry in groups[idx] if entry != name]
+            _set_current_atoms_data(
+                viewer, atoms_data, is_trajectory=is_traj, frame=frame, trajectory=traj
+            )
+            return WeasToolResult(
+                f"Removed {len(use)} atoms from group '{name}'.",
+                summary={"group": name, "indices": use},
+            ).to_dict()
+
+        @tool
+        def clear_group(group: str) -> Dict[str, Any]:
+            """Remove a group from all atoms."""
+            atoms_data, is_traj, frame, traj = _get_current_atoms_data(viewer)
+            groups = _ensure_group_attribute(atoms_data)
+            name = str(group)
+            removed = 0
+            for i, entry in enumerate(groups):
+                new_entry = [g for g in entry if g != name]
+                removed += len(entry) - len(new_entry)
+                groups[i] = new_entry
+            _set_current_atoms_data(
+                viewer, atoms_data, is_trajectory=is_traj, frame=frame, trajectory=traj
+            )
+            return WeasToolResult(
+                f"Cleared group '{name}' from {removed} memberships.",
+                summary={"group": name, "removed": removed},
+            ).to_dict()
+
+        @tool
+        def select_atoms_by_group(group: str) -> Dict[str, Any]:
+            """Select atoms by group name."""
+            atoms_data, *_ = _get_current_atoms_data(viewer)
+            groups = _ensure_group_attribute(atoms_data)
+            name = str(group)
+            selected = [i for i, entry in enumerate(groups) if name in entry]
+            viewer.avr.selected_atoms_indices = selected
+            return WeasToolResult(
+                f"Selected {len(selected)} atoms in group '{name}'.",
+                summary={"group": name, "indices": selected},
+            ).to_dict()
+
+        @tool
         def read_atoms_from_file(file_path: str) -> Dict[str, Any]:
             """Read atoms from a file and load into the viewer.
             Supported formats depend on ASE installation, e.g., XYZ, CIF, POSCAR, etc.
@@ -586,10 +770,11 @@ class WeasToolkit:
         def load_fcc_surface(
             symbol: str = "Pt",
             miller: List[int] = [1, 1, 1],
-            size: List[int] = [3, 3, 4],
+            size: List[int] = [4, 4, 4],
             vacuum: float = 10.0,
             a: Optional[float] = None,
             orthogonal: bool = True,
+            mode: Optional[Literal["override", "append"]] = None,
         ) -> Dict[str, Any]:
             """
             Build and load an FCC surface slab (e.g., Pt(111)).
@@ -612,8 +797,25 @@ class WeasToolkit:
                 Lattice constant (optional, ASE will use a default if omitted).
             orthogonal
                 Whether to build an orthogonal cell (recommended for slabs).
+            mode
+                "override" replaces the current structure, "append" adds the slab to it.
             """
             from ase.build import bulk, fcc100, fcc110, fcc111, surface
+
+            atoms, is_traj, frame, traj = _get_current_ase_atoms(viewer)
+            has_atoms = len(atoms) > 0
+            if mode is None and has_atoms:
+                return WeasToolResult(
+                    "Confirmation required to load surface.",
+                    summary={"existing_atoms": int(len(atoms))},
+                    confirmation={
+                        "prompt": "Viewer already has atoms. Choose how to proceed.",
+                        "options": ["override", "append"],
+                        "note": "override replaces the current structure; append adds the slab.",
+                    },
+                ).to_dict()
+            if mode is not None and mode not in {"override", "append"}:
+                raise ValueError("mode must be 'override' or 'append'.")
 
             if len(miller) != 3:
                 raise ValueError("miller must be a length-3 list like [1,1,1].")
@@ -657,7 +859,32 @@ class WeasToolkit:
                 )
                 slab = slab.repeat((nx, ny, 1))
 
-            viewer.from_ase(slab)
+            if mode == "append" and has_atoms:
+                # align slab to existing atoms' cell if present, otherwise adopt slab's cell
+                orig_cell = np.asarray(atoms.get_cell().array, dtype=float)
+                slab_cell = np.asarray(slab.get_cell().array, dtype=float)
+                orig_has_cell = orig_cell.shape == (3, 3) and not np.allclose(
+                    orig_cell, 0.0
+                )
+                if orig_has_cell:
+                    # preserve original cell and pbc, align slab in xy to cell center
+                    slab.set_cell(orig_cell, scale_atoms=False)
+                    slab.set_pbc(atoms.get_pbc())
+                    center_orig = _cell_center_xy(atoms)
+                    center_slab = _cell_center_xy(slab)
+                    dxy = center_orig[:2] - center_slab[:2]
+                    if not np.allclose(dxy, 0.0):
+                        slab.translate([float(dxy[0]), float(dxy[1]), 0.0])
+                else:
+                    # adopt slab cell/pbc for the combined system
+                    atoms.set_cell(slab_cell, scale_atoms=False)
+                    atoms.set_pbc(slab.get_pbc())
+                atoms += slab
+                _set_current_ase_atoms(
+                    viewer, atoms, is_trajectory=is_traj, frame=frame, trajectory=traj
+                )
+            else:
+                viewer.from_ase(slab)
             viewer.avr.selected_atoms_indices = []
             return WeasToolResult(
                 f"Loaded {symbol}({h}{k}{l}) slab with {len(slab)} atoms.",
@@ -677,6 +904,7 @@ class WeasToolkit:
             vacuum: float = 10.0,
             a: Optional[float] = None,
             cubic: bool = True,
+            mode: Optional[Literal["override", "append"]] = None,
         ) -> Dict[str, Any]:
             """
             Build and load a general surface slab using ASE.
@@ -685,6 +913,21 @@ class WeasToolkit:
             crystal structure accepted by `ase.build.bulk` and any Miller index.
             """
             from ase.build import bulk, surface
+
+            atoms, is_traj, frame, traj = _get_current_ase_atoms(viewer)
+            has_atoms = len(atoms) > 0
+            if mode is None and has_atoms:
+                return WeasToolResult(
+                    "Confirmation required to load surface.",
+                    summary={"existing_atoms": int(len(atoms))},
+                    confirmation={
+                        "prompt": "Viewer already has atoms. Choose how to proceed.",
+                        "options": ["override", "append"],
+                        "note": "override replaces the current structure; append adds the slab.",
+                    },
+                ).to_dict()
+            if mode is not None and mode not in {"override", "append"}:
+                raise ValueError("mode must be 'override' or 'append'.")
 
             if len(miller) != 3:
                 raise ValueError("miller must be a length-3 list like [1,1,1].")
@@ -705,7 +948,13 @@ class WeasToolkit:
             )
             slab = slab.repeat((nx, ny, 1))
 
-            viewer.from_ase(slab)
+            if mode == "append" and has_atoms:
+                atoms += slab
+                _set_current_ase_atoms(
+                    viewer, atoms, is_trajectory=is_traj, frame=frame, trajectory=traj
+                )
+            else:
+                viewer.from_ase(slab)
             viewer.avr.selected_atoms_indices = []
             return WeasToolResult(
                 f"Loaded {symbol} {crystalstructure}({h}{k}{l}) slab with {len(slab)} atoms.",
@@ -894,6 +1143,52 @@ class WeasToolkit:
             viewer.ops.atoms.replace(symbol=symbol, indices=indices)
             return WeasToolResult(
                 f"Replaced {len(indices)} atoms with '{symbol}'."
+            ).to_dict()
+
+        @tool
+        def get_top_layer_indices(
+            symbol: Optional[str] = None,
+            n_layers: int = 1,
+            tolerance: float = 0.2,
+        ) -> Dict[str, Any]:
+            """
+            Return atom indices for the top-most layer(s) along +z.
+
+            Parameters
+            ----------
+            symbol
+                If provided, only consider atoms of this element.
+            n_layers
+                Number of top layers to include.
+            tolerance
+                Z-distance threshold (Angstrom) to group atoms into the same layer.
+            """
+            if n_layers <= 0:
+                raise ValueError("n_layers must be >= 1.")
+            atoms, *_ = _get_current_ase_atoms(viewer)
+            symbols = np.array(atoms.get_chemical_symbols(), dtype=object)
+            z_values = atoms.get_positions()[:, 2]
+
+            if symbol is not None:
+                mask = symbols == str(symbol)
+                if not np.any(mask):
+                    return WeasToolResult(
+                        f"No atoms found for element '{symbol}'.",
+                        summary={"indices": []},
+                    ).to_dict()
+                indices = np.where(mask)[0]
+                z_slice = z_values[indices]
+                layers = _group_layers_by_z(z_slice, float(tolerance))
+                top_layers = layers[: int(n_layers)]
+                selected = [int(indices[i]) for layer in top_layers for i in layer]
+            else:
+                layers = _group_layers_by_z(z_values, float(tolerance))
+                top_layers = layers[: int(n_layers)]
+                selected = [int(i) for layer in top_layers for i in layer]
+
+            return WeasToolResult(
+                f"Found {len(selected)} atoms in top {int(n_layers)} layer(s).",
+                summary={"indices": selected},
             ).to_dict()
 
         @tool
@@ -1414,11 +1709,11 @@ class WeasToolkit:
             load_surface,
             append_molecule,
             place_selected_on_top,
-            select_atoms,
             add_atom,
             delete_atoms,
             copy_atoms,
             replace_atoms,
+            get_top_layer_indices,
             color_by_attribute,
             translate,
             rotate,
@@ -1426,6 +1721,13 @@ class WeasToolkit:
             redo,
             select_all_atoms,
             invert_selection,
+            select_atoms,
+            select_atoms_by_element,
+            list_groups,
+            add_atoms_to_group,
+            remove_atoms_from_group,
+            clear_group,
+            select_atoms_by_group,
             select_atoms_inside_selected_objects,
             op_scale,
             delete_selected_objects,
