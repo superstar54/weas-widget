@@ -54,7 +54,6 @@ class BaseWidget(anywidget.AnyWidget):
     cameraSetting = tl.Dict().tag(sync=True)
     cameraZoom = tl.Float().tag(sync=True)
     cameraPosition = tl.List().tag(sync=True)
-    cameraRotation = tl.List().tag(sync=True)
     cameraLookAt = tl.List().tag(sync=True)
     cameraType = tl.Unicode("Orthographic").tag(sync=True)
     # task

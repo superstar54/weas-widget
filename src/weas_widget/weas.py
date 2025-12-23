@@ -183,7 +183,6 @@ class WeasWidget(ipw.HBox):
                 "volumetricData": deepcopy(self._widget.volumetricData),
                 "phonon": deepcopy(self._widget.phonon),
             },
-            "camera": {"cameraRotation": deepcopy(self._widget.cameraRotation)},
         }
 
     def _apply_widget_extras(self, state: dict) -> None:
@@ -191,8 +190,6 @@ class WeasWidget(ipw.HBox):
         ui = widget.get("ui") or state.get("ui") or {}
         viewer = widget.get("viewer") or state.get("viewer") or {}
         plugins = widget.get("plugins") or state.get("plugins") or {}
-        camera = widget.get("camera") or state.get("camera") or {}
-
         if "viewerStyle" in ui:
             self._widget.viewerStyle = deepcopy(ui["viewerStyle"])
         if "guiConfig" in ui:
@@ -205,8 +202,6 @@ class WeasWidget(ipw.HBox):
             self._widget.volumetricData = deepcopy(plugins["volumetricData"])
         if "phonon" in plugins:
             self._widget.phonon = deepcopy(plugins["phonon"])
-        if "cameraRotation" in camera:
-            self._widget.cameraRotation = deepcopy(camera["cameraRotation"])
 
     def save_state(self, filename: str) -> None:
         with open(filename, "w", encoding="utf-8") as handle:
