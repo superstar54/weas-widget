@@ -1,7 +1,7 @@
 // if we want test weas package, clone the weas repo and import the weas module, then use the following import
-// import * as weas from "../../weas-js/src/index.js";
+import * as weas from "../../weas-js/src/index.js";
 // if not, then use the following import
-import * as weas from "weas";
+// import * as weas from "weas";
 import "./widget.css";
 
 
@@ -169,11 +169,75 @@ function render({ model, el }) {
         // camera settings
         const cameraSetting = model.get("cameraSetting");
         editor.tjs.updateCameraAndControls(cameraSetting);
+        const measurementSettings = model.get("measurementSettings");
+        if (measurementSettings && editor.state && typeof editor.state.set === "function") {
+            editor.state.set({ plugins: { measurement: measurementSettings } });
+        }
+        const animationState = model.get("animationState") || {};
+        if (typeof animationState.frameDuration === "number") {
+            editor.avr.frameDuration = animationState.frameDuration;
+        }
+        if (typeof animationState.currentFrame === "number") {
+            editor.avr.currentFrame = animationState.currentFrame;
+        }
+        if (animationState.isPlaying) {
+            editor.avr.play();
+        } else if (animationState.isPlaying === false) {
+            editor.avr.pause();
+        }
         editor.render();
         return editor;
     };
     // Initial rendering
     editor = renderAtoms();
+    let suppressCameraSync = false;
+    const syncCameraToModel = () => {
+        if (suppressCameraSync) {
+            return;
+        }
+        const camera = editor.tjs.camera;
+        const controls = editor.tjs.controls;
+        if (!camera) {
+            return;
+        }
+        const position = camera.position?.toArray ? camera.position.toArray() : null;
+        const target = controls && controls.target?.toArray ? controls.target.toArray() : null;
+        let direction = null;
+        let distance = null;
+        if (Array.isArray(position) && Array.isArray(target)) {
+            const dx = position[0] - target[0];
+            const dy = position[1] - target[1];
+            const dz = position[2] - target[2];
+            distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            if (distance > 0) {
+                direction = [dx / distance, dy / distance, dz / distance];
+            }
+        }
+        const cameraSetting = {
+            direction: direction || [0, 0, 1],
+            distance: distance,
+            zoom: camera.zoom,
+            lookAt: target || [0, 0, 0],
+        };
+        model.set("cameraSetting", cameraSetting);
+        if (position) {
+            model.set("cameraPosition", position);
+        }
+        if (target) {
+            model.set("cameraLookAt", target);
+        }
+        if (typeof camera.zoom === "number") {
+            model.set("cameraZoom", camera.zoom);
+        }
+        if (editor.tjs.cameraType) {
+            model.set("cameraType", editor.tjs.cameraType);
+        }
+        model.save_changes();
+    };
+    if (editor.tjs.controls && typeof editor.tjs.controls.addEventListener === "function") {
+        editor.tjs.controls.addEventListener("end", syncCameraToModel);
+    }
+    syncCameraToModel();
     // js task
     model.on("change:js_task", () => {
         const task = model.get("js_task");
@@ -183,6 +247,10 @@ function render({ model, el }) {
         }
         run_task(editor, task, model);
     });
+    const initialTask = model.get("js_task");
+    if (initialTask && Object.keys(initialTask).length > 0) {
+        run_task(editor, initialTask, model);
+    }
     // Listen for changes in the 'atoms' property
     model.on("change:atoms", () => {
         const data = model.get("atoms");
@@ -303,23 +371,94 @@ function render({ model, el }) {
     model.on("change:cameraSetting", () => {
         console.log("cameraSetting changed.")
         const cameraSetting = model.get("cameraSetting");
+        suppressCameraSync = true;
         editor.tjs.updateCameraAndControls(cameraSetting);
+        setTimeout(() => { suppressCameraSync = false; }, 0);
+    });
+    model.on("change:cameraType", () => {
+        const cameraType = model.get("cameraType");
+        const cameraSetting = model.get("cameraSetting");
+        suppressCameraSync = true;
+        editor.tjs.cameraType = cameraType;
+        editor.tjs.updateCameraAndControls(cameraSetting || {});
+        setTimeout(() => { suppressCameraSync = false; }, 0);
     });
     model.on("change:cameraZoom", () => {
         const cameraZoom = model.get("cameraZoom");
+        suppressCameraSync = true;
         editor.tjs.camera.updateZoom(cameraZoom);
         editor.requestRedraw("render");
+        setTimeout(() => { suppressCameraSync = false; }, 0);
     });
     model.on("change:cameraPosition", () => {
         const cameraPosition = model.get("cameraPosition");
+        suppressCameraSync = true;
         editor.tjs.camera.updatePosition(cameraPosition[0], cameraPosition[1], cameraPosition[2]);
         editor.requestRedraw("render");
+        setTimeout(() => { suppressCameraSync = false; }, 0);
     });
     model.on("change:cameraLookAt", () => {
         const cameraLookAt = model.get("cameraLookAt");
+        suppressCameraSync = true;
         editor.tjs.controls.target.set(cameraLookAt[0], cameraLookAt[1], cameraLookAt[2]);
         editor.tjs.controls.update();
         editor.requestRedraw("render");
+        setTimeout(() => { suppressCameraSync = false; }, 0);
+    });
+
+    let suppressMeasurementSync = false;
+    const syncMeasurementToModel = (next) => {
+        if (suppressMeasurementSync) {
+            return;
+        }
+        model.set("measurementSettings", next || {});
+        model.save_changes();
+    };
+    if (editor.state && typeof editor.state.subscribe === "function") {
+        editor.state.subscribe("plugins.measurement", (next) => {
+            syncMeasurementToModel(next);
+        });
+    }
+    model.on("change:measurementSettings", () => {
+        const measurement = model.get("measurementSettings");
+        suppressMeasurementSync = true;
+        if (editor.state && typeof editor.state.set === "function") {
+            editor.state.set({ plugins: { measurement: measurement } });
+        }
+        setTimeout(() => { suppressMeasurementSync = false; }, 0);
+    });
+
+    let suppressAnimationSync = false;
+    const syncAnimationToModel = (next) => {
+        if (suppressAnimationSync) {
+            return;
+        }
+        model.set("animationState", next || {});
+        if (next && typeof next.currentFrame === "number") {
+            model.set("currentFrame", next.currentFrame);
+        }
+        model.save_changes();
+    };
+    if (editor.state && typeof editor.state.subscribe === "function") {
+        editor.state.subscribe("animation", (next) => {
+            syncAnimationToModel(next);
+        });
+    }
+    model.on("change:animationState", () => {
+        const animation = model.get("animationState") || {};
+        suppressAnimationSync = true;
+        if (typeof animation.frameDuration === "number") {
+            editor.avr.frameDuration = animation.frameDuration;
+        }
+        if (typeof animation.currentFrame === "number") {
+            editor.avr.currentFrame = animation.currentFrame;
+        }
+        if (animation.isPlaying) {
+            editor.avr.play();
+        } else if (animation.isPlaying === false) {
+            editor.avr.pause();
+        }
+        setTimeout(() => { suppressAnimationSync = false; }, 0);
     });
     // frame
     model.on("change:showAtomLegend", () => {
@@ -392,6 +531,11 @@ function resolveFunctionFromString(editor, path) {
             model.set("imageData", imageData);
             model.save_changes();
             break;
+        case "exportState":
+            const snapshot = editor.exportState();
+            model.set("stateSnapshot", snapshot);
+            model.save_changes();
+            break;
         // all the other tasks, run editor.task.name with task.args and task.kwargs
         default:
             // Extract the method based on the 'name' path
@@ -420,6 +564,8 @@ function resolveFunctionFromString(editor, path) {
             }
             break;
     }
+    model.set("js_task", {});
+    model.save_changes();
 }
 
 export default { render }
