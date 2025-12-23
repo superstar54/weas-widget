@@ -190,54 +190,6 @@ function render({ model, el }) {
     };
     // Initial rendering
     editor = renderAtoms();
-    let suppressCameraSync = false;
-    const syncCameraToModel = () => {
-        if (suppressCameraSync) {
-            return;
-        }
-        const camera = editor.tjs.camera;
-        const controls = editor.tjs.controls;
-        if (!camera) {
-            return;
-        }
-        const position = camera.position?.toArray ? camera.position.toArray() : null;
-        const target = controls && controls.target?.toArray ? controls.target.toArray() : null;
-        let direction = null;
-        let distance = null;
-        if (Array.isArray(position) && Array.isArray(target)) {
-            const dx = position[0] - target[0];
-            const dy = position[1] - target[1];
-            const dz = position[2] - target[2];
-            distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
-            if (distance > 0) {
-                direction = [dx / distance, dy / distance, dz / distance];
-            }
-        }
-        const cameraSetting = {
-            direction: direction || [0, 0, 1],
-            distance: distance,
-            zoom: camera.zoom,
-            lookAt: target || [0, 0, 0],
-        };
-        model.set("cameraSetting", cameraSetting);
-        if (position) {
-            model.set("cameraPosition", position);
-        }
-        if (target) {
-            model.set("cameraLookAt", target);
-        }
-        if (typeof camera.zoom === "number") {
-            model.set("cameraZoom", camera.zoom);
-        }
-        if (editor.tjs.cameraType) {
-            model.set("cameraType", editor.tjs.cameraType);
-        }
-        model.save_changes();
-    };
-    if (editor.tjs.controls && typeof editor.tjs.controls.addEventListener === "function") {
-        editor.tjs.controls.addEventListener("end", syncCameraToModel);
-    }
-    syncCameraToModel();
     // js task
     model.on("change:js_task", () => {
         const task = model.get("js_task");
@@ -371,39 +323,29 @@ function render({ model, el }) {
     model.on("change:cameraSetting", () => {
         console.log("cameraSetting changed.")
         const cameraSetting = model.get("cameraSetting");
-        suppressCameraSync = true;
         editor.tjs.updateCameraAndControls(cameraSetting);
-        setTimeout(() => { suppressCameraSync = false; }, 0);
     });
     model.on("change:cameraType", () => {
         const cameraType = model.get("cameraType");
         const cameraSetting = model.get("cameraSetting");
-        suppressCameraSync = true;
         editor.tjs.cameraType = cameraType;
         editor.tjs.updateCameraAndControls(cameraSetting || {});
-        setTimeout(() => { suppressCameraSync = false; }, 0);
     });
     model.on("change:cameraZoom", () => {
         const cameraZoom = model.get("cameraZoom");
-        suppressCameraSync = true;
         editor.tjs.camera.updateZoom(cameraZoom);
         editor.requestRedraw("render");
-        setTimeout(() => { suppressCameraSync = false; }, 0);
     });
     model.on("change:cameraPosition", () => {
         const cameraPosition = model.get("cameraPosition");
-        suppressCameraSync = true;
         editor.tjs.camera.updatePosition(cameraPosition[0], cameraPosition[1], cameraPosition[2]);
         editor.requestRedraw("render");
-        setTimeout(() => { suppressCameraSync = false; }, 0);
     });
     model.on("change:cameraLookAt", () => {
         const cameraLookAt = model.get("cameraLookAt");
-        suppressCameraSync = true;
         editor.tjs.controls.target.set(cameraLookAt[0], cameraLookAt[1], cameraLookAt[2]);
         editor.tjs.controls.update();
         editor.requestRedraw("render");
-        setTimeout(() => { suppressCameraSync = false; }, 0);
     });
 
     let suppressMeasurementSync = false;

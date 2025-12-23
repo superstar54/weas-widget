@@ -203,9 +203,16 @@ class WeasWidget(ipw.HBox):
         if "phonon" in plugins:
             self._widget.phonon = deepcopy(plugins["phonon"])
 
-    def save_state(self, filename: str) -> None:
-        with open(filename, "w", encoding="utf-8") as handle:
-            json.dump(self.export_state(), handle, ensure_ascii=False, indent=2)
+    def save_state(self, filename: str, callback=None) -> None:
+        def _save_state():
+            payload = self.export_state()
+            with open(filename, "w", encoding="utf-8") as handle:
+                json.dump(payload, handle, ensure_ascii=False, indent=2)
+            if callback:
+                callback(filename)
+
+        thread = threading.Thread(target=_save_state, args=(), daemon=False)
+        thread.start()
 
     def load_state(self, filename: str) -> None:
         with open(filename, "r", encoding="utf-8") as handle:
