@@ -36,7 +36,6 @@ A widget to visualize and interact with atomic structures in Jupyter Notebook. I
    fermi_surface
    volume_slice
    vector_field
-   agent_tools
    lattice_plane
    highlight
    mesh_primitive

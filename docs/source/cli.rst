@@ -33,6 +33,12 @@ Examples
 
        weas graphene.cif --phonon --eigenvectors '[ [[-0.31, 0.47], [-0.16, -0.38], [0, 0]], [[0.54, -0.15], [-0.31, -0.27], [0, 0]] ]'
 
+4. **Loading a saved WEAS state**:
+
+   .. code-block:: bash
+
+       weas weas-state.json
+
 Options
 -------
 
@@ -44,6 +50,12 @@ Options
 - `--kpoint <json>` : K-point for phonon mode.
 - `--amplitude <float>` : Phonon amplitude (default: 2).
 - `--nframes <int>` : Number of animation frames (default: 50).
+
+.. note::
+
+    When the input file is a WEAS state snapshot (`.json`), the viewer loads
+    the saved state directly and ignores `--style`, `--color-type`, and
+    `--boundary` unless explicitly overridden in the snapshot itself.
 
 
 Running on a Remote Computer
