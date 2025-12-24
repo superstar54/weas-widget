@@ -4,6 +4,7 @@ build:
   os: "ubuntu-22.04"
   tools:
     python: "3.11"
+    nodejs: "20"
 
 # Build from the docs/ directory with Sphinx
 sphinx:
@@ -12,4 +13,7 @@ sphinx:
 # Explicitly set the version of Python and its requirements
 python:
   install:
-    - requirements: docs/requirements.txt
+    - method: pip
+      path: .
+      extra_requirements:
+        - docs

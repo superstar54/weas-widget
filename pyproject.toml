@@ -53,6 +53,7 @@ docs = [
     "sphinx_rtd_theme",
     "sphinx~=7.2",
     "nbsphinx",
+    "ipykernel",
 ]
 pre-commit = [
     "pre-commit~=2.2",

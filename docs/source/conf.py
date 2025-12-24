@@ -13,7 +13,9 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath("../.."))
+repo_root = os.path.abspath("../..")
+sys.path.insert(0, repo_root)
+sys.path.insert(0, os.path.join(repo_root, "src"))
 
 
 # -- Project information -----------------------------------------------------
