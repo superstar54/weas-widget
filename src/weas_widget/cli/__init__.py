@@ -1,13 +1,17 @@
 import click
+import json
 import os
 import webbrowser
-import json
-from ase.io import read
-from weas_widget.utils import ASEAdapter, create_volume_data
-from ase.io.cube import read_cube_data
+from pathlib import Path
+from string import Template
+
 import numpy as np
-from .server import run_http_server
-from .config import CONFIG_DIR, DEFAULT_PORT
+from ase.io import read
+from ase.io.cube import read_cube_data
+
+from ..config import CONFIG_DIR, DEFAULT_PORT
+from ..server import run_http_server
+from ..utils import ASEAdapter, create_volume_data
 
 
 def auto_find_isovalue(volume):
@@ -19,9 +23,7 @@ def auto_find_isovalue(volume):
     values = np.array(volume["values"])
 
     # Use percentile-based approach to avoid outliers affecting the isovalue
-    iso_value = np.percentile(
-        np.abs(values), 85
-    )  # Take the 85th percentile as threshold
+    iso_value = np.percentile(np.abs(values), 85)  # 85th percentile threshold
     return round(float(iso_value), 5)  # Round for better formatting
 
 
@@ -65,8 +67,23 @@ def weas(
     # Identify file format
     extension = os.path.splitext(filename)[1].lower()
 
-    # Read file using ASE
-    if extension == ".cube":
+    snapshot_json = "null"
+    atoms_json = None
+    volume_json = "null"
+    isovalue = None
+    atoms = None
+
+    # Read file using ASE or import a saved viewer state
+    if extension == ".json":
+        with open(filename, "r", encoding="utf-8") as f:
+            snapshot = json.load(f)
+        version = snapshot.get("version")
+        if version not in ("weas_state_v1", "weas_widget_state_v1"):
+            raise click.ClickException(
+                "Invalid WEAS state file: missing or unsupported 'version'."
+            )
+        snapshot_json = json.dumps(snapshot)
+    elif extension == ".cube":
         volume, atoms = read_cube_data(filename)
         atoms_json = json.dumps(ASEAdapter.to_weas(atoms))
         volume_json = create_volume_data(volume, cell=atoms.get_cell().array.tolist())
@@ -76,8 +93,6 @@ def weas(
         atoms = read(filename, index=":")
         atoms_json = json.dumps(ASEAdapter.to_weas(atoms))
         atoms = atoms[0]  # Use the first frame for visualization
-        volume_json = "null"  # No volumetric data for XYZ and CIF
-        isovalue = None  # No volumetric data
 
     # Set default settings based on file format
     default_settings = {
@@ -99,6 +114,11 @@ def weas(
             "color_type": "VESTA" if color_type is None else color_type,
             "boundary": None if boundary is None else boundary,
         },
+        ".json": {
+            "style": None if style is None else style,
+            "color_type": None if color_type is None else color_type,
+            "boundary": None if boundary is None else boundary,
+        },
     }
 
     # Use default settings if no user input
@@ -113,125 +133,40 @@ def weas(
     eigenvectors_json = json.dumps(json.loads(eigenvectors)) if eigenvectors else "null"
     kpoint_json = json.dumps(json.loads(kpoint))
 
-    # Generate JavaScript for the WEAS Viewer
-    js_script = f"""
-    <script type="module">
-      import * as THREE from "https://unpkg.com/three@0.152.0/build/three.module.js";
-      import {{ WEAS, Atoms }} from "https://unpkg.com/weas/dist/weas.mjs";
+    viewer_style = "null" if settings["style"] is None else settings["style"]
+    model_style = "null" if settings["style"] is None else settings["style"]
+    color_type = settings["color_type"] if settings["color_type"] is not None else ""
+    show_bonded_atoms = "true" if settings.get("showBondedAtoms", False) else "false"
 
-      window.THREE = THREE;
+    js_template_path = Path(__file__).with_name("template.js")
+    if atoms_json is None:
+        atoms_json = "null"
+    js_template = Template(js_template_path.read_text(encoding="utf-8"))
+    js_script = js_template.substitute(
+        viewer_style=viewer_style,
+        snapshot_json=snapshot_json,
+        atoms_json=atoms_json,
+        model_style=model_style,
+        color_type=color_type,
+        show_bonded_atoms=show_bonded_atoms,
+        boundary_json=boundary_json,
+        volume_json=volume_json,
+        isovalue="null" if isovalue is None else isovalue,
+        phonon=phonon,
+        eigenvectors_json=eigenvectors_json,
+        kpoint_json=kpoint_json,
+        amplitude=amplitude,
+        nframes=nframes,
+    )
 
-      const domElement = document.getElementById("weas");
+    template_path = Path(__file__).with_name("template.html")
+    template = Template(template_path.read_text(encoding="utf-8"))
+    html_content = template.substitute(
+        title="WEAS Visualization",
+        js_script=js_script,
+    )
 
-      const viewerConfig = {{
-        _modelStyle: {settings["style"]},
-        logLevel: "debug"
-      }};
-
-      const guiConfig = {{
-        controls: {{
-          enabled: true,
-          atomsControl: true,
-          colorControl: true,
-          cameraControls: true
-        }},
-        legend: {{
-          enabled: true,
-          position: "bottom-right"
-        }},
-        timeline: {{
-          enabled: true
-        }},
-        buttons: {{
-          enabled: true,
-          fullscreen: true,
-          undo: true,
-          redo: true,
-          download: true,
-          measurement: true
-        }}
-      }};
-
-      const editor = new WEAS({{ domElement, viewerConfig, guiConfig }});
-      window.editor = editor;
-
-      // Load atoms directly from Python (ASE parsed)
-      let trajectory = {atoms_json};
-      let atoms;
-
-      // Convert atoms to WEAS format
-      if (Array.isArray(trajectory)) {{
-          trajectory = trajectory.map((atom) => new Atoms(atom));
-          atoms = trajectory[0];
-      }} else {{
-          atoms = new Atoms(trajectory);
-          trajectory = atoms;
-      }}
-
-      editor.avr.atoms = trajectory;
-      editor.avr.modelStyle = {settings["style"]};
-      editor.avr.colorType = "{settings["color_type"]}";
-      editor.avr.showBondedAtoms = {"true" if settings.get("showBondedAtoms", False) else "false"};
-
-      // Apply boundary settings if necessary
-      if ({boundary_json} !== null) {{
-        editor.avr.boundary = {boundary_json};
-      }}
-
-      // Handle Cube files (Isosurface visualization)
-      let volume_json = {volume_json};
-      if (volume_json !== null) {{
-        console.log("Volumetric data loaded.");
-        editor.avr.volumetricData = volume_json;
-        editor.avr.isosurfaceManager.fromSettings({{
-          positive: {{ isovalue: {isovalue}, mode: 1, step_size: 1 }},
-          negative: {{ isovalue: -{isovalue}, color: "#ff0000", mode: 1 }}
-        }});
-        editor.avr.isosurfaceManager.drawIsosurfaces();
-      }}
-
-      editor.avr.drawModels();
-
-      // If phonon mode is enabled, apply phonon settings
-      if ("{phonon}" === "True") {{
-        const eigenvectors = {eigenvectors_json};
-        const kpoint = {kpoint_json};
-
-        editor.avr.fromPhononMode({{
-          atoms: atoms,
-          eigenvectors: eigenvectors,
-          amplitude: {amplitude},
-          factor: 1,
-          nframes: {nframes},
-          kpoint: kpoint,
-          repeat: [4, 4, 1],
-          color: "#ff0000",
-          radius: 0.1
-        }});
-
-        editor.avr.frameDuration = 50;
-        editor.avr.showBondedAtoms = false;
-      }}
-
-    </script>
-    """
-
-    # Generate HTML content
-    html_content = f"""
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8"/>
-      <title>WEAS Visualization</title>
-    </head>
-    <body>
-      <div id="weas" style="width:100%; height:800px;"></div>
-      {js_script}
-    </body>
-    </html>
-    """
-
-    formula = atoms.get_chemical_formula()
+    formula = atoms.get_chemical_formula() if atoms is not None else "weas_state"
     html_filename = os.path.join(CONFIG_DIR, f"{formula}.html")
 
     with open(html_filename, "w", encoding="utf-8") as f:
@@ -241,3 +176,6 @@ def weas(
         # webbrowser.open(f"http://localhost:{PORT}/{os.path.basename(html_filename)}")
     else:
         webbrowser.open("file://" + os.path.abspath(html_filename))
+
+
+__all__ = ["weas"]

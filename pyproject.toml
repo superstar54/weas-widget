@@ -78,6 +78,13 @@ features = ["dev"]
 only-packages = true
 artifacts = ["src/weas_widget/static/*"]
 
+[tool.hatch.build.targets.wheel]
+packages = ["src/weas_widget"]
+include = ["src/weas_widget/cli/template.html", "src/weas_widget/cli/template.js"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/weas_widget/**", "pyproject.toml", "README.md", "LICENSE"]
+
 [tool.hatch.build.hooks.jupyter-builder]
 build-function = "hatch_jupyter_builder.npm_builder"
 ensured-targets = ["src/weas_widget/static/widget.js"]

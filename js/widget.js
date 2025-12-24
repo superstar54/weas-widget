@@ -171,7 +171,7 @@ function render({ model, el }) {
         editor.tjs.updateCameraAndControls(cameraSetting);
         const measurementSettings = model.get("measurementSettings");
         if (measurementSettings && editor.state && typeof editor.state.set === "function") {
-            editor.state.set({ plugins: { measurement: measurementSettings } });
+            editor.state.set({ plugins: { measurement: { settings: measurementSettings } } });
         }
         const animationState = model.get("animationState") || {};
         if (typeof animationState.frameDuration === "number") {
@@ -353,7 +353,7 @@ function render({ model, el }) {
         if (suppressMeasurementSync) {
             return;
         }
-        model.set("measurementSettings", next || {});
+        model.set("measurementSettings", next?.settings || {});
         model.save_changes();
     };
     if (editor.state && typeof editor.state.subscribe === "function") {
@@ -365,7 +365,7 @@ function render({ model, el }) {
         const measurement = model.get("measurementSettings");
         suppressMeasurementSync = true;
         if (editor.state && typeof editor.state.set === "function") {
-            editor.state.set({ plugins: { measurement: measurement } });
+            editor.state.set({ plugins: { measurement: { settings: measurement } } });
         }
         setTimeout(() => { suppressMeasurementSync = false; }, 0);
     });
