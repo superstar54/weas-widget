@@ -9,6 +9,8 @@ from .fermi_surface import add_fermi_surface_from_bxsf
 import time
 import threading
 import ipywidgets as ipw
+import json
+from copy import deepcopy
 
 
 class WeasWidget(ipw.HBox):
@@ -26,6 +28,12 @@ class WeasWidget(ipw.HBox):
             self.from_pymatgen(from_pymatgen)
         if from_aiida is not None:
             self.from_aiida(from_aiida)
+
+    @classmethod
+    def from_state_file(cls, filename: str, **kwargs):
+        widget = cls(**kwargs)
+        widget.load_state(filename)
+        return widget
 
     def from_ase(self, atoms):
         self.avr.atoms = ASEAdapter.to_weas(atoms)
@@ -133,6 +141,83 @@ class WeasWidget(ipw.HBox):
 
         thread = threading.Thread(target=_save_image, args=(), daemon=False)
         thread.start()
+
+    def export_state(self) -> dict:
+        snapshot = self._request_state_snapshot()
+        snapshot["widget"] = self._collect_widget_extras()
+        return snapshot
+
+    def import_state(self, state: dict) -> None:
+        if not isinstance(state, dict):
+            raise ValueError("State must be a dict.")
+        self._apply_widget_extras(state)
+        self._widget.send_js_task({"name": "importState", "args": [state]})
+
+    def _request_state_snapshot(
+        self, timeout: float = 5.0, poll_interval: float = 0.05
+    ) -> dict:
+        start = time.time()
+        while not self._widget.ready:
+            if time.time() - start > timeout:
+                raise TimeoutError("Timed out waiting for the widget to be ready.")
+            time.sleep(poll_interval)
+        self._widget.stateSnapshot = {}
+        self._widget.send_js_task({"name": "exportState"})
+        while True:
+            snapshot = self._widget.stateSnapshot
+            if snapshot:
+                return deepcopy(snapshot)
+            if time.time() - start > timeout:
+                raise TimeoutError("Timed out waiting for a state snapshot.")
+            time.sleep(poll_interval)
+
+    def _collect_widget_extras(self) -> dict:
+        return {
+            "ui": {
+                "viewerStyle": deepcopy(self._widget.viewerStyle),
+                "guiConfig": deepcopy(self._widget.guiConfig),
+                "logLevel": self._widget.logLevel,
+            },
+            "viewer": {"showAtomLegend": self._widget.showAtomLegend},
+            "plugins": {
+                "volumetricData": deepcopy(self._widget.volumetricData),
+                "phonon": deepcopy(self._widget.phonon),
+            },
+        }
+
+    def _apply_widget_extras(self, state: dict) -> None:
+        widget = state.get("widget", {})
+        ui = widget.get("ui") or state.get("ui") or {}
+        viewer = widget.get("viewer") or state.get("viewer") or {}
+        plugins = widget.get("plugins") or state.get("plugins") or {}
+        if "viewerStyle" in ui:
+            self._widget.viewerStyle = deepcopy(ui["viewerStyle"])
+        if "guiConfig" in ui:
+            self._widget.guiConfig = deepcopy(ui["guiConfig"])
+        if "logLevel" in ui:
+            self._widget.logLevel = deepcopy(ui["logLevel"])
+        if "showAtomLegend" in viewer:
+            self._widget.showAtomLegend = deepcopy(viewer["showAtomLegend"])
+        if "volumetricData" in plugins:
+            self._widget.volumetricData = deepcopy(plugins["volumetricData"])
+        if "phonon" in plugins:
+            self._widget.phonon = deepcopy(plugins["phonon"])
+
+    def save_state(self, filename: str, callback=None) -> None:
+        def _save_state():
+            payload = self.export_state()
+            with open(filename, "w", encoding="utf-8") as handle:
+                json.dump(payload, handle, ensure_ascii=False, indent=2)
+            if callback:
+                callback(filename)
+
+        thread = threading.Thread(target=_save_state, args=(), daemon=False)
+        thread.start()
+
+    def load_state(self, filename: str) -> None:
+        with open(filename, "r", encoding="utf-8") as handle:
+            payload = json.load(handle)
+        self.import_state(payload)
 
     def add_fermi_surface_from_bxsf(
         self,

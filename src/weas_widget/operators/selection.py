@@ -4,6 +4,7 @@ This module contains the Transform class which is used to perform
 SelectAll
 InvertSelection
 InsideSelection
+SelectByGroup
 """
 
 
@@ -22,4 +23,9 @@ class SelectionOperation:
     def inside_selection(self, **kwargs):
         self.base_widget.send_js_task(
             {"name": "ops.selection.InsideSelection", "kwargs": kwargs}
+        )
+
+    def select_by_group(self, group: str):
+        self.base_widget.send_js_task(
+            {"name": "ops.selection.SelectByGroup", "kwargs": {"group": group}}
         )

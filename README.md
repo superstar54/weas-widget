@@ -254,6 +254,18 @@ viewer
 ```
 <img src="docs/source/_static/images/example-volume-slice.png"  width="300px"/>
 
+### Save and restore state
+
+```python
+state = viewer.export_state()
+viewer.save_state("snapshot.json")
+
+# later
+viewer.load_state("snapshot.json")
+
+# or create a viewer directly from a saved state
+viewer = WeasWidget.from_state_file("snapshot.json")
+```
 
 ## Test
 

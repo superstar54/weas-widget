@@ -54,11 +54,12 @@ class BaseWidget(anywidget.AnyWidget):
     cameraSetting = tl.Dict().tag(sync=True)
     cameraZoom = tl.Float().tag(sync=True)
     cameraPosition = tl.List().tag(sync=True)
-    cameraRotation = tl.List().tag(sync=True)
     cameraLookAt = tl.List().tag(sync=True)
+    cameraType = tl.Unicode("Orthographic").tag(sync=True)
     # task
     js_task = tl.Dict().tag(sync=True)
     python_task = tl.Dict().tag(sync=True)
+    stateSnapshot = tl.Dict().tag(sync=True)
     debug = tl.Bool(False).tag(sync=True)
     # species
     speciesSettings = tl.Dict().tag(sync=True)
@@ -74,6 +75,8 @@ class BaseWidget(anywidget.AnyWidget):
     phonon = tl.Dict().tag(sync=True)
     # highlight
     highlightSettings = tl.Dict().tag(sync=True)
+    measurementSettings = tl.Dict().tag(sync=True)
+    animationState = tl.Dict().tag(sync=True)
     #
     showAtomLegend = tl.Bool(False).tag(sync=True)
     continuousUpdate = tl.Bool(True).tag(sync=True)
