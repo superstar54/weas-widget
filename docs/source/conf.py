@@ -40,6 +40,16 @@ extensions = [
     "nbsphinx",
 ]
 
+# Always execute notebooks during docs build and persist widget state.
+nbsphinx_execute = "always"
+nbsphinx_execute_arguments = [
+    "--ExecutePreprocessor.store_widget_state=True",
+]
+# Use the standard HTML widget manager so widget state can render in static HTML.
+nbsphinx_widgets_path = (
+    "https://unpkg.com/@jupyter-widgets/html-manager@^1.0.0/dist/embed-amd.js"
+)
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
 
