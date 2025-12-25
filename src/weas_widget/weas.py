@@ -231,9 +231,11 @@ class WeasWidget(ipw.HBox):
         show_reciprocal_axes: bool = True,
         combine_bands: bool = True,
         name: str = None,
-        color: list = None,
+        color: list | str = None,
         opacity: float = 0.6,
         material_type: str = "Standard",
+        brillouin_zone_options: dict = None,
+        reciprocal_axes_options: dict = None,
     ):
         """Compute Fermi surface meshes from a BXSF file and render via AnyMesh."""
         add_fermi_surface_from_bxsf(
@@ -251,4 +253,6 @@ class WeasWidget(ipw.HBox):
             color=color,
             opacity=opacity,
             material_type=material_type,
+            brillouin_zone_options=brillouin_zone_options,
+            reciprocal_axes_options=reciprocal_axes_options,
         )
