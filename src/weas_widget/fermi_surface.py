@@ -458,20 +458,26 @@ def compute_fermi_surface_mesh(
 
 
 def add_brillouin_zone(
-    viewer,
-    b_vectors,
-    name="brillouin-zone",
-    color=None,
-    opacity=0.2,
-    show_edges=True,
-    edge_color=None,
-    material_type="Standard",
-    append=True,
+    viewer: "WeasWidget",
+    b_vectors: Iterable[Iterable[float]],
+    name: str = "brillouin-zone",
+    color: Optional[Union[List[float], str]] = None,
+    opacity: Optional[float] = 0.1,
+    show_edges: bool = True,
+    edge_color: Optional[Union[List[float], str]] = None,
+    material_type: str = "Standard",
+    depth_write: bool = False,
+    depth_test: bool = False,
+    side: str = "DoubleSide",
+    clear_depth: bool = True,
+    render_order: int = 10,
 ):
     vertices, faces = compute_brillouin_zone_mesh(b_vectors)
-    mesh_color = color or [1.0, 0.0, 0.0, opacity]
-    if len(mesh_color) == 3:
-        mesh_color = [mesh_color[0], mesh_color[1], mesh_color[2], opacity]
+    if isinstance(color, (list, tuple)) and len(color) != 3:
+        raise ValueError("RGB color must be like [r, g, b].")
+    mesh_color = color or [0.0, 0.0, 0.5]
+    mesh_opacity = 0.1 if opacity is None else float(opacity)
+
     edge_color = edge_color or [0.0, 0.0, 0.0, 1.0]
     if len(edge_color) == 3:
         edge_color = [edge_color[0], edge_color[1], edge_color[2], 1.0]
@@ -479,28 +485,34 @@ def add_brillouin_zone(
         "name": name,
         "vertices": vertices.reshape(-1).tolist(),
         "faces": faces.reshape(-1).tolist(),
-        "color": [float(c) for c in mesh_color],
+        "color": mesh_color,
+        "opacity": float(mesh_opacity),
         "position": [0.0, 0.0, 0.0],
         "materialType": material_type,
         "showEdges": bool(show_edges),
         "edgeColor": [float(c) for c in edge_color],
+        "depthWrite": bool(depth_write),
+        "depthTest": bool(depth_test),
+        "side": side,
+        "clearDepth": bool(clear_depth),
+        "renderOrder": render_order,
     }
     settings = []
-    if append and isinstance(viewer.any_mesh.settings, list):
-        settings = list(viewer.any_mesh.settings)
+    existing_settings = getattr(viewer.any_mesh, "settings", None)
+    if isinstance(existing_settings, list):
+        settings = list(existing_settings)
     settings.append(setting)
     viewer.any_mesh.settings = settings
     return setting
 
 
 def add_reciprocal_axes(
-    viewer,
-    b_vectors,
-    name="reciprocal-axes",
-    color="#000000",
-    radius=0.02,
-    factor=1.0,
-    append=True,
+    viewer: "WeasWidget",
+    b_vectors: Iterable[Iterable[float]],
+    name: str = "reciprocal-axes",
+    color: Union[List[float], str] = "#000000",
+    radius: float = 0.02,
+    factor: float = 0.8,
 ):
     b1, b2, b3 = [list(vec) for vec in b_vectors]
     setting = {
@@ -512,7 +524,7 @@ def add_reciprocal_axes(
     }
     settings = {}
     existing_settings = getattr(viewer.avr.vf, "_settings", None)
-    if append and isinstance(existing_settings, dict):
+    if isinstance(existing_settings, dict):
         settings = dict(existing_settings)
     settings[name] = setting
     viewer.avr.vf.settings = settings
@@ -520,8 +532,8 @@ def add_reciprocal_axes(
 
 
 def add_fermi_surface_from_bxsf(
-    viewer,
-    file_path,
+    viewer: "WeasWidget",
+    file_path: str,
     band_index: int = None,
     fermi_energy: Optional[float] = None,
     supercell_size: tuple = (2, 2, 2),
@@ -534,8 +546,18 @@ def add_fermi_surface_from_bxsf(
     material_type: str = "Standard",
     show_bz: bool = True,
     show_reciprocal_axes: bool = True,
+    brillouin_zone_options: Optional[Dict] = None,
+    reciprocal_axes_options: Optional[Dict] = None,
 ):
-    """Compute Fermi surface meshes from a BXSF file and render via AnyMesh."""
+    """Compute Fermi surface meshes from a BXSF file and render via AnyMesh.
+
+    Parameters
+    ----------
+    brillouin_zone_options : dict, optional
+        Extra keyword arguments forwarded to :func:`add_brillouin_zone`.
+    reciprocal_axes_options : dict, optional
+        Extra keyword arguments forwarded to :func:`add_reciprocal_axes`.
+    """
     from ase import Atoms
 
     bxsf_data = parse_bxsf(file_path)
@@ -564,19 +586,10 @@ def add_fermi_surface_from_bxsf(
             clip_bz=clip_bz,
         )
 
-    if color is None:
-        mesh_color = [0.96, 0.62, 0.04, opacity]
-    elif isinstance(color, (list, tuple)):
-        if len(color) == 3:
-            mesh_color = [color[0], color[1], color[2], opacity]
-        elif len(color) == 4:
-            mesh_color = list(color)
-        else:
-            raise ValueError(
-                "color must be RGB or RGBA like [r, g, b] or [r, g, b, a]."
-            )
-    else:
-        raise ValueError("color must be a list or tuple of RGB(A) values.")
+    if isinstance(color, (list, tuple)) and len(color) != 3:
+        raise ValueError("RGB color must be like [r, g, b].")
+    mesh_color = color or [0.0, 1.0, 0.0]
+    mesh_opacity = float(opacity)
     settings = []
     if combine_bands or len(fs_bands) == 1:
         verts_list = []
@@ -604,7 +617,8 @@ def add_fermi_surface_from_bxsf(
                 "name": name or default_name,
                 "vertices": vertices.reshape(-1).tolist(),
                 "faces": faces.reshape(-1).tolist(),
-                "color": [float(c) for c in mesh_color],
+                "color": mesh_color,
+                "opacity": mesh_opacity,
                 "position": [0.0, 0.0, 0.0],
                 "materialType": material_type,
             }
@@ -621,7 +635,8 @@ def add_fermi_surface_from_bxsf(
                     "name": band_name,
                     "vertices": vertices.reshape(-1).tolist(),
                     "faces": faces.reshape(-1).tolist(),
-                    "color": [float(c) for c in mesh_color],
+                    "color": mesh_color,
+                    "opacity": mesh_opacity,
                     "position": [0.0, 0.0, 0.0],
                     "materialType": material_type,
                 }
@@ -635,9 +650,11 @@ def add_fermi_surface_from_bxsf(
     mesh_settings.extend(settings)
     viewer.any_mesh.settings = mesh_settings
     if show_reciprocal_axes:
-        add_reciprocal_axes(viewer, b_vectors)
+        axes_kwargs = dict(reciprocal_axes_options or {})
+        add_reciprocal_axes(viewer, b_vectors, **axes_kwargs)
     if show_bz:
-        add_brillouin_zone(viewer, b_vectors)
+        bz_kwargs = dict(brillouin_zone_options or {})
+        add_brillouin_zone(viewer, b_vectors, **bz_kwargs)
     if len(settings) == 1:
         return settings[0]
     return settings
