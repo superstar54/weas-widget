@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "weas_widget"
-version = "0.1.26"
+version = "0.2.1"
 description = "A widget to visualize and interact with atomistic structures in Jupyter Notebook."
 authors = [{name = "Xing Wang", email = "xingwang1991@gmail.com"}]
 readme = "README.md"
@@ -53,6 +53,7 @@ docs = [
     "sphinx_rtd_theme",
     "sphinx~=7.2",
     "nbsphinx",
+    "ipykernel",
 ]
 pre-commit = [
     "pre-commit~=2.2",
@@ -77,6 +78,13 @@ features = ["dev"]
 [tool.hatch.build]
 only-packages = true
 artifacts = ["src/weas_widget/static/*"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/weas_widget"]
+include = ["src/weas_widget/cli/template.html", "src/weas_widget/cli/template.js"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/weas_widget/**", "pyproject.toml", "README.md", "LICENSE"]
 
 [tool.hatch.build.hooks.jupyter-builder]
 build-function = "hatch_jupyter_builder.npm_builder"

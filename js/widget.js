@@ -169,6 +169,22 @@ function render({ model, el }) {
         // camera settings
         const cameraSetting = model.get("cameraSetting");
         editor.tjs.updateCameraAndControls(cameraSetting);
+        const measurementSettings = model.get("measurementSettings");
+        if (measurementSettings && editor.state && typeof editor.state.set === "function") {
+            editor.state.set({ plugins: { measurement: { settings: measurementSettings } } });
+        }
+        const animationState = model.get("animationState") || {};
+        if (typeof animationState.frameDuration === "number") {
+            editor.avr.frameDuration = animationState.frameDuration;
+        }
+        if (typeof animationState.currentFrame === "number") {
+            editor.avr.currentFrame = animationState.currentFrame;
+        }
+        if (animationState.isPlaying) {
+            editor.avr.play();
+        } else if (animationState.isPlaying === false) {
+            editor.avr.pause();
+        }
         editor.render();
         return editor;
     };
@@ -183,6 +199,10 @@ function render({ model, el }) {
         }
         run_task(editor, task, model);
     });
+    const initialTask = model.get("js_task");
+    if (initialTask && Object.keys(initialTask).length > 0) {
+        run_task(editor, initialTask, model);
+    }
     // Listen for changes in the 'atoms' property
     model.on("change:atoms", () => {
         const data = model.get("atoms");
@@ -305,6 +325,12 @@ function render({ model, el }) {
         const cameraSetting = model.get("cameraSetting");
         editor.tjs.updateCameraAndControls(cameraSetting);
     });
+    model.on("change:cameraType", () => {
+        const cameraType = model.get("cameraType");
+        const cameraSetting = model.get("cameraSetting");
+        editor.tjs.cameraType = cameraType;
+        editor.tjs.updateCameraAndControls(cameraSetting || {});
+    });
     model.on("change:cameraZoom", () => {
         const cameraZoom = model.get("cameraZoom");
         editor.tjs.camera.updateZoom(cameraZoom);
@@ -320,6 +346,61 @@ function render({ model, el }) {
         editor.tjs.controls.target.set(cameraLookAt[0], cameraLookAt[1], cameraLookAt[2]);
         editor.tjs.controls.update();
         editor.requestRedraw("render");
+    });
+
+    let suppressMeasurementSync = false;
+    const syncMeasurementToModel = (next) => {
+        if (suppressMeasurementSync) {
+            return;
+        }
+        model.set("measurementSettings", next?.settings || {});
+        model.save_changes();
+    };
+    if (editor.state && typeof editor.state.subscribe === "function") {
+        editor.state.subscribe("plugins.measurement", (next) => {
+            syncMeasurementToModel(next);
+        });
+    }
+    model.on("change:measurementSettings", () => {
+        const measurement = model.get("measurementSettings");
+        suppressMeasurementSync = true;
+        if (editor.state && typeof editor.state.set === "function") {
+            editor.state.set({ plugins: { measurement: { settings: measurement } } });
+        }
+        setTimeout(() => { suppressMeasurementSync = false; }, 0);
+    });
+
+    let suppressAnimationSync = false;
+    const syncAnimationToModel = (next) => {
+        if (suppressAnimationSync) {
+            return;
+        }
+        model.set("animationState", next || {});
+        if (next && typeof next.currentFrame === "number") {
+            model.set("currentFrame", next.currentFrame);
+        }
+        model.save_changes();
+    };
+    if (editor.state && typeof editor.state.subscribe === "function") {
+        editor.state.subscribe("animation", (next) => {
+            syncAnimationToModel(next);
+        });
+    }
+    model.on("change:animationState", () => {
+        const animation = model.get("animationState") || {};
+        suppressAnimationSync = true;
+        if (typeof animation.frameDuration === "number") {
+            editor.avr.frameDuration = animation.frameDuration;
+        }
+        if (typeof animation.currentFrame === "number") {
+            editor.avr.currentFrame = animation.currentFrame;
+        }
+        if (animation.isPlaying) {
+            editor.avr.play();
+        } else if (animation.isPlaying === false) {
+            editor.avr.pause();
+        }
+        setTimeout(() => { suppressAnimationSync = false; }, 0);
     });
     // frame
     model.on("change:showAtomLegend", () => {
@@ -392,6 +473,11 @@ function resolveFunctionFromString(editor, path) {
             model.set("imageData", imageData);
             model.save_changes();
             break;
+        case "exportState":
+            const snapshot = editor.exportState();
+            model.set("stateSnapshot", snapshot);
+            model.save_changes();
+            break;
         // all the other tasks, run editor.task.name with task.args and task.kwargs
         default:
             // Extract the method based on the 'name' path
@@ -420,6 +506,8 @@ function resolveFunctionFromString(editor, path) {
             }
             break;
     }
+    model.set("js_task", {});
+    model.save_changes();
 }
 
 export default { render }

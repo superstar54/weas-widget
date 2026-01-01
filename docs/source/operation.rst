@@ -32,6 +32,12 @@ Atoms
 
    # replace selected atoms with a new atom
    viewer.ops.atoms.replace(symbol = "N")
+   # add selected atoms to a group
+   viewer.ops.atoms.add_to_group(group = "molecule")
+   # remove selected atoms from a group
+   viewer.ops.atoms.remove_from_group(group = "molecule")
+   # clear a group from all atoms
+   viewer.ops.atoms.clear_group(group = "molecule")
 
 Selection
 ---------------------------
@@ -40,6 +46,7 @@ Selection
 
    viewer.ops.selection.select_all()
    viewer.ops.selection.invert_selection()
+   viewer.ops.selection.select_by_group(group = "molecule")
 
 
 Transform
