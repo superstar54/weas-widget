@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from .base_widget import BaseWidget
 from .utils import ASEAdapter, PymatgenAdapter, load_online_example
 from .atoms_viewer import AtomsViewer
