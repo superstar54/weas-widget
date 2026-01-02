@@ -5,6 +5,7 @@
 [![Unit test](https://github.com/superstar54/weas-widget/actions/workflows/ci.yml/badge.svg)](https://github.com/superstar54/weas-widget/actions/workflows/ci.yml)
 
 A widget to visualize and edit atomic structures in Jupyter Notebooks. It uses [WEAS](https://github.com/superstar54/weas) (Web Environment For Atomistic Structure) in the backend.
+Interact with the widget using LLM agents (e.g., LangChain) to guide edits and analysis from your notebook.
 
 
 <img src="docs/source/_static/images/example-adsorption.gif"  width="100%"/>
@@ -19,6 +20,9 @@ Features:
 - Animations
 - Isosurfaces
 - Vector fields, e.g., magnetic moments, phonons, ...
+- Fermi surface
+- Lattice planes
+- Integrate with LLMs via LangChain Agent
 
 ## Demo
 Please try the widget in the following links:
@@ -266,6 +270,38 @@ viewer.load_state("snapshot.json")
 # or create a viewer directly from a saved state
 viewer = WeasWidget.from_state_file("snapshot.json")
 ```
+
+### Integrate with LangChain Agent
+
+`WeasToolkit` provides agent-ready tools for inspection and editing (style controls, selection, structure loading, atom edits, camera, measurements, meshes, and more). You can also extend it with your own tools.
+
+```python
+from weas_widget import WeasWidget, WeasToolkit
+from langchain_openai import ChatOpenAI
+from langchain_widget import LangChainWidget
+from langchain_openai import ChatOpenAI
+from dotenv import load_dotenv
+import ipywidgets as ipw
+
+load_dotenv()
+
+viewer = WeasWidget()
+
+chat_model = ChatOpenAI(model="gpt-4o-mini")
+
+chat = LangChainWidget(
+    chat_model=chat_model,
+    tools=WeasToolkit(viewer=viewer),
+    title="WEAS Agent Chat",
+    system_prompt=(
+        "You are a scientific assistant. "
+        "Use the available tools to inspect and manipulate the 3D structure."
+    ),
+)
+ipw.VBox([viewer, chat])
+```
+
+See the agent tools reference in the docs: https://weas-widget.readthedocs.io/en/latest/agent_tools.html
 
 ## Test
 

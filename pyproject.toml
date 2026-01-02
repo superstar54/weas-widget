@@ -65,6 +65,9 @@ tests = [
     "playwright",
     "httpx",
 ]
+langchain = [
+    "langchain-widget[openai]"
+]
 aiida = [
     "aiida-core"
 ]

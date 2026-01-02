@@ -14,9 +14,12 @@ class AtomsOperation:
     def __init__(self, base_widget):
         self.base_widget = base_widget
 
-    def replace(self, symbol: str):
+    def replace(self, symbol: str, indices: list[int] | None = None):
         self.base_widget.send_js_task(
-            {"name": "ops.atoms.ReplaceOperation", "kwargs": {"symbol": symbol}}
+            {
+                "name": "ops.atoms.ReplaceOperation",
+                "kwargs": {"symbol": symbol, "indices": indices},
+            }
         )
 
     def add_atom(self, symbol: str, position: list[float] | dict = [0, 0, 0]):

@@ -2,6 +2,7 @@
 Welcome to WEAS Widget's documentation!
 ===========================================
 A widget to visualize and interact with atomic structures in Jupyter Notebook. It uses WEAS_ (Web Environment For Atomistic Structure) in the backend.
+You can also control the widget through LLM agents (e.g., LangChain) for guided edits and analysis.
 
 
 .. note::
@@ -43,6 +44,7 @@ A widget to visualize and interact with atomic structures in Jupyter Notebook. I
    search_operator
    selection
    camera
+   agent_tools
    development/index
    gallery
 
