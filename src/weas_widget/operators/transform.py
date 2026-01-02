@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 # weas/src/operation/transform.js
 This module contains the Transform class which is used to perform
