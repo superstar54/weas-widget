@@ -83,7 +83,7 @@ jobs:
           npm install
           npm run build
           python -m pip install -U jupyterlab==4.1.2 jupyter-packaging~=0.12
-          pip install -e .
+          pip install -e .[langchain]
 
       - name: Install Test Dependencies
         run: |
