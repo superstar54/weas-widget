@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "weas_widget"
-version = "0.0.14"
+version = "0.2.2"
 description = "A widget to visualize and interact with atomistic structures in Jupyter Notebook."
 authors = [{name = "Xing Wang", email = "xingwang1991@gmail.com"}]
 readme = "README.md"
@@ -29,11 +29,23 @@ classifiers = [
 keywords = ["atomistic", "visualize", "edit"]
 requires-python = ">=3.6"
 
-dependencies = ["anywidget", "ase", "requests"]
+dependencies = [
+    "anywidget>=0.9.11",
+    "ase",
+    "requests",
+    "click>=8.1.7",
+    "appdirs>=1.4.4",
+    "numpy",
+    "scikit-image",
+    "seekpath",
+]
 
 [project.urls]
 Documentation = "https://weas-widget.readthedocs.io"
-Source = "https://github.com/superstart54/weas-widget"
+Source = "https://github.com/superstar54/weas-widget"
+
+[project.scripts]
+weas = "weas_widget.cli:weas"
 
 
 [project.optional-dependencies]
@@ -41,6 +53,7 @@ docs = [
     "sphinx_rtd_theme",
     "sphinx~=7.2",
     "nbsphinx",
+    "ipykernel",
 ]
 pre-commit = [
     "pre-commit~=2.2",
@@ -52,6 +65,12 @@ tests = [
     "playwright",
     "httpx",
 ]
+langchain = [
+    "langchain-widget[openai]"
+]
+aiida = [
+    "aiida-core"
+]
 dev = ["watchfiles", "jupyterlab"]
 
 # automatically add the dev feature to the default env (e.g., hatch shell)
@@ -62,6 +81,13 @@ features = ["dev"]
 [tool.hatch.build]
 only-packages = true
 artifacts = ["src/weas_widget/static/*"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/weas_widget"]
+include = ["src/weas_widget/cli/template.html", "src/weas_widget/cli/template.js"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/weas_widget/**", "pyproject.toml", "README.md", "LICENSE"]
 
 [tool.hatch.build.hooks.jupyter-builder]
 build-function = "hatch_jupyter_builder.npm_builder"

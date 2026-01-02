@@ -1,15 +1,19 @@
 name: Test
 
-on: [push, pull_request]
+on:
+  pull_request:
+  push:
+    branches:
+      - main
 
 jobs:
   docs:
     name: Documentation
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: 3.11
           cache: 'pip'
@@ -28,16 +32,16 @@ jobs:
 
   python:
     name: Python
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       max-parallel: 4
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11']
+        python-version: ['3.10', '3.11', '3.12']
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
@@ -51,7 +55,7 @@ jobs:
           npm install
           npm run build
           pip install -e .
-          pip install "pytest<8"
+          pip install "pytest<8" pymatgen
       - name: Test with pytest
         run: |
           cd tests
@@ -60,12 +64,12 @@ jobs:
 
   ui-test:
     name: Visual Regression
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'
@@ -79,7 +83,7 @@ jobs:
           npm install
           npm run build
           python -m pip install -U jupyterlab==4.1.2 jupyter-packaging~=0.12
-          pip install -e .
+          pip install -e .[langchain]
 
       - name: Install Test Dependencies
         run: |
@@ -95,7 +99,7 @@ jobs:
 
       - name: Upload Playwright Test assets
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test-assets
           path: |
@@ -103,7 +107,7 @@ jobs:
 
       - name: Upload Playwright Test report
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test-report
           path: |
@@ -117,7 +121,7 @@ jobs:
 
       - name: Upload updated snapshots
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: updated-snapshots
           path: tests/notebooks/tests

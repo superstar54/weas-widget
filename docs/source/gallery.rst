@@ -48,6 +48,11 @@ Color by attribute is a powerful tool to visualize the data. Here we show how to
    :width: 10cm
 
 
+Lattice plane
+=================
+
+.. figure:: _static/images/lattice_plane.png
+   :align: center
 
 
 Animation

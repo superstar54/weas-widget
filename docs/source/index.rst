@@ -1,7 +1,8 @@
 
 Welcome to WEAS Widget's documentation!
 ===========================================
-A widget to visualize and interact with atomistic structures in Jupyter Notebook. It uses WEAS_ (Web Environment For Atomistic Structure) in the backend.
+A widget to visualize and interact with atomic structures in Jupyter Notebook. It uses WEAS_ (Web Environment For Atomistic Structure) in the backend.
+You can also control the widget through LLM agents (e.g., LangChain) for guided edits and analysis.
 
 
 .. note::
@@ -23,17 +24,30 @@ A widget to visualize and interact with atomistic structures in Jupyter Notebook
    installation
    edit
    gui
+   cli
    color
+   cell
+   bond
    operation
+   state
+   animation
    boundary
    measurement
    isosurface
+   fermi_surface
+   volume_slice
    vector_field
+   lattice_plane
+   highlight
    mesh_primitive
+   any_mesh
    search_operator
    selection
    camera
+   agent_tools
+   development/index
    gallery
+
 
 
 Indices and tables

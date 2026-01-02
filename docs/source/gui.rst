@@ -113,10 +113,14 @@ Select specific components
 .. code-block:: python
 
    from weas_widget import WeasWidget
-   guiConfig={"enabled": True,
-              "components": {"atomsControl": True,
+   guiConfig={
+              "components": {
+                             "enabled": True,
+                             "atomsControl": True,
                              "buttons": True},
-              "buttons": {"fullscreen": True,
+              "buttons": {
+                          "enabled": True,
+                          "fullscreen": True,
                           "download": True,
                           "measurement": True,
                           }
@@ -128,8 +132,22 @@ Select specific components
 Set viewer width and height
 ----------------------------
 
+Use the widget layout (or container CSS) to control size.
+
+.. code-block:: python
+
+   import ipywidgets as ipw
+   from weas_widget import WeasWidget
+   # this sets the style of the viewer inside the widget
+   viewer = WeasWidget(viewerStyle = {"width": "800px", "height": "600px"})
+   # This sets the layout of the widget itself
+   # viewer.layout = ipw.Layout(width="800px", height="600px")
+   viewer
+
+Show atoms legend
+------------------
+
 .. code-block:: python
 
    from weas_widget import WeasWidget
-   viewer = WeasWidget(viewerStyle = {"width": "800px", "height": "600px"})
-   viewer
+   viewer.avr.show_atoms_legend = True
