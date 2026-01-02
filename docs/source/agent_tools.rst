@@ -9,9 +9,24 @@ One can use the `langchain-widget` package to create a chat agent with the toolk
    pip install langchain-widget[openai]
 
 
-Then, you can create a toolkit instance by passing in a ``WeasWidget`` instance:
+Then, you can create a toolkit instance by passing in a ``WeasWidget`` instance.
 
-Here is an example of using the toolkit with a chat agent:
+.. important::
+
+   The ``WeasToolkit`` requires an LLM that supports function calling, such as GPT.
+   Make sure to set up your OpenAI API key in the environment variable ``OPENAI_API_KEY``.
+   Check the `LangChain OpenAI documentation <https://langchain-widget.readthedocs.io/en/latest/quick_start.html>`_ for more details.
+
+Example
+-------
+
+Run the following code to create a LangChain chat widget integrated with `weas_widget`. And try to ask:
+
+- “Load a Si diamond conventional cell and repeat 2x2x2”
+- “Select atom 0 and atom 1.”
+- “Replace the selected atoms with Ge”
+- "Summarize the structure"
+
 
 .. code-block:: python
 
@@ -26,7 +41,7 @@ Here is an example of using the toolkit with a chat agent:
 
    viewer = WeasWidget()
 
-   chat_model = ChatOpenAI(model="gpt-4o-mini")
+   chat_model = ChatOpenAI(model="gpt-4o")
    chat = LangChainWidget(
       chat_model=chat_model,
       tools=WeasToolkit(viewer=viewer),
@@ -38,6 +53,11 @@ Here is an example of using the toolkit with a chat agent:
       sidebar_open=False,
    )
    ipw.HBox([viewer, chat])
+
+.. image:: ../_static/images/langchain-agent.png
+   :alt: Agent Tools Example
+   :align: center
+   :width: 100%
 
 Extending the toolkit
 ---------------------
