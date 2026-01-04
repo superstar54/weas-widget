@@ -6,6 +6,7 @@ from .atoms_viewer import AtomsViewer
 from .camera import Camera
 from .plugins.instanced_mesh_pritimive import InstancedMeshPrimitive
 from .plugins.any_mesh import AnyMesh
+from .plugins.text import Text
 from .operators.ops import Operators
 from .fermi_surface import add_fermi_surface_from_bxsf
 import time
@@ -23,6 +24,7 @@ class WeasWidget(ipw.HBox):
         self.camera = Camera(self._widget)
         self.imp = InstancedMeshPrimitive(self._widget)
         self.any_mesh = AnyMesh(self._widget)
+        self.text = Text(self._widget)
         self.ops = Operators(self._widget)
         if from_ase is not None:
             self.from_ase(from_ase)
@@ -228,18 +230,22 @@ class WeasWidget(ipw.HBox):
         fermi_energy: float = None,
         supercell_size: tuple = (2, 2, 2),
         drop_periodic: bool = True,
-        clip_bz: bool = False,
+        clip_bz: bool = True,
         show_bz: bool = True,
         show_reciprocal_axes: bool = True,
-        combine_bands: bool = True,
+        combine_bands: bool = False,
         name: str = None,
         color: list | str = None,
         opacity: float = 0.6,
         material_type: str = "Standard",
+        merge_vertices_tolerance: float | None = 1e-5,
+        smooth_normals: bool | None = True,
         brillouin_zone_options: dict = None,
         reciprocal_axes_options: dict = None,
     ):
         """Compute Fermi surface meshes from a BXSF file and render via AnyMesh."""
+        guiConfig = {"meshLegend": {"enabled": True, "position": "bottom-left"}}
+        self._widget.guiConfig.update(guiConfig)
         add_fermi_surface_from_bxsf(
             viewer=self,
             file_path=file_path,
@@ -255,6 +261,8 @@ class WeasWidget(ipw.HBox):
             color=color,
             opacity=opacity,
             material_type=material_type,
+            merge_vertices_tolerance=merge_vertices_tolerance,
+            smooth_normals=smooth_normals,
             brillouin_zone_options=brillouin_zone_options,
             reciprocal_axes_options=reciprocal_axes_options,
         )

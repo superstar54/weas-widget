@@ -41,6 +41,7 @@ You can also control the widget through LLM agents (e.g., LangChain) for guided 
    highlight
    mesh_primitive
    any_mesh
+   text
    search_operator
    selection
    camera
