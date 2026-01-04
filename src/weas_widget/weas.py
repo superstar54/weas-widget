@@ -6,6 +6,7 @@ from .atoms_viewer import AtomsViewer
 from .camera import Camera
 from .plugins.instanced_mesh_pritimive import InstancedMeshPrimitive
 from .plugins.any_mesh import AnyMesh
+from .plugins.text import Text
 from .operators.ops import Operators
 from .fermi_surface import add_fermi_surface_from_bxsf
 import time
@@ -23,6 +24,7 @@ class WeasWidget(ipw.HBox):
         self.camera = Camera(self._widget)
         self.imp = InstancedMeshPrimitive(self._widget)
         self.any_mesh = AnyMesh(self._widget)
+        self.text = Text(self._widget)
         self.ops = Operators(self._widget)
         if from_ase is not None:
             self.from_ase(from_ase)

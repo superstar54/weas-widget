@@ -48,6 +48,8 @@ class BaseWidget(anywidget.AnyWidget):
     instancedMeshPrimitive = tl.List(tl.Dict()).tag(sync=True)
     # any mesh
     anyMesh = tl.List(tl.Dict()).tag(sync=True)
+    # text labels
+    text = tl.List(tl.Dict()).tag(sync=True)
     # viewer
     viewerStyle = tl.Dict().tag(sync=True)
     # camera

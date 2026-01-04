@@ -152,6 +152,7 @@ function render({ model, el }) {
                     vectorField: { settings: vectorField, show: showVectorField },
                     instancedMeshPrimitive: { settings: model.get("instancedMeshPrimitive") || [] },
                     anyMesh: { settings: model.get("anyMesh") || [] },
+                    text: { settings: model.get("text") || [] },
                     species: { settings: model.get("speciesSettings") || {} },
                 },
             });
@@ -318,6 +319,13 @@ function render({ model, el }) {
         const data = model.get("anyMesh") || [];
         console.log("anyMesh: ", data);
         editor.state.set({ plugins: { anyMesh: { settings: data } } });
+    });
+
+    // text labels
+    model.on("change:text", () => {
+        const data = model.get("text") || [];
+        console.log("text: ", data);
+        editor.state.set({ plugins: { text: { settings: data } } });
     });
 
     // camera settings
