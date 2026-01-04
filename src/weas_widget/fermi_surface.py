@@ -244,7 +244,6 @@ def fermi_crossing_bands(
         e_max = float(np.max(b.energies))
         if (e_min - tol) <= ef <= (e_max + tol):
             hits.append(b.index)
-    print("Found Fermi-crossing bands:", hits)
     return hits
 
 
