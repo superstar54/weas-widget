@@ -1,5 +1,6 @@
 // if we want test weas package, clone the weas repo and import the weas module, then use the following import
 // import * as weas from "../../weas-js/src/index.js";
+// import "../../weas-js/src/style.css";
 // if not, then use the following import
 import * as weas from "weas";
 import "./widget.css";
@@ -63,10 +64,10 @@ function render({ model, el }) {
         }
         // console.log("atoms: ", atoms);
         const guiConfig = model.get("guiConfig");
-        if (guiConfig.legend) {
-            guiConfig.legend.enabled = model.get("showAtomLegend");
+        if (guiConfig.atomLegend) {
+            guiConfig.atomLegend.enabled = model.get("showAtomLegend");
         } else {
-            guiConfig.legend = {enabled: model.get("showAtomLegend"),
+            guiConfig.atomLegend = {enabled: model.get("showAtomLegend"),
                 position: "bottom-right",
             };
         }
@@ -404,7 +405,7 @@ function render({ model, el }) {
     });
     // frame
     model.on("change:showAtomLegend", () => {
-        editor.avr.guiManager.guiConfig.legend.enabled = model.get("showAtomLegend");
+        editor.avr.guiManager.guiConfig.atomLegend.enabled = model.get("showAtomLegend");
         editor.avr.guiManager.updateLegend();
     });
 }

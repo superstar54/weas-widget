@@ -1,4 +1,5 @@
 from typing import Dict, Iterable, List, Tuple, Optional, Union
+import colorsys
 import numpy as np
 from dataclasses import dataclass
 from pathlib import Path
@@ -87,6 +88,19 @@ def _find_fermi_energy(lines: List[str]) -> float:
     )
 
 
+def _find_bandgrid_header(lines: List[str]) -> Optional[int]:
+    for i, ln in enumerate(lines):
+        up = ln.upper()
+        if "BANDGRID_3D" not in up:
+            continue
+        if up.startswith("BEGIN_BLOCK_BANDGRID_3D"):
+            continue
+        if up.startswith("END_BANDGRID_3D") or up.startswith("END_BLOCK_BANDGRID_3D"):
+            continue
+        return i
+    return None
+
+
 def _find_reciprocal_lattice(lines: List[str]) -> np.ndarray:
     # Typical structure:
     # BEGIN_BLOCK_BANDGRID_3D
@@ -100,13 +114,9 @@ def _find_reciprocal_lattice(lines: List[str]) -> np.ndarray:
     #   <b3x> <b3y> <b3z>
     #   BAND: 1
     #   ...
-    begin_idx = None
-    for i, ln in enumerate(lines):
-        if ln.upper().startswith("BEGIN_BANDGRID_3D"):
-            begin_idx = i
-            break
+    begin_idx = _find_bandgrid_header(lines)
     if begin_idx is None:
-        raise BXSFParseError("Could not find 'BEGIN_BANDGRID_3D'.")
+        raise BXSFParseError("Could not find BANDGRID_3D header.")
 
     # After BEGIN_BANDGRID_3D:
     # i+1: nbands
@@ -132,13 +142,9 @@ def _find_reciprocal_lattice(lines: List[str]) -> np.ndarray:
 
 def _parse_bands(lines: List[str]) -> List[BXSFBand]:
     # Locate BEGIN_BANDGRID_3D to get nbands, grid, origin, and start position.
-    begin_idx = None
-    for i, ln in enumerate(lines):
-        if ln.upper().startswith("BEGIN_BANDGRID_3D"):
-            begin_idx = i
-            break
+    begin_idx = _find_bandgrid_header(lines)
     if begin_idx is None:
-        raise BXSFParseError("Could not find 'BEGIN_BANDGRID_3D'.")
+        raise BXSFParseError("Could not find BANDGRID_3D header.")
 
     try:
         nbands = int(float(lines[begin_idx + 1].split()[0]))
@@ -225,17 +231,20 @@ def _parse_bands(lines: List[str]) -> List[BXSFBand]:
     return bands
 
 
-def fermi_crossing_bands(data: BXSFData, tol: float = 1e-6) -> List[int]:
+def fermi_crossing_bands(
+    data: BXSFData, fermi_energy: float = None, tol: float = 1e-6
+) -> List[int]:
     """
     Return band indices whose energy range brackets the Fermi level (likely to contribute to the FS).
     """
-    ef = data.fermi_energy
+    ef = data.fermi_energy if fermi_energy is None else fermi_energy
     hits: List[int] = []
     for b in data.bands:
         e_min = float(np.min(b.energies))
         e_max = float(np.max(b.energies))
         if (e_min - tol) <= ef <= (e_max + tol):
             hits.append(b.index)
+    print("Found Fermi-crossing bands:", hits)
     return hits
 
 
@@ -460,7 +469,7 @@ def compute_fermi_surface_mesh(
 def add_brillouin_zone(
     viewer: "WeasWidget",
     b_vectors: Iterable[Iterable[float]],
-    name: str = "brillouin-zone",
+    name: str = "Brillouin-zone",
     color: Optional[Union[List[float], str]] = None,
     opacity: Optional[float] = 0.1,
     show_edges: bool = True,
@@ -546,6 +555,8 @@ def add_fermi_surface_from_bxsf(
     material_type: str = "Standard",
     show_bz: bool = True,
     show_reciprocal_axes: bool = True,
+    merge_vertices_tolerance: Optional[float] = None,
+    smooth_normals: Optional[bool] = None,
     brillouin_zone_options: Optional[Dict] = None,
     reciprocal_axes_options: Optional[Dict] = None,
 ):
@@ -566,7 +577,7 @@ def add_fermi_surface_from_bxsf(
     if band_index is not None:
         fs_bands = [band_index]
     else:
-        fs_bands = fermi_crossing_bands(bxsf_data)
+        fs_bands = fermi_crossing_bands(bxsf_data, fermi_energy=fermi_energy)
     if not fs_bands:
         raise ValueError(
             "No Fermi-crossing bands found. Specify band_index to render a single band."
@@ -586,9 +597,32 @@ def add_fermi_surface_from_bxsf(
             clip_bz=clip_bz,
         )
 
-    if isinstance(color, (list, tuple)) and len(color) != 3:
-        raise ValueError("RGB color must be like [r, g, b].")
-    mesh_color = color or [0.0, 1.0, 0.0]
+    def _is_rgb_list(value) -> bool:
+        return (
+            isinstance(value, (list, tuple))
+            and len(value) == 3
+            and all(isinstance(x, (int, float)) for x in value)
+        )
+
+    def _auto_band_colors(count: int) -> List[List[float]]:
+        colors = []
+        for i in range(count):
+            hue = (i * 0.61803398875) % 1.0
+            r, g, b = colorsys.hsv_to_rgb(hue, 0.6, 0.9)
+            colors.append([float(r), float(g), float(b)])
+        return colors
+
+    if color is not None and not _is_rgb_list(color):
+        if not (
+            isinstance(color, (list, tuple))
+            and color
+            and all(_is_rgb_list(c) for c in color)
+        ):
+            raise ValueError(
+                "Color must be an RGB list like [r, g, b] or a list of RGB lists."
+            )
+
+    mesh_color = color if _is_rgb_list(color) else [0.0, 1.0, 0.0]
     mesh_opacity = float(opacity)
     settings = []
     if combine_bands or len(fs_bands) == 1:
@@ -609,9 +643,7 @@ def add_fermi_surface_from_bxsf(
             faces = np.vstack(faces_list)
         else:
             faces = np.zeros((0, 3), dtype=int)
-        default_name = (
-            f"fermi-band-{fs_bands[0]}" if len(fs_bands) == 1 else "fermi-bands"
-        )
+        default_name = f"Band-{fs_bands[0]}" if len(fs_bands) == 1 else "Bands"
         settings.append(
             {
                 "name": name or default_name,
@@ -621,13 +653,25 @@ def add_fermi_surface_from_bxsf(
                 "opacity": mesh_opacity,
                 "position": [0.0, 0.0, 0.0],
                 "materialType": material_type,
+                "mergeVerticesTolerance": merge_vertices_tolerance,
+                "smoothNormals": smooth_normals,
             }
         )
     else:
+        if color is None:
+            band_colors = _auto_band_colors(len(fs_bands))
+        elif _is_rgb_list(color):
+            band_colors = [list(map(float, color)) for _ in fs_bands]
+        else:
+            base_colors = [list(map(float, c)) for c in color]
+            band_colors = [
+                base_colors[i % len(base_colors)] for i in range(len(fs_bands))
+            ]
         for idx in fs_bands:
+            band_color = band_colors[len(settings)]
             band = bands_by_index[idx]
             vertices, faces = _mesh_for_band(band)
-            band_name = name or f"fermi-band-{idx}"
+            band_name = name or f"Band-{idx}"
             if name is not None and len(fs_bands) > 1:
                 band_name = f"{name}-{idx}"
             settings.append(
@@ -635,10 +679,12 @@ def add_fermi_surface_from_bxsf(
                     "name": band_name,
                     "vertices": vertices.reshape(-1).tolist(),
                     "faces": faces.reshape(-1).tolist(),
-                    "color": mesh_color,
+                    "color": band_color,
                     "opacity": mesh_opacity,
                     "position": [0.0, 0.0, 0.0],
                     "materialType": material_type,
+                    "mergeVerticesTolerance": merge_vertices_tolerance,
+                    "smoothNormals": smooth_normals,
                 }
             )
     atoms = Atoms(symbols=[], positions=[], cell=b_vectors, pbc=True)
