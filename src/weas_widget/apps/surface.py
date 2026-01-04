@@ -519,13 +519,11 @@ class SurfaceBuilder(ipw.VBox):
         return atoms
 
     def _update_fixed_highlight(self):
-        settings = self.viewer.avr.highlight.settings
-        fixed = dict(settings.get("fixed", {}))
-        fixed.setdefault("type", "cross")
-        fixed.setdefault("color", "black")
-        fixed.setdefault("scale", 1.1)
-        fixed["indices"] = list(self._fixed_indices)
-        settings["fixed"] = fixed
+        self.viewer.avr.highlight.settings["fixed"] = {
+            "type": "crossView",
+            "indices": list(self._fixed_indices),
+            "scale": 1.0,
+        }
         self.viewer.avr.draw()
 
     @tl.observe("bulk")
@@ -626,6 +624,7 @@ class SurfaceBuilder(ipw.VBox):
             self.structure = atoms
             self._set_status("")
             self._update_summary(atoms, groups)
+            self._update_fixed_highlight()
         else:
             self._set_status("No bulk structure loaded.", is_error=True)
 

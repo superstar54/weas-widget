@@ -1,5 +1,6 @@
 // if we want test weas package, clone the weas repo and import the weas module, then use the following import
 // import * as weas from "../../weas-js/src/index.js";
+// import "../../weas-js/src/style.css";
 // if not, then use the following import
 import * as weas from "weas";
 import "./widget.css";
@@ -63,10 +64,10 @@ function render({ model, el }) {
         }
         // console.log("atoms: ", atoms);
         const guiConfig = model.get("guiConfig");
-        if (guiConfig.legend) {
-            guiConfig.legend.enabled = model.get("showAtomLegend");
+        if (guiConfig.atomLegend) {
+            guiConfig.atomLegend.enabled = model.get("showAtomLegend");
         } else {
-            guiConfig.legend = {enabled: model.get("showAtomLegend"),
+            guiConfig.atomLegend = {enabled: model.get("showAtomLegend"),
                 position: "bottom-right",
             };
         }
@@ -151,6 +152,7 @@ function render({ model, el }) {
                     vectorField: { settings: vectorField, show: showVectorField },
                     instancedMeshPrimitive: { settings: model.get("instancedMeshPrimitive") || [] },
                     anyMesh: { settings: model.get("anyMesh") || [] },
+                    text: { settings: model.get("text") || [] },
                     species: { settings: model.get("speciesSettings") || {} },
                 },
             });
@@ -319,6 +321,13 @@ function render({ model, el }) {
         editor.state.set({ plugins: { anyMesh: { settings: data } } });
     });
 
+    // text labels
+    model.on("change:text", () => {
+        const data = model.get("text") || [];
+        console.log("text: ", data);
+        editor.state.set({ plugins: { text: { settings: data } } });
+    });
+
     // camera settings
     model.on("change:cameraSetting", () => {
         console.log("cameraSetting changed.")
@@ -404,7 +413,7 @@ function render({ model, el }) {
     });
     // frame
     model.on("change:showAtomLegend", () => {
-        editor.avr.guiManager.guiConfig.legend.enabled = model.get("showAtomLegend");
+        editor.avr.guiManager.guiConfig.atomLegend.enabled = model.get("showAtomLegend");
         editor.avr.guiManager.updateLegend();
     });
 }
