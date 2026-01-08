@@ -6,6 +6,8 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 
+from ..utils import group_layers_by_coordinate
+
 from .constants import MODEL_STYLE_MAP
 
 
@@ -213,17 +215,7 @@ def _cell_center_xy(atoms: Any) -> np.ndarray:
 
 
 def _group_layers_by_z(z_values: np.ndarray, tolerance: float) -> List[List[int]]:
-    order = np.argsort(z_values)[::-1]
-    layers: List[List[int]] = []
-    z_ref: Optional[float] = None
-    for idx in order:
-        z = float(z_values[idx])
-        if z_ref is None or abs(z - z_ref) > tolerance:
-            layers.append([int(idx)])
-            z_ref = z
-        else:
-            layers[-1].append(int(idx))
-    return layers
+    return group_layers_by_coordinate(z_values, tolerance, descending=True)
 
 
 @dataclass(frozen=True)

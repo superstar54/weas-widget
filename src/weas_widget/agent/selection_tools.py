@@ -8,6 +8,7 @@ from .tool_helpers import (
     _normalize_indices,
     _set_current_atoms_data,
 )
+from ..utils import group_layers_by_coordinate
 
 
 def build_selection_tools(viewer: Any):
@@ -141,6 +142,66 @@ def build_selection_tools(viewer: Any):
             summary={"group": name, "indices": selected},
         ).to_dict()
 
+    @tool
+    def select_atoms_by_coordinate(
+        axis: str, max_value: Optional[float] = None, min_value: Optional[float] = None
+    ) -> Dict[str, Any]:
+        """Select atoms with coordinate in [min_value, max_value] on axis x/y/z."""
+        if max_value is None and min_value is None:
+            raise ValueError("Provide at least one of min_value or max_value.")
+        axis_key = str(axis).strip().lower()
+        axis_map = {"x": 0, "y": 1, "z": 2}
+        if axis_key not in axis_map:
+            raise ValueError("axis must be one of: 'x', 'y', 'z'.")
+        axis_index = axis_map[axis_key]
+        atoms, *_ = _get_current_ase_atoms(viewer)
+        coord_values = atoms.get_positions()[:, axis_index]
+        selected = [
+            i
+            for i, value in enumerate(coord_values)
+            if (min_value is None or value >= float(min_value))
+            and (max_value is None or value <= float(max_value))
+        ]
+        viewer.avr.selected_atoms_indices = selected
+        return WeasToolResult(
+            f"Selected {len(selected)} atoms with {axis_key} in [{min_value}, {max_value}].",
+            summary={"indices": selected},
+        ).to_dict()
+
+    @tool
+    def select_atoms_by_layers(
+        n_layers: int = 1,
+        tolerance: float = 0.2,
+        axis: str = "z",
+        side: str = "top",
+    ) -> Dict[str, Any]:
+        """Select atoms in the top/bottom N layers along an axis."""
+        if n_layers <= 0:
+            raise ValueError("n_layers must be >= 1.")
+        if tolerance <= 0:
+            raise ValueError("tolerance must be > 0.")
+        axis_key = str(axis).strip().lower()
+        axis_map = {"x": 0, "y": 1, "z": 2}
+        if axis_key not in axis_map:
+            raise ValueError("axis must be one of: 'x', 'y', 'z'.")
+        side_key = str(side).strip().lower()
+        if side_key not in {"top", "bottom"}:
+            raise ValueError("side must be 'top' or 'bottom'.")
+
+        atoms, *_ = _get_current_ase_atoms(viewer)
+        coord_values = atoms.get_positions()[:, axis_map[axis_key]]
+        layers = group_layers_by_coordinate(
+            coord_values, float(tolerance), descending=(side_key == "top")
+        )
+        if not layers:
+            return WeasToolResult("No layers found.", summary={"indices": []}).to_dict()
+        selected = [i for layer in layers[: int(n_layers)] for i in layer]
+        viewer.avr.selected_atoms_indices = selected
+        return WeasToolResult(
+            f"Selected {len(selected)} atoms in {side_key} {int(n_layers)} layer(s) along {axis_key}.",
+            summary={"indices": selected},
+        ).to_dict()
+
     return [
         get_selected_atoms,
         select_atoms,
@@ -150,4 +211,6 @@ def build_selection_tools(viewer: Any):
         remove_atoms_from_group,
         clear_group,
         select_atoms_by_group,
+        select_atoms_by_coordinate,
+        select_atoms_by_layers,
     ]

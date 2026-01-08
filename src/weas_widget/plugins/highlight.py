@@ -36,6 +36,11 @@ class HighlightManager(WidgetWrapper):
                 "color": "yellow",
                 "type": "sphere",
             },
-            "fixed": {"indices": [], "scale": 1.1, "color": "black", "type": "cross"},
+            "fixed": {
+                "indices": [],
+                "scale": 1.0,
+                "color": "black",
+                "type": "crossView",
+            },
         }
         return settings
