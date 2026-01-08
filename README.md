@@ -94,17 +94,30 @@ If the problem persists, please open a [GitHub issue](https://github.com/superst
 
 ### Select Atoms
 - Pick Selection: Click directly on an atom to select it.
-- Range Selection: Hold the `Shift` key and drag the right mouse button to select a group of atoms.
+- Box Selection: Hold the `Shift` key and drag to select a group of atoms.
+- Lasso Selection: Hold `Shift + Alt` and drag to select a group of atoms.
 
-### Move, Rotate selected atoms
-
+### Shortcuts for editing selected atoms
 Press the keyboard shortcut, and move your mouse.
+
 
 |Operation | Shortcut|
 |----------|---------|
 | Move     | `g`   |
 | Rotate   | `r`   |
 | Duplicate| `d`   |
+
+### Rotate selected atoms
+
+To rotate around a custom axis, press ``r`` then ``a`` and click one or two atoms.
+Rotation defaults to the camera axis through the selection center.
+One atom sets the rotation center (camera axis), two atoms define the bond axis.
+The axis is shown with orange crosses and a long orange line (for two atoms).
+Press ``a`` again to exit axis picking and rotate; click an axis atom again to deselect it.
+Press ``r`` then ``x``, ``y``, or ``z`` to lock rotation to a world axis (press the same key again to unlock).
+
+### Translate along one axis
+To translate along one axis, press ``g`` then ``x``, ``y``, or ``z`` to lock movement.
 
 
 ### Delete selected atoms
