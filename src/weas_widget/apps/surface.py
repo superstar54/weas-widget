@@ -258,21 +258,10 @@ class SurfaceBuilder(ipw.VBox):
     def _layer_groups(self, atoms, tol):
         if len(atoms) == 0:
             return []
+        from ..utils import group_layers_by_coordinate
+
         z = atoms.positions[:, 2]
-        order = np.argsort(z)
-        groups = []
-        current = [int(order[0])]
-        z_ref = z[order[0]]
-        for idx in order[1:]:
-            idx = int(idx)
-            if abs(z[idx] - z_ref) <= tol:
-                current.append(idx)
-            else:
-                groups.append(current)
-                current = [idx]
-                z_ref = z[idx]
-        groups.append(current)
-        return groups
+        return group_layers_by_coordinate(z, tol, descending=False)
 
     def _cell_center_xy(self, atoms):
         cell = atoms.get_cell()

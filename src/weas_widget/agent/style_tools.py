@@ -35,7 +35,14 @@ def build_style_tools(viewer: Any):
         """
         schema: Dict[str, Any] = {
             "viewer": {
-                "model_style": {"type": "int|str", "values": MODEL_STYLE_MAP},
+                "model_style": {
+                    "type": "int|str",
+                    "values": MODEL_STYLE_MAP,
+                    "note": (
+                        "Applies to the current selection if any atoms are selected; "
+                        "otherwise applies to all atoms."
+                    ),
+                },
                 "boundary": {
                     "type": "3x2 float list",
                     "example": [[-0.1, 1.1], [-0.1, 1.1], [-0.1, 1.1]],
@@ -127,6 +134,9 @@ def build_style_tools(viewer: Any):
         """
         Set visualization/style settings.
 
+        Note:
+        - model_style applies to selected atoms if a selection exists; otherwise it applies to all atoms.
+
         Examples:
         - set_style("model_style", "Polyhedra")
         - set_style("color_type", "VESTA")
@@ -138,8 +148,14 @@ def build_style_tools(viewer: Any):
 
         if k == "model_style":
             viewer.avr.model_style = _parse_model_style(value)
+            selected = getattr(viewer.avr, "selected_atoms_indices", []) or []
+            scope = (
+                f"{len(selected)} selected atoms"
+                if selected
+                else "all atoms (no selection)"
+            )
             return WeasToolResult(
-                f"Set model_style to {viewer.avr.model_style}."
+                f"Set model_style to {viewer.avr.model_style} for {scope}."
             ).to_dict()
 
         if k == "boundary":

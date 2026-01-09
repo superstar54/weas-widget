@@ -28,6 +28,9 @@ class ASEAdapter:
         for key in ase_atoms.arrays.keys():
             if key not in ["positions", "numbers"]:
                 attributes["atom"][key] = ase_atoms.arrays[key].tolist()
+        fixed_xyz = cls._extract_fixed_xyz(ase_atoms)
+        if fixed_xyz is not None:
+            attributes["atom"]["fixed_xyz"] = fixed_xyz
 
         weas_atoms = {
             "species": species,
@@ -39,22 +42,113 @@ class ASEAdapter:
         }
         return weas_atoms
 
+    @staticmethod
+    def _extract_fixed_xyz(ase_atoms):
+        constraints = getattr(ase_atoms, "constraints", None)
+        if not constraints:
+            return None
+        if not isinstance(constraints, (list, tuple)):
+            constraints = [constraints]
+        n_atoms = len(ase_atoms)
+        fixed = np.zeros((n_atoms, 3), dtype=bool)
+
+        for constraint in constraints:
+            indices = None
+            if hasattr(constraint, "get_indices"):
+                try:
+                    indices = list(constraint.get_indices())
+                except Exception:
+                    indices = None
+            if indices is None:
+                if hasattr(constraint, "indices"):
+                    indices = list(constraint.indices)
+                elif hasattr(constraint, "index"):
+                    indices = [constraint.index]
+            if not indices:
+                continue
+
+            if hasattr(constraint, "mask"):
+                mask = np.asarray(constraint.mask, dtype=bool)
+                if mask.shape == (3,):
+                    fixed[indices, :] |= mask
+                    continue
+                if (
+                    mask.ndim == 2
+                    and mask.shape[1] == 3
+                    and mask.shape[0] == len(indices)
+                ):
+                    for idx, axis_mask in zip(indices, mask):
+                        fixed[idx] |= axis_mask
+                    continue
+            if hasattr(constraint, "masks"):
+                masks = np.asarray(constraint.masks, dtype=bool)
+                if (
+                    masks.ndim == 2
+                    and masks.shape[1] == 3
+                    and masks.shape[0] == len(indices)
+                ):
+                    for idx, axis_mask in zip(indices, masks):
+                        fixed[idx] |= axis_mask
+                    continue
+
+            fixed[indices, :] = True
+
+        if not fixed.any():
+            return None
+        return fixed.tolist()
+
     @classmethod
     def to_ase(cls, weas_atoms):
         # Convert the widget's format to an ASE Atoms object
         from ase import Atoms
+        from ase.constraints import FixAtoms, FixCartesian
         import numpy as np
 
         # if atoms is a list of atoms, convert all atoms to a list of ase atoms
         if isinstance(weas_atoms, list):
             trajectory = [cls.to_ase(atom) for atom in weas_atoms]
             return trajectory[0] if len(trajectory) == 1 else trajectory
+        if not isinstance(weas_atoms, dict) or "symbols" not in weas_atoms:
+            return Atoms(
+                symbols=[],
+                positions=[],
+                cell=np.zeros((3, 3), dtype=float),
+                pbc=[False, False, False],
+            )
         symbols = [weas_atoms["species"][s] for s in weas_atoms["symbols"]]
         positions = weas_atoms["positions"]
         cell = np.array(weas_atoms["cell"]).reshape(3, 3)
         ase_atoms = Atoms(
             symbols=symbols, positions=positions, cell=cell, pbc=weas_atoms["pbc"]
         )
+        attributes = weas_atoms.get("attributes", {})
+        atom_attrs = attributes.get("atom", {})
+        fixed_xyz = atom_attrs.get("fixed_xyz")
+        if isinstance(fixed_xyz, list) and fixed_xyz:
+            masks = []
+            for entry in fixed_xyz:
+                if isinstance(entry, (list, tuple)) and len(entry) == 3:
+                    masks.append(tuple(bool(x) for x in entry))
+                else:
+                    masks.append((False, False, False))
+            if any(any(mask) for mask in masks):
+                constraints = []
+                fixed_all = [
+                    i for i, mask in enumerate(masks) if mask == (True, True, True)
+                ]
+                if fixed_all:
+                    constraints.append(FixAtoms(indices=fixed_all))
+                partial_groups = {}
+                for i, mask in enumerate(masks):
+                    if mask == (True, True, True) or mask == (False, False, False):
+                        continue
+                    partial_groups.setdefault(mask, []).append(i)
+                for mask, indices in partial_groups.items():
+                    constraints.append(FixCartesian(indices=indices, mask=list(mask)))
+                if constraints:
+                    ase_atoms.set_constraint(
+                        constraints if len(constraints) > 1 else constraints[0]
+                    )
         return ase_atoms
 
 
@@ -85,6 +179,16 @@ class PymatgenAdapter:
             attributes["atom"][key] = [
                 site.properties[key] for site in pymatgen_structure.sites
             ]
+        selective = attributes["atom"].get("selective_dynamics")
+        if isinstance(selective, list) and selective:
+            fixed_xyz = []
+            for entry in selective:
+                if isinstance(entry, (list, tuple)) and len(entry) == 3:
+                    fixed_xyz.append([not bool(x) for x in entry])
+                else:
+                    fixed_xyz.append([False, False, False])
+            if any(any(mask) for mask in fixed_xyz):
+                attributes["atom"]["fixed_xyz"] = fixed_xyz
         weas_atoms = {
             "species": species,
             "cell": cell,
@@ -111,6 +215,21 @@ class PymatgenAdapter:
         else:
             lattice = Lattice(weas_atoms["cell"], pbc=weas_atoms["pbc"])
             structure = Structure(lattice, species, sites, coords_are_cartesian=True)
+        attributes = weas_atoms.get("attributes", {})
+        atom_attrs = attributes.get("atom", {})
+        fixed_xyz = atom_attrs.get("fixed_xyz")
+        if isinstance(fixed_xyz, list) and fixed_xyz:
+            selective = []
+            for entry in fixed_xyz:
+                if isinstance(entry, (list, tuple)) and len(entry) == 3:
+                    selective.append([not bool(x) for x in entry])
+                else:
+                    selective.append([True, True, True])
+            if any(not all(mask) for mask in selective):
+                try:
+                    structure.add_site_property("selective_dynamics", selective)
+                except Exception:
+                    structure.site_properties["selective_dynamics"] = selective
         return structure
 
 
@@ -151,3 +270,24 @@ def create_volume_data(data, cell=[[1, 0, 0], [0, 1, 0], [0, 0, 1]]):
     values = np.array(data).flatten().tolist()
 
     return {"dims": dims, "values": values, "cell": cell, "origin": [0, 0, 0]}
+
+
+def group_layers_by_coordinate(values, tolerance: float, *, descending: bool = False):
+    if len(values) == 0:
+        return []
+    order = np.argsort(values)
+    if descending:
+        order = order[::-1]
+    groups = []
+    current = [int(order[0])]
+    ref_value = float(values[order[0]])
+    for idx in order[1:]:
+        idx = int(idx)
+        if abs(float(values[idx]) - ref_value) <= float(tolerance):
+            current.append(idx)
+        else:
+            groups.append(current)
+            current = [idx]
+            ref_value = float(values[idx])
+    groups.append(current)
+    return groups

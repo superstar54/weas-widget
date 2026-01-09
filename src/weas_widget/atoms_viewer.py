@@ -7,7 +7,6 @@ from .plugins.cell import CellManager
 from .plugins.bond import BondManager
 from .plugins.species import SpeciesManager
 from .plugins.highlight import HighlightManager
-from copy import deepcopy
 
 
 class AtomsViewer(WidgetWrapper):
@@ -80,7 +79,30 @@ class AtomsViewer(WidgetWrapper):
         self.vf.update_atoms()
         # highlight
         self.highlight.update_atoms()
+        self._update_fixed_highlight(atoms)
         self._widget.send_js_task({"name": "tjs.onWindowResize"})
+
+    def _update_fixed_highlight(self, atoms):
+        if not isinstance(atoms, dict):
+            return
+        attributes = atoms.get("attributes", {})
+        atom_attrs = attributes.get("atom", {})
+        fixed_xyz = atom_attrs.get("fixed_xyz")
+        if not isinstance(fixed_xyz, list):
+            return
+        indices = [
+            idx
+            for idx, mask in enumerate(fixed_xyz)
+            if isinstance(mask, list) and any(mask)
+        ]
+        if not indices:
+            return
+        self.highlight.settings["fixed"] = {
+            "type": "crossView",
+            "indices": indices,
+            "scale": 1.0,
+            "color": "black",
+        }
 
     def draw(self):
         """Redraw the widget."""
@@ -88,9 +110,18 @@ class AtomsViewer(WidgetWrapper):
 
     def set_attribute(self, name, value, domain="atoms"):
         """Set an attribute of the widget."""
-        atoms = deepcopy(self._widget.atoms)
-        atoms["attributes"][domain][name] = value
-        self._widget.atoms = atoms
+        atoms = self._widget.atoms
+        if isinstance(atoms, list):
+            frame = int(getattr(self, "current_frame", 0))
+            frame = max(0, min(frame, len(atoms) - 1))
+            target = atoms[frame]
+        else:
+            target = atoms
+        if "attributes" not in target:
+            target["attributes"] = {"atom": {}, "species": {}}
+        if domain not in target["attributes"]:
+            target["attributes"][domain] = {}
+        target["attributes"][domain][name] = value
         # update the widget
         self._widget.send_js_task(
             {"name": "avr.setAttribute", "args": [name, value, domain]}

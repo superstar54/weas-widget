@@ -5,6 +5,7 @@ import numpy as np
 from .tool_helpers import (
     WeasToolResult,
     _cell_center_xy,
+    _get_current_atoms_data,
     _get_current_ase_atoms,
     _normalize_indices,
     _set_current_ase_atoms,
@@ -13,6 +14,33 @@ from .tool_helpers import (
 
 def build_structure_tools(viewer: Any):
     from langchain_core.tools import tool
+
+    def _sanitize_group(label: str) -> str:
+        import re
+
+        name = re.sub(r"[^A-Za-z0-9_]+", "_", str(label).strip().lower())
+        return name.strip("_") or "group"
+
+    def _with_group_name(prefix: str, label: str) -> str:
+        return f"{prefix}_{_sanitize_group(label)}"
+
+    def _merge_groups(
+        existing: Optional[List[Any]], n_old: int, n_new: int, group_name: str
+    ) -> List[List[str]]:
+        groups: List[List[str]] = []
+        existing = existing if isinstance(existing, list) else []
+        for i in range(n_old):
+            entry = existing[i] if i < len(existing) else []
+            if isinstance(entry, list):
+                groups.append([str(x) for x in entry])
+            else:
+                groups.append([])
+        for _ in range(n_new):
+            groups.append([group_name])
+        return groups
+
+    def _apply_groups(groups: List[List[str]]) -> None:
+        viewer.avr.set_attribute("groups", groups, domain="atom")
 
     @tool
     def get_structure_summary() -> Dict[str, Any]:
@@ -51,6 +79,7 @@ def build_structure_tools(viewer: Any):
 
         atoms = molecule(name)
         viewer.from_ase(atoms)
+        _apply_groups([[_with_group_name("mol", name)] for _ in range(len(atoms))])
         viewer.avr.selected_atoms_indices = []
         return WeasToolResult(
             f"Loaded molecule '{name}' with {len(atoms)} atoms."
@@ -73,6 +102,7 @@ def build_structure_tools(viewer: Any):
                 raise ValueError("repeat must be a length-3 list like [nx, ny, nz].")
             atoms = atoms * tuple(int(x) for x in repeat)
         viewer.from_ase(atoms)
+        _apply_groups([[_with_group_name("bulk", symbol)] for _ in range(len(atoms))])
         viewer.avr.selected_atoms_indices = []
         return WeasToolResult(
             f"Loaded bulk {symbol} ({crystalstructure}) with {len(atoms)} atoms."
@@ -115,6 +145,12 @@ def build_structure_tools(viewer: Any):
         from ase.build import bulk, fcc100, fcc110, fcc111, surface
 
         atoms, is_traj, frame, traj = _get_current_ase_atoms(viewer)
+        atoms_data, *_ = _get_current_atoms_data(viewer)
+        existing_groups = (
+            atoms_data.get("attributes", {}).get("atom", {}).get("groups")
+            if isinstance(atoms_data, dict)
+            else None
+        )
         has_atoms = len(atoms) > 0
         if mode is None and has_atoms:
             return WeasToolResult(
@@ -192,8 +228,15 @@ def build_structure_tools(viewer: Any):
             _set_current_ase_atoms(
                 viewer, atoms, is_trajectory=is_traj, frame=frame, trajectory=traj
             )
+            group_name = _with_group_name("slab", symbol)
+            groups = _merge_groups(
+                existing_groups, len(atoms) - len(slab), len(slab), group_name
+            )
+            _apply_groups(groups)
         else:
             viewer.from_ase(slab)
+            group_name = _with_group_name("slab", symbol)
+            _apply_groups([[group_name] for _ in range(len(slab))])
         viewer.avr.selected_atoms_indices = []
         return WeasToolResult(
             f"Loaded {symbol}({h}{k}{l}) slab with {len(slab)} atoms.",
@@ -220,6 +263,12 @@ def build_structure_tools(viewer: Any):
         from ase.build import bulk, surface
 
         atoms, is_traj, frame, traj = _get_current_ase_atoms(viewer)
+        atoms_data, *_ = _get_current_atoms_data(viewer)
+        existing_groups = (
+            atoms_data.get("attributes", {}).get("atom", {}).get("groups")
+            if isinstance(atoms_data, dict)
+            else None
+        )
         has_atoms = len(atoms) > 0
         if mode is None and has_atoms:
             return WeasToolResult(
@@ -258,8 +307,15 @@ def build_structure_tools(viewer: Any):
             _set_current_ase_atoms(
                 viewer, atoms, is_trajectory=is_traj, frame=frame, trajectory=traj
             )
+            group_name = _with_group_name("slab", symbol)
+            groups = _merge_groups(
+                existing_groups, len(atoms) - len(slab), len(slab), group_name
+            )
+            _apply_groups(groups)
         else:
             viewer.from_ase(slab)
+            group_name = _with_group_name("slab", symbol)
+            _apply_groups([[group_name] for _ in range(len(slab))])
         viewer.avr.selected_atoms_indices = []
         return WeasToolResult(
             f"Loaded {symbol} {crystalstructure}({h}{k}{l}) slab with {len(slab)} atoms.",
@@ -285,6 +341,12 @@ def build_structure_tools(viewer: Any):
         from ase.build import molecule
 
         atoms, is_traj, frame, traj = _get_current_ase_atoms(viewer)
+        atoms_data, *_ = _get_current_atoms_data(viewer)
+        existing_groups = (
+            atoms_data.get("attributes", {}).get("atom", {}).get("groups")
+            if isinstance(atoms_data, dict)
+            else None
+        )
         before_n = int(len(atoms))
         mol = molecule(name)
 
@@ -308,6 +370,9 @@ def build_structure_tools(viewer: Any):
         _set_current_ase_atoms(
             viewer, atoms, is_trajectory=is_traj, frame=frame, trajectory=traj
         )
+        group_name = _with_group_name("mol", name)
+        groups = _merge_groups(existing_groups, before_n, len(mol), group_name)
+        _apply_groups(groups)
 
         added = list(range(before_n, before_n + len(mol)))
         if select_added:

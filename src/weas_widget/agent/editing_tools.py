@@ -1,17 +1,80 @@
-from typing import Any, Dict, List, Optional
-
-import numpy as np
+from typing import Any, Dict, List, Optional, Union
 
 from .tool_helpers import (
     WeasToolResult,
     _get_current_ase_atoms,
     _get_current_atoms_and_use_indices,
-    _group_layers_by_z,
+    _normalize_indices,
 )
 
 
 def build_editing_tools(viewer: Any):
     from langchain_core.tools import tool
+
+    def _apply_fixed_xyz(
+        indices: List[int], axes: Optional[Union[List[str], str]]
+    ) -> Dict[str, Any]:
+        atoms_payload = getattr(viewer._widget, "atoms", {})
+        if isinstance(atoms_payload, list):
+            frame = int(getattr(viewer.avr, "current_frame", 0))
+            frame = max(0, min(frame, len(atoms_payload) - 1))
+            atoms_payload = atoms_payload[frame]
+        if not isinstance(atoms_payload, dict):
+            atoms_payload = {}
+        attributes = atoms_payload.get("attributes", {})
+        atom_attrs = attributes.get("atom", {})
+        atoms, *_ = _get_current_ase_atoms(viewer)
+        n_atoms = len(atoms)
+        fixed_xyz = atom_attrs.get("fixed_xyz")
+        if not isinstance(fixed_xyz, list) or len(fixed_xyz) != n_atoms:
+            fixed_xyz = [[False, False, False] for _ in range(n_atoms)]
+        else:
+            cleaned = []
+            for i in range(n_atoms):
+                entry = fixed_xyz[i] if i < len(fixed_xyz) else None
+                if isinstance(entry, (list, tuple)) and len(entry) == 3:
+                    cleaned.append([bool(x) for x in entry])
+                else:
+                    cleaned.append([False, False, False])
+            fixed_xyz = cleaned
+
+        if axes is None:
+            axis_mask = [True, True, True]
+        else:
+            if isinstance(axes, str):
+                axis_tokens = set(axes.lower().replace(",", "").replace(" ", ""))
+            else:
+                axis_tokens = {str(a).lower().strip() for a in axes}
+            axis_mask = [
+                "x" in axis_tokens,
+                "y" in axis_tokens,
+                "z" in axis_tokens,
+            ]
+            if not any(axis_mask):
+                raise ValueError("axes must include at least one of 'x', 'y', or 'z'.")
+
+        for idx in indices:
+            for axis_idx, enabled in enumerate(axis_mask):
+                if enabled:
+                    fixed_xyz[idx][axis_idx] = True
+
+        viewer.avr.set_attribute("fixed_xyz", fixed_xyz, domain="atom")
+        fixed_indices = [i for i, mask in enumerate(fixed_xyz) if any(mask)]
+        viewer.avr.highlight.settings["fixed"] = {
+            "type": "crossView",
+            "indices": fixed_indices,
+            "scale": 1.0,
+            "color": "black",
+        }
+        viewer.avr.draw()
+        axis_names = [
+            name for name, enabled in zip(("x", "y", "z"), axis_mask) if enabled
+        ]
+        return {
+            "fixed_xyz": fixed_xyz,
+            "axis_names": axis_names,
+            "fixed_indices": fixed_indices,
+        }
 
     @tool
     def add_atom(symbol: str, x: float, y: float, z: float) -> Dict[str, Any]:
@@ -55,52 +118,6 @@ def build_editing_tools(viewer: Any):
         viewer.ops.atoms.replace(symbol=symbol, indices=indices)
         return WeasToolResult(
             f"Replaced {len(indices)} atoms with '{symbol}'."
-        ).to_dict()
-
-    @tool
-    def get_top_layer_indices(
-        symbol: Optional[str] = None,
-        n_layers: int = 1,
-        tolerance: float = 0.2,
-    ) -> Dict[str, Any]:
-        """
-        Return atom indices for the top-most layer(s) along +z.
-
-        Parameters
-        ----------
-        symbol
-            If provided, only consider atoms of this element.
-        n_layers
-            Number of top layers to include.
-        tolerance
-            Z-distance threshold (Angstrom) to group atoms into the same layer.
-        """
-        if n_layers <= 0:
-            raise ValueError("n_layers must be >= 1.")
-        atoms, *_ = _get_current_ase_atoms(viewer)
-        symbols = np.array(atoms.get_chemical_symbols(), dtype=object)
-        z_values = atoms.get_positions()[:, 2]
-
-        if symbol is not None:
-            mask = symbols == str(symbol)
-            if not np.any(mask):
-                return WeasToolResult(
-                    f"No atoms found for element '{symbol}'.",
-                    summary={"indices": []},
-                ).to_dict()
-            indices = np.where(mask)[0]
-            z_slice = z_values[indices]
-            layers = _group_layers_by_z(z_slice, float(tolerance))
-            top_layers = layers[: int(n_layers)]
-            selected = [int(indices[i]) for layer in top_layers for i in layer]
-        else:
-            layers = _group_layers_by_z(z_values, float(tolerance))
-            top_layers = layers[: int(n_layers)]
-            selected = [int(i) for layer in top_layers for i in layer]
-
-        return WeasToolResult(
-            f"Found {len(selected)} atoms in top {int(n_layers)} layer(s).",
-            summary={"indices": selected},
         ).to_dict()
 
     @tool
@@ -150,13 +167,33 @@ def build_editing_tools(viewer: Any):
             f"Rotated {len(indices)} atoms by {angle} degrees."
         ).to_dict()
 
+    @tool
+    def fix_atoms(
+        indices: Optional[List[int]] = None,
+        axes: Optional[Union[List[str], str]] = None,
+    ) -> Dict[str, Any]:
+        """Fix atoms by indices (0-based); if omitted, uses the current selection."""
+        atoms, *_ = _get_current_ase_atoms(viewer)
+        n_atoms = len(atoms)
+        selected = getattr(viewer.avr, "selected_atoms_indices", []) or []
+        use = _normalize_indices(indices, selected=selected, n_atoms=n_atoms)
+        if not use:
+            return WeasToolResult(
+                "Nothing to fix (no indices and empty selection)."
+            ).to_dict()
+
+        info = _apply_fixed_xyz(use, axes)
+        return WeasToolResult(
+            f"Fixed {len(use)} atoms on axes {info['axis_names']}."
+        ).to_dict()
+
     return [
         add_atom,
         delete_atoms,
         copy_atoms,
         replace_atoms,
-        get_top_layer_indices,
         color_by_attribute,
         translate,
         rotate,
+        fix_atoms,
     ]
