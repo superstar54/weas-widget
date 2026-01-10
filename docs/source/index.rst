@@ -49,6 +49,7 @@ You can also control the widget through LLM agents (e.g., LangChain) for guided 
    agent_tools
    development/index
    gallery
+   readthedocs
 
 
 
