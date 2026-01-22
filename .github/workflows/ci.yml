@@ -23,7 +23,7 @@ jobs:
         run: |
           sudo apt-get install -y pandoc
           python -m pip install --upgrade pip
-          python -m pip install -e .
+          python -m pip install -e .[fermi-surface]
           python -m pip install -r ./docs/requirements.txt
       - name: Build docs
         run: |
@@ -54,7 +54,7 @@ jobs:
           python -m pip install --upgrade pip
           npm install
           npm run build
-          pip install -e .
+          pip install -e .[fermi-surface]
           pip install "pytest<8" pymatgen
       - name: Test with pytest
         run: |
@@ -83,7 +83,7 @@ jobs:
           npm install
           npm run build
           python -m pip install -U jupyterlab==4.1.2 jupyter-packaging~=0.12
-          pip install -e .[langchain]
+          pip install -e .[langchain,fermi-surface]
 
       - name: Install Test Dependencies
         run: |
