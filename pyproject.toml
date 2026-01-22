@@ -37,7 +37,6 @@ dependencies = [
     "appdirs>=1.4.4",
     "numpy",
     "scikit-image",
-    "seekpath",
 ]
 
 [project.urls]
@@ -72,6 +71,7 @@ aiida = [
     "aiida-core"
 ]
 dev = ["watchfiles", "jupyterlab"]
+fermi-surface = ["seekpath"]
 
 # automatically add the dev feature to the default env (e.g., hatch shell)
 [tool.hatch.envs.default]
