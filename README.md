@@ -185,6 +185,12 @@ viewer
 
 ### Fermi surface
 
+Requires the optional `fermi-surface` dependencies (includes `seekpath`):
+
+```bash
+pip install "weas-widget[fermi-surface]"
+```
+
 ```python
 from weas_widget import WeasWidget
 viewer = WeasWidget()

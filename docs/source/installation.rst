@@ -20,6 +20,13 @@ To install the package from source, first clone the repository and then install 
 
 The ``-e`` flag will install the package in editable mode, meaning that changes to the source code will be automatically picked up.
 
+Optional features can be installed with extras. For example, the Fermi surface feature
+requires ``seekpath``:
+
+.. code-block:: console
+
+    $ pip install "weas-widget[fermi-surface]"
+
 
 
 .. |pip| replace:: ``pip``
