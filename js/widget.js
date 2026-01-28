@@ -96,6 +96,8 @@ function render({ model, el }) {
         window.editor = editor; // for debugging
         // volumetric data
         setVolumetricData(editor, model.get("volumetricData"), atoms.cell);
+        // fermi surface data
+        setFermiSurfaceData(editor, model.get("fermiData"), atoms.cell);
         editor.avr.transaction(() => {
             const initialState = {
                 modelStyle: model.get("modelStyle"),
@@ -131,6 +133,7 @@ function render({ model, el }) {
             const showOutBoundaryBonds = model.get("showOutBoundaryBonds");
             const highlightSettings = model.get("highlightSettings") || {};
             const isoSettings = model.get("isoSettings") || {};
+            const fermiSettings = model.get("fermiSettings") || {};
             const sliceSettings = model.get("sliceSettings") || {};
             const vectorField = model.get("vectorField") || {};
             const showVectorField = model.get("showVectorField");
@@ -148,6 +151,7 @@ function render({ model, el }) {
                 cell: cellSettings,
                 plugins: {
                     isosurface: { settings: isoSettings },
+                    fermiSurface: { settings: fermiSettings },
                     volumeSlice: { settings: sliceSettings },
                     vectorField: { settings: vectorField, show: showVectorField },
                     instancedMeshPrimitive: { settings: model.get("instancedMeshPrimitive") || [] },
@@ -288,9 +292,19 @@ function render({ model, el }) {
         setVolumetricData(editor, data, editor.avr.atoms.cell);
         console.log("volumeData: ", editor.avr.volumetricData);
     });
+    model.on("change:fermiData", () => {
+        const data = model.get("fermiData");
+        console.log("fermiData: ", data);
+        setFermiSurfaceData(editor, data, editor.avr.atoms.cell);
+        console.log("fermiSurfaceData: ", editor.avr.fermiSurfaceData);
+    });
     model.on("change:isoSettings", () => {
         const isoSettings = model.get("isoSettings") || {};
         editor.state.set({ plugins: { isosurface: { settings: isoSettings } } });
+    });
+    model.on("change:fermiSettings", () => {
+        const fermiSettings = model.get("fermiSettings") || {};
+        editor.state.set({ plugins: { fermiSurface: { settings: fermiSettings } } });
     });
     // volume slice
     model.on("change:sliceSettings", () => {
@@ -418,14 +432,24 @@ function render({ model, el }) {
     });
 }
 function createVolumeData(data, cell=[[1, 0, 0], [0, 1, 0], [0, 0, 1]]) {
-    if (!data || !data.values || !Array.isArray(data.values) || data.values.length === 0) {
+    if (!data) {
         return null;
     }
-    // get the dimensions
-    const dims = [data.values.length, data.values[0].length, data.values[0][0].length];
-    // flatten the 3d data to 1d
-    const values = [].concat.apply([], [].concat.apply([], data.values));
-    return {dims, values, cell: cell, origin: [0, 0, 0]};
+    if (Array.isArray(data.values) && data.values.length === 0) {
+        return null;
+    }
+    if (Array.isArray(data.values) && Array.isArray(data.values[0]) && Array.isArray(data.values[0][0])) {
+        const dims = [data.values.length, data.values[0].length, data.values[0][0].length];
+        const values = [].concat.apply([], [].concat.apply([], data.values));
+        return {dims, values, cell: data.cell || cell, origin: data.origin || [0, 0, 0], bzPlanes: data.bzPlanes, bzMesh: data.bzMesh};
+    }
+    if (Array.isArray(data.values) && Array.isArray(data.dims)) {
+        return {dims: data.dims, values: data.values, cell: data.cell || cell, origin: data.origin || [0, 0, 0], bzPlanes: data.bzPlanes, bzMesh: data.bzMesh, datasets: data.datasets};
+    }
+    if (Array.isArray(data.datasets)) {
+        return {datasets: data.datasets, cell: data.cell || cell, origin: data.origin || [0, 0, 0], bzPlanes: data.bzPlanes, bzMesh: data.bzMesh};
+    }
+    return null;
 }
 
 function setVolumetricData(editor, data, cell) {
@@ -446,6 +470,27 @@ function setVolumetricData(editor, data, cell) {
     }
     if (editor.avr.volumeSliceManager && typeof editor.avr.volumeSliceManager.drawSlices === "function") {
         editor.avr.volumeSliceManager.drawSlices();
+    }
+    if (typeof editor.avr.requestRedraw === "function") {
+        editor.avr.requestRedraw("render");
+    }
+}
+
+function setFermiSurfaceData(editor, data, cell) {
+    if (!editor || !editor.avr) {
+        return;
+    }
+    const fermiData = createVolumeData(data, cell);
+    if (!fermiData) {
+        return;
+    }
+    if (typeof editor.avr.setFermiSurfaceData === "function") {
+        editor.avr.setFermiSurfaceData(fermiData);
+        return;
+    }
+    editor.avr.fermiSurfaceData = fermiData;
+    if (editor.avr.fermiSurfaceManager && typeof editor.avr.fermiSurfaceManager.drawFermiSurfaces === "function") {
+        editor.avr.fermiSurfaceManager.drawFermiSurfaces();
     }
     if (typeof editor.avr.requestRedraw === "function") {
         editor.avr.requestRedraw("render");
