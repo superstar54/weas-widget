@@ -151,11 +151,11 @@ function render({ model, el }) {
                 cell: cellSettings,
                 plugins: {
                     isosurface: { settings: isoSettings },
-                    fermiSurface: { settings: fermiSettings },
                     volumeSlice: { settings: sliceSettings },
                     vectorField: { settings: vectorField, show: showVectorField },
                     instancedMeshPrimitive: { settings: model.get("instancedMeshPrimitive") || [] },
                     anyMesh: { settings: model.get("anyMesh") || [] },
+                    fermiSurface: { settings: fermiSettings },
                     text: { settings: model.get("text") || [] },
                     species: { settings: model.get("speciesSettings") || {} },
                 },
