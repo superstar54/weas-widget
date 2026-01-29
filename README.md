@@ -109,7 +109,7 @@ Press the keyboard shortcut, and move your mouse.
 
 ### Rotate selected atoms
 
-To rotate around a custom axis, press ``r`` then ``a`` and click one or two atoms.
+To rotate around a custom axis, press ``r`` then ``a`` and click one or two atoms, then press ``a`` again to exit axis picking.
 Rotation defaults to the camera axis through the selection center.
 One atom sets the rotation center (camera axis), two atoms define the bond axis.
 The axis is shown with orange crosses and a long orange line (for two atoms).
@@ -118,6 +118,8 @@ Press ``r`` then ``x``, ``y``, or ``z`` to lock rotation to a world axis (press 
 
 ### Translate along one axis
 To translate along one axis, press ``g`` then ``x``, ``y``, or ``z`` to lock movement.
+To translate along an atom-defined axis, press ``g`` then ``a`` and click two atoms, then press ``a`` again to exit axis picking.
+To translate in an atom-defined plane, press ``g`` then ``a`` and click three atoms, press ``a`` again to exit axis picking, then press ``p`` for plane or ``n`` for normal.
 
 
 ### Delete selected atoms

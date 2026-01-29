@@ -185,6 +185,7 @@ class WeasWidget(ipw.HBox):
             "viewer": {"showAtomLegend": self._widget.showAtomLegend},
             "plugins": {
                 "volumetricData": deepcopy(self._widget.volumetricData),
+                "fermiData": deepcopy(self._widget.fermiData),
                 "phonon": deepcopy(self._widget.phonon),
             },
         }
@@ -204,6 +205,8 @@ class WeasWidget(ipw.HBox):
             self._widget.showAtomLegend = deepcopy(viewer["showAtomLegend"])
         if "volumetricData" in plugins:
             self._widget.volumetricData = deepcopy(plugins["volumetricData"])
+        if "fermiData" in plugins:
+            self._widget.fermiData = deepcopy(plugins["fermiData"])
         if "phonon" in plugins:
             self._widget.phonon = deepcopy(plugins["phonon"])
 
@@ -228,7 +231,6 @@ class WeasWidget(ipw.HBox):
         file_path: str,
         band_index: int = None,
         fermi_energy: float = None,
-        supercell_size: tuple = (2, 2, 2),
         drop_periodic: bool = True,
         clip_bz: bool = True,
         show_bz: bool = True,
@@ -251,7 +253,6 @@ class WeasWidget(ipw.HBox):
             file_path=file_path,
             band_index=band_index,
             fermi_energy=fermi_energy,
-            supercell_size=supercell_size,
             drop_periodic=drop_periodic,
             clip_bz=clip_bz,
             show_bz=show_bz,

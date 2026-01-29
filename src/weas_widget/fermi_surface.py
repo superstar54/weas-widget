@@ -247,129 +247,6 @@ def fermi_crossing_bands(
     return hits
 
 
-def kgrid_fractional(data: BXSFData) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """
-    Build fractional k-grid coordinates (u,v,w) in [0,1] along the three reciprocal vectors.
-
-    Returns (u, v, w) as 1D arrays of lengths nx, ny, nz.
-    """
-    if not data.bands:
-        raise ValueError("No bands present.")
-    nx, ny, nz = data.bands[0].grid_shape
-    u = np.linspace(0.0, 1.0, nx, endpoint=False)
-    v = np.linspace(0.0, 1.0, ny, endpoint=False)
-    w = np.linspace(0.0, 1.0, nz, endpoint=False)
-    return u, v, w
-
-
-def kgrid_cartesian(
-    data: BXSFData,
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    """
-    Build full k-grid in Cartesian coordinates.
-
-    Returns
-    -------
-    kx, ky, kz, kpts where:
-      - kx, ky, kz are 3D arrays with shape (nx, ny, nz)
-      - kpts is an array with shape (nx, ny, nz, 3)
-    """
-    u, v, w = kgrid_fractional(data)
-    U, V, W = np.meshgrid(u, v, w, indexing="ij")  # (nx, ny, nz)
-
-    # Reciprocal vectors as rows
-    b1, b2, b3 = data.rec_lattice
-    kpts = U[..., None] * b1 + V[..., None] * b2 + W[..., None] * b3  # (nx, ny, nz, 3)
-    return kpts[..., 0], kpts[..., 1], kpts[..., 2], kpts
-
-
-def _clip_triangles_against_plane(
-    vertices: np.ndarray,
-    faces: np.ndarray,
-    normal: np.ndarray,
-    point: np.ndarray,
-    eps: float = 1e-10,
-) -> Tuple[np.ndarray, np.ndarray]:
-    v_list = vertices.tolist()
-    f_list: List[List[int]] = []
-
-    def signed_distance(x: np.ndarray) -> float:
-        return float(np.dot(normal, x - point))
-
-    for face in faces:
-        tri = [vertices[face[0]], vertices[face[1]], vertices[face[2]]]
-        distances = [
-            signed_distance(tri[0]),
-            signed_distance(tri[1]),
-            signed_distance(tri[2]),
-        ]
-        inside = [d <= eps for d in distances]
-
-        if all(inside):
-            f_list.append(face.tolist())
-            continue
-        if not any(inside):
-            continue
-
-        poly = tri
-        poly_d = distances
-        new_poly: List[np.ndarray] = []
-        for a, da, b, db in zip(
-            poly, poly_d, poly[1:] + poly[:1], poly_d[1:] + poly_d[:1]
-        ):
-            a_in = da <= eps
-            b_in = db <= eps
-            if a_in:
-                new_poly.append(a)
-            if a_in ^ b_in:
-                t = da / (da - db)
-                new_poly.append(a + t * (b - a))
-
-        if len(new_poly) < 3:
-            continue
-
-        base_idx = len(v_list)
-        for p in new_poly:
-            v_list.append(p.tolist())
-        idx = list(range(base_idx, base_idx + len(new_poly)))
-        for m in range(1, len(idx) - 1):
-            f_list.append([idx[0], idx[m], idx[m + 1]])
-
-    return np.array(v_list, float), np.array(f_list, int)
-
-
-def _clip_to_brillouin_zone(
-    vertices: np.ndarray, faces: np.ndarray, b_vectors: Iterable[Iterable[float]]
-) -> Tuple[np.ndarray, np.ndarray]:
-    try:
-        from seekpath.brillouinzone.brillouinzone import get_BZ
-    except ImportError as exc:
-        raise ImportError(
-            "seekpath is required for clip_bz=True. Install with `pip install seekpath`."
-        ) from exc
-
-    b1, b2, b3 = map(np.array, b_vectors)
-    bz = get_BZ(b1, b2, b3)
-    bz_faces = bz["faces"]
-    center = np.array(bz["triangles_vertices"]).mean(axis=0)
-
-    def face_plane(face_vertices: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
-        p0, p1, p2 = face_vertices[0], face_vertices[1], face_vertices[2]
-        n = np.cross(p1 - p0, p2 - p0)
-        n = n / (np.linalg.norm(n) + 1e-30)
-        if np.dot(n, center - p0) > 0:
-            n = -n
-        return n, p0
-
-    v_out, f_out = vertices, faces
-    for face in bz_faces:
-        face = np.array(face)
-        n, p0 = face_plane(face)
-        v_out, f_out = _clip_triangles_against_plane(v_out, f_out, n, p0)
-
-    return v_out, f_out
-
-
 def compute_brillouin_zone_mesh(
     b_vectors: Iterable[Iterable[float]],
 ) -> Tuple[np.ndarray, np.ndarray]:
@@ -417,52 +294,43 @@ def compute_brillouin_zone_mesh(
     return np.array(vertices, dtype=float), np.array(face_indices, dtype=int)
 
 
-def compute_fermi_surface_mesh(
-    energy: np.ndarray,
+def compute_brillouin_zone_planes(
     b_vectors: Iterable[Iterable[float]],
-    fermi_energy: Optional[float] = None,
-    supercell_size: Tuple[int, int, int] = (2, 2, 2),
-    drop_periodic: bool = True,
-    clip_bz: bool = False,
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> List[Dict[str, List[float]]]:
     try:
-        from skimage import measure
+        from seekpath.brillouinzone.brillouinzone import get_BZ
     except ImportError as exc:
         raise ImportError(
-            "scikit-image is required to compute the Fermi surface. Install with `pip install scikit-image`."
+            "seekpath is required to compute the Brillouin zone planes."
         ) from exc
 
-    if drop_periodic:
-        if energy.shape[0] > 1 and energy.shape[1] > 1 and energy.shape[2] > 1:
-            energy = energy[:-1, :-1, :-1]
-
-    if fermi_energy is None:
-        fermi_energy = 0.5 * (float(energy.min()) + float(energy.max()))
-
-    sx, sy, sz = supercell_size
-    energy_sc = np.tile(energy, supercell_size)
-    nx, ny, nz = energy.shape
-    spacing = (1.0 / nx, 1.0 / ny, 1.0 / nz)
-
-    verts_frac, faces, _, _ = measure.marching_cubes(
-        volume=energy_sc, level=fermi_energy, spacing=spacing
-    )
-
-    origin = np.array([-(sx // 2), -(sy // 2), -(sz // 2)], dtype=float)
-    verts_frac = verts_frac + origin
-
     b1, b2, b3 = map(np.array, b_vectors)
-    k1, k2, k3 = verts_frac[:, 0], verts_frac[:, 1], verts_frac[:, 2]
-    verts_abs = (
-        k1[:, None] * b1[None, :]
-        + k2[:, None] * b2[None, :]
-        + k3[:, None] * b3[None, :]
-    )
+    bz = get_BZ(b1, b2, b3)
+    faces = bz.get("faces") or []
+    triangles = bz.get("triangles_vertices") or []
+    if not faces and triangles:
+        faces = triangles
 
-    if clip_bz:
-        verts_abs, faces = _clip_to_brillouin_zone(verts_abs, faces, b_vectors)
+    if len(faces) == 0:
+        return []
 
-    return verts_abs, faces
+    center = np.array(triangles, dtype=float).reshape(-1, 3).mean(axis=0)
+    planes: List[Dict[str, List[float]]] = []
+    for face in faces:
+        face = np.array(face, dtype=float)
+        if face.shape[0] < 3:
+            continue
+        p0, p1, p2 = face[0], face[1], face[2]
+        n = np.cross(p1 - p0, p2 - p0)
+        norm = np.linalg.norm(n)
+        if norm < 1e-30:
+            continue
+        n = n / norm
+        if np.dot(n, center - p0) > 0:
+            n = -n
+        planes.append({"normal": n.tolist(), "point": p0.tolist()})
+
+    return planes
 
 
 def add_brillouin_zone(
@@ -544,10 +412,9 @@ def add_fermi_surface_from_bxsf(
     file_path: str,
     band_index: int = None,
     fermi_energy: Optional[float] = None,
-    supercell_size: tuple = (2, 2, 2),
     drop_periodic: bool = True,
-    clip_bz: bool = False,
-    combine_bands: bool = True,
+    clip_bz: bool = True,
+    combine_bands: bool = False,
     name: str = None,
     color: list = None,
     opacity: float = 0.6,
@@ -586,16 +453,6 @@ def add_fermi_surface_from_bxsf(
     if missing:
         raise ValueError(f"Band indices not found in BXSF data: {missing}.")
 
-    def _mesh_for_band(band):
-        return compute_fermi_surface_mesh(
-            energy=band.energies,
-            b_vectors=b_vectors,
-            fermi_energy=fermi_energy,
-            supercell_size=supercell_size,
-            drop_periodic=drop_periodic,
-            clip_bz=clip_bz,
-        )
-
     def _is_rgb_list(value) -> bool:
         return (
             isinstance(value, (list, tuple))
@@ -623,39 +480,72 @@ def add_fermi_surface_from_bxsf(
 
     mesh_color = color if _is_rgb_list(color) else [0.0, 1.0, 0.0]
     mesh_opacity = float(opacity)
-    settings = []
-    if combine_bands or len(fs_bands) == 1:
-        verts_list = []
-        faces_list = []
-        vert_offset = 0
-        for idx in fs_bands:
-            band = bands_by_index[idx]
-            vertices, faces = _mesh_for_band(band)
-            verts_list.append(vertices)
-            if faces.size:
-                faces_list.append(faces + vert_offset)
-            vert_offset += vertices.shape[0]
-        if not verts_list:
-            raise ValueError("No Fermi surface vertices were generated.")
-        vertices = np.vstack(verts_list)
-        if faces_list:
-            faces = np.vstack(faces_list)
-        else:
-            faces = np.zeros((0, 3), dtype=int)
-        default_name = f"Band-{fs_bands[0]}" if len(fs_bands) == 1 else "Bands"
-        settings.append(
+
+    b1, b2, b3 = map(np.array, b_vectors)
+    origin = [0.0, 0.0, 0.0]
+    planes = compute_brillouin_zone_planes(b_vectors) if clip_bz else []
+
+    datasets = []
+    for idx in fs_bands:
+        band = bands_by_index[idx]
+        energy = band.energies
+        if drop_periodic:
+            if energy.shape[0] > 1 and energy.shape[1] > 1 and energy.shape[2] > 1:
+                energy = energy[:-1, :-1, :-1]
+        dims = list(map(int, energy.shape))
+        values = energy.reshape(-1).tolist()
+        datasets.append(
             {
-                "name": name or default_name,
-                "vertices": vertices.reshape(-1).tolist(),
-                "faces": faces.reshape(-1).tolist(),
-                "color": mesh_color,
-                "opacity": mesh_opacity,
-                "position": [0.0, 0.0, 0.0],
-                "materialType": material_type,
-                "mergeVerticesTolerance": merge_vertices_tolerance,
-                "smoothNormals": smooth_normals,
+                "name": f"Band-{idx}",
+                "dims": dims,
+                "values": values,
+                "cell": [b1.tolist(), b2.tolist(), b3.tolist()],
+                "origin": origin,
             }
         )
+
+    fermi_data = {
+        "datasets": datasets,
+        "cell": [b1.tolist(), b2.tolist(), b3.tolist()],
+        "origin": origin,
+    }
+    if planes:
+        fermi_data["bzPlanes"] = planes
+    if show_bz:
+        bz_vertices, bz_faces = compute_brillouin_zone_mesh(b_vectors)
+        fermi_data["bzMesh"] = {
+            "name": "Brillouin-zone",
+            "vertices": bz_vertices.reshape(-1).tolist(),
+            "faces": bz_faces.reshape(-1).tolist(),
+            "color": [0.0, 0.0, 0.5],
+            "opacity": 0.1,
+            "showEdges": True,
+            "edgeColor": [0.0, 0.0, 0.0, 1.0],
+            "materialType": material_type,
+            "depthWrite": False,
+            "depthTest": False,
+            "side": "DoubleSide",
+            "clearDepth": True,
+            "renderOrder": 10,
+        }
+
+    fermi_settings = {}
+    if combine_bands or len(fs_bands) == 1:
+        default_name = f"Band-{fs_bands[0]}" if len(fs_bands) == 1 else "Bands"
+        fermi_settings[name or default_name] = {
+            "isovalue": float(fermi_energy),
+            "color": mesh_color,
+            "step_size": 1,
+            "opacity": mesh_opacity,
+            "periodic": False,
+            "clipToBZ": bool(clip_bz),
+            "tile": 1,
+            "bzCropMargin": 1,
+            "datasets": [f"Band-{idx}" for idx in fs_bands],
+            "materialType": material_type,
+            "mergeVerticesTolerance": merge_vertices_tolerance,
+            "smoothNormals": smooth_normals,
+        }
     else:
         if color is None:
             band_colors = _auto_band_colors(len(fs_bands))
@@ -667,39 +557,33 @@ def add_fermi_surface_from_bxsf(
                 base_colors[i % len(base_colors)] for i in range(len(fs_bands))
             ]
         for idx in fs_bands:
-            band_color = band_colors[len(settings)]
-            band = bands_by_index[idx]
-            vertices, faces = _mesh_for_band(band)
+            band_color = band_colors[len(fermi_settings)]
             band_name = name or f"Band-{idx}"
             if name is not None and len(fs_bands) > 1:
                 band_name = f"{name}-{idx}"
-            settings.append(
-                {
-                    "name": band_name,
-                    "vertices": vertices.reshape(-1).tolist(),
-                    "faces": faces.reshape(-1).tolist(),
-                    "color": band_color,
-                    "opacity": mesh_opacity,
-                    "position": [0.0, 0.0, 0.0],
-                    "materialType": material_type,
-                    "mergeVerticesTolerance": merge_vertices_tolerance,
-                    "smoothNormals": smooth_normals,
-                }
-            )
+            fermi_settings[band_name] = {
+                "isovalue": float(fermi_energy),
+                "color": band_color,
+                "step_size": 1,
+                "opacity": mesh_opacity,
+                "periodic": False,
+                "clipToBZ": bool(clip_bz),
+                "tile": 1,
+                "bzCropMargin": 1,
+                "dataset": f"Band-{idx}",
+                "materialType": material_type,
+                "mergeVerticesTolerance": merge_vertices_tolerance,
+                "smoothNormals": smooth_normals,
+            }
+
     atoms = Atoms(symbols=[], positions=[], cell=b_vectors, pbc=True)
     viewer.from_ase(atoms)
     viewer.avr.cell.settings["showCell"] = False
-    mesh_settings = []
-    if isinstance(viewer.any_mesh.settings, list):
-        mesh_settings = list(viewer.any_mesh.settings)
-    mesh_settings.extend(settings)
-    viewer.any_mesh.settings = mesh_settings
+    viewer.avr.fermi.fermi_data = fermi_data
+    viewer.avr.fermi.settings = fermi_settings
     if show_reciprocal_axes:
         axes_kwargs = dict(reciprocal_axes_options or {})
         add_reciprocal_axes(viewer, b_vectors, **axes_kwargs)
-    if show_bz:
-        bz_kwargs = dict(brillouin_zone_options or {})
-        add_brillouin_zone(viewer, b_vectors, **bz_kwargs)
-    if len(settings) == 1:
-        return settings[0]
-    return settings
+    if len(fermi_settings) == 1:
+        return list(fermi_settings.values())[0]
+    return list(fermi_settings.values())
