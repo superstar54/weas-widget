@@ -77,6 +77,7 @@ Other parameters:
 - **Replace Atom**: replace the selected atom with another atom.
 - **Add Atom**: add a new atom to the structure.
 - **Boundary**: show atoms inside the boundary, making a supercell.
+- **Wrap On Move**: wrap moved atoms back into the unit cell when PBC is enabled.
 
 
 Buttons

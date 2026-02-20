@@ -34,6 +34,7 @@ class AtomsViewer(WidgetWrapper):
         "current_frame": "currentFrame",
         "phonon_setting": "phonon",
         "continuous_update": "continuousUpdate",
+        "wrap_on_move": "wrapOnMove",
     }
 
     _extra_allowed_attrs = [

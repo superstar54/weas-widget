@@ -3,8 +3,10 @@ Apps
 
 Apps are small, task-specific widgets that demonstrate how to combine
 ``weas-widget`` with other Python packages to build structures
-interactively. ``SurfaceBuilder`` is the first app in this series, and
-more apps will be added over time.
+interactively. They are example use cases that show how to create
+interactive apps for visualization and editing of atomic structures
+inside Jupyter notebooks. ``SurfaceBuilder`` is the first app in this
+series, and more apps will be added over time.
 
 SurfaceBuilder
 --------------

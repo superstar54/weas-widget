@@ -91,6 +91,7 @@ function render({ model, el }) {
             boundary: model.get("boundary"),
             currentFrame: model.get("currentFrame"),
             continuousUpdate: model.get("continuousUpdate"),
+            wrapOnMove: model.get("wrapOnMove"),
         };
         editor = new weas.WEAS({ domElement, atoms, viewerConfig, guiConfig });
         window.editor = editor; // for debugging
@@ -109,6 +110,7 @@ function render({ model, el }) {
                 atomLabelType: model.get("atomLabelType"),
                 showBondedAtoms: model.get("showBondedAtoms"),
                 boundary: model.get("boundary"),
+                wrapOnMove: model.get("wrapOnMove"),
                 selectedAtomsIndices: model.get("selectedAtomsIndices") || [],
             };
             const atomScales = model.get("atomScales");
@@ -243,6 +245,7 @@ function render({ model, el }) {
     model.on("change:atomLabelType", () => {editor.avr.applyState({ atomLabelType: model.get("atomLabelType") }, { redraw: "render" });});
     model.on("change:showBondedAtoms", () => {editor.avr.applyState({ showBondedAtoms: model.get("showBondedAtoms") }, { redraw: "full" });});
     model.on("change:continuousUpdate", () => {editor.avr.applyState({ continuousUpdate: model.get("continuousUpdate") }, { redraw: "none" });});
+    model.on("change:wrapOnMove", () => {editor.avr.applyState({ wrapOnMove: model.get("wrapOnMove") }, { redraw: "none" });});
     model.on("change:atomScales", () => {editor.avr.applyState({ atomScales: model.get("atomScales") }, { redraw: "full" });});
     model.on("change:modelSticks", () => {editor.avr.applyState({ modelSticks: model.get("modelSticks") }, { redraw: "full" });});
     model.on("change:modelPolyhedras", () => {editor.avr.applyState({ modelPolyhedras: model.get("modelPolyhedras") }, { redraw: "full" });});

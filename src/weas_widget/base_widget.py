@@ -84,6 +84,7 @@ class BaseWidget(anywidget.AnyWidget):
     #
     showAtomLegend = tl.Bool(False).tag(sync=True)
     continuousUpdate = tl.Bool(True).tag(sync=True)
+    wrapOnMove = tl.Bool(False).tag(sync=True)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
